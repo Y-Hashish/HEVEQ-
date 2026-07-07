@@ -78,9 +78,9 @@ export class AdminUsersService {
         userName: request.userName,
         email: request.email,
         password: request.password,
-        phoneNumber: request.phoneNumber,
-        department: request.department,
-        assignedGovernorate: request.assignedGovernorate,
+        phoneNumber: request.phoneNumber?.trim() || null,
+        department: request.department || null,
+        assignedGovernorate: request.assignedGovernorate?.trim() || null,
         isAvailableForDispatch: request.isAvailableForDispatch === true
       });
     }
@@ -91,7 +91,7 @@ export class AdminUsersService {
       userName: request.userName,
       email: request.email,
       password: request.password,
-      phoneNumber: request.phoneNumber
+      phoneNumber: request.phoneNumber?.trim() || null
     });
   }
 }

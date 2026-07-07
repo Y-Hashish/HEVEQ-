@@ -258,6 +258,7 @@ namespace HEVEQ.Application.Features.Admin.Command.DisputeDecision
                     {
                         Id = Guid.NewGuid(),
                         BookingId = booking.Id,
+                        TicketId = ticket.Id,
                         DispatchedEmployeeId = employee.Id,
                         DispatchedByAdminId = request.AdminId,
                         LinkedEvidenceFormId = linkedEvidence.Id,
@@ -290,6 +291,26 @@ namespace HEVEQ.Application.Features.Admin.Command.DisputeDecision
                         StatusCode = 400,
                         Message = $"Unsupported decision type '{request.DecisionType}' for Booking disputes."
                     };
+            }
+
+            // Auto-update linked field verifications if they are pending admin decision
+            var linkedVerifications = await context.FieldVerificationForms
+                .Where(v => (v.BookingId == booking.Id || (v.TicketId.HasValue && v.TicketId.Value == ticket.Id)) 
+                            && v.AdminDecision == FieldVerificationAdminDecision.Pending)
+                .ToListAsync(cancellationToken);
+
+            foreach (var verification in linkedVerifications)
+            {
+                verification.AdminDecision = request.DecisionType switch
+                {
+                    "ReleaseToProvider" => FieldVerificationAdminDecision.ReleaseToProvider,
+                    "RefundCustomer" => FieldVerificationAdminDecision.RefundToCustomer,
+                    "PartialSettlement" => FieldVerificationAdminDecision.PartialSettlement,
+                    _ => verification.AdminDecision
+                };
+                verification.DecidedByAdminId = request.AdminId;
+                verification.DecidedAt = DateTime.UtcNow;
+                verification.AdminDecisionNote = request.DecisionNote;
             }
 
             ticket.UpdatedAt = DateTime.UtcNow;

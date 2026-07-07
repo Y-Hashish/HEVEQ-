@@ -40,6 +40,11 @@ namespace HEVEQ.Application.Features.EmployeeProfiles.Commands.SubmitFieldVisitE
                 return new SubmitFieldVisitEvidenceResponse { IsSuccess = false, StatusCode = 403, Message = "You are not authorized to upload evidence for this field visit." };
             }
 
+            if (visit.VisitStatus == VisitStatus.Completed)
+            {
+                return new SubmitFieldVisitEvidenceResponse { IsSuccess = false, StatusCode = 400, Message = "لقد تم تقديم تقرير وإثباتات هذه الزيارة بالفعل ولا يمكن التعديل عليها." };
+            }
+
             // Map Outcome string to Enum
             if (Enum.TryParse<FieldVerificationOutcome>(request.Outcome, true, out var parsedOutcome))
             {
@@ -55,16 +60,20 @@ namespace HEVEQ.Application.Features.EmployeeProfiles.Commands.SubmitFieldVisitE
             visit.VisitedAt = DateTime.UtcNow;
             visit.FormSubmittedAt = DateTime.UtcNow;
 
-            // Clear old photos and add new ones
-            context.FieldVerificationPhotos.RemoveRange(visit.Photos);
-            visit.Photos.Clear();
+            // Delete old photos
+            var existingPhotos = visit.Photos.ToList();
+            if (existingPhotos.Any())
+            {
+                context.FieldVerificationPhotos.RemoveRange(existingPhotos);
+            }
 
+            // Add new photos directly to DB Context to avoid collection mutation tracking errors
             if (request.PhotoUrls != null && request.PhotoUrls.Any())
             {
                 int order = 1;
                 foreach (var url in request.PhotoUrls)
                 {
-                    visit.Photos.Add(new FieldVerificationPhoto
+                    var photo = new FieldVerificationPhoto
                     {
                         Id = Guid.NewGuid(),
                         FieldVerificationFormId = visit.Id,
@@ -72,7 +81,8 @@ namespace HEVEQ.Application.Features.EmployeeProfiles.Commands.SubmitFieldVisitE
                         Caption = $"Evidence photo {order}",
                         DisplayOrder = order++,
                         CreatedAt = DateTime.UtcNow
-                    });
+                    };
+                    await context.FieldVerificationPhotos.AddAsync(photo, cancellationToken);
                 }
             }
 

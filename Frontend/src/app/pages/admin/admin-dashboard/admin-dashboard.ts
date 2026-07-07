@@ -187,7 +187,9 @@ export class AdminDashboard implements OnInit {
       disputedMarketplaceOrders: Number(data?.disputedMarketplaceOrders ?? 0),
       frozenEscrowRecords: Number(data?.frozenEscrowRecords ?? 0),
       pendingFieldVerifications: Number(data?.pendingFieldVerifications ?? 0),
-      aiHighRiskItems: Number(data?.aiHighRiskItems ?? 0)
+      aiHighRiskItems: Number(data?.aiHighRiskItems ?? 0),
+      netPlatformEarnings: Number(data?.netPlatformEarnings ?? 0),
+      netEscrowAmount: Number(data?.netEscrowAmount ?? 0)
     };
   }
 

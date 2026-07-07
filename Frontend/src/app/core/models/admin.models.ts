@@ -11,6 +11,8 @@ export interface DashboardSummary {
   frozenEscrowRecords: number;
   pendingFieldVerifications: number;
   aiHighRiskItems: number;
+  netPlatformEarnings?: number;
+  netEscrowAmount?: number;
 }
 
 export interface PendingAction {

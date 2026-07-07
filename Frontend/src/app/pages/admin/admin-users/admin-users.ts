@@ -2,6 +2,7 @@ import { Component, OnInit, ChangeDetectionStrategy, DestroyRef, inject, ChangeD
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { AdminUser, AdminUsersService, UpdateUserStatusRequest, CreateStaffRequest } from '../../../core/services/adminUsersService';
+import { getErrorMessage } from '../../../core/helpers/errorMessageHelper';
 import { Loading } from '../../../shared/components/loading/loading';
 import { EmptyState } from '../../../shared/components/empty-state/empty-state';
 import { ActionModal } from '../../../shared/components/action-modal/action-modal';
@@ -139,7 +140,7 @@ export class AdminUsers implements OnInit {
         },
         error: err => {
           this.isCreatingStaff = false;
-          this.toastService.error(err.error?.message || 'فشل إنشاء الحساب');
+          this.toastService.error(getErrorMessage(err, 'فشل إنشاء الحساب'));
           this.cdr.detectChanges();
         }
       });

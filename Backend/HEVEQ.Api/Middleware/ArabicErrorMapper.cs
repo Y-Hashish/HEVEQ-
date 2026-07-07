@@ -24,6 +24,70 @@ public static class ArabicErrorMapper
 
         var lower = value.ToLowerInvariant();
 
+        // ── Identity & Password & Field validation translations ─────────
+        var parts = new List<string>();
+
+        if (lower.Contains("passwords must be at least") || lower.Contains("password must be at least"))
+        {
+            var match = System.Text.RegularExpressions.Regex.Match(value, @"\d+");
+            var length = match.Success ? match.Value : "8";
+            parts.Add($"يجب أن تكون كلمة المرور مكونة من {length} رموز على الأقل");
+        }
+        if (lower.Contains("non alphanumeric") || lower.Contains("special character") || lower.Contains("special"))
+        {
+            parts.Add("يجب أن تحتوي كلمة المرور على رمز خاص واحد على الأقل (مثل @، #، $)");
+        }
+        if (lower.Contains("digit") || lower.Contains("number") || lower.Contains("numbers"))
+        {
+            parts.Add("يجب أن تحتوي كلمة المرور على رقم واحد على الأقل (0-9)");
+        }
+        if (lower.Contains("lowercase"))
+        {
+            parts.Add("يجب أن تحتوي كلمة المرور على حرف صغير واحد على الأقل (a-z)");
+        }
+        if (lower.Contains("uppercase"))
+        {
+            parts.Add("يجب أن تحتوي كلمة المرور على حرف كبير واحد على الأقل (A-Z)");
+        }
+        if (lower.Contains("username can only contain letters, numbers") || lower.Contains("username can only contain letters"))
+        {
+            parts.Add("اسم المستخدم يجب أن يحتوي فقط على أحرف إنجليزية، أرقام، نقاط، شرطة سفلية أو شرطة عادية");
+        }
+        if (lower.Contains("username is invalid") || lower.Contains("user name is invalid"))
+        {
+            parts.Add("اسم المستخدم غير صالح");
+        }
+        if (lower.Contains("already taken") || lower.Contains("is already used") || lower.Contains("already exists") || lower.Contains("مستخدم بالفعل"))
+        {
+            if (lower.Contains("email") || lower.Contains("البريد"))
+                parts.Add("البريد الإلكتروني مستخدم بالفعل");
+            else if (lower.Contains("user name") || lower.Contains("username") || lower.Contains("اسم المستخدم"))
+                parts.Add("اسم المستخدم مستخدم بالفعل");
+            else
+                parts.Add("البيانات مدخلة بالفعل في النظام");
+        }
+        if (lower.Contains("invalid email") || (lower.Contains("email") && lower.Contains("invalid")) || lower.Contains("email is not valid"))
+        {
+            parts.Add("البريد الإلكتروني غير صالح");
+        }
+        if (lower.Contains("password is required"))
+        {
+            parts.Add("كلمة المرور مطلوبة");
+        }
+        if (lower.Contains("first name is required"))
+        {
+            parts.Add("الاسم الأول مطلوب");
+        }
+        if (lower.Contains("last name is required"))
+        {
+            parts.Add("اسم العائلة مطلوب");
+        }
+
+        if (parts.Count > 0)
+        {
+            return string.Join(" - ", parts);
+        }
+
         if (lower.Contains("booking time is outside service listing availability"))
             return "وقت الحجز خارج مواعيد الإتاحة لهذه الخدمة. اختر وقتاً يسمح بانتهاء الحجز قبل نهاية وقت العمل.";
         if (lower.Contains("no availability exists for the selected day"))

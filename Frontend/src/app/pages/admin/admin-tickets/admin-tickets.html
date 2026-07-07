@@ -118,6 +118,62 @@
           <p>{{ selectedTicket.description }}</p>
         </div>
 
+        <!-- Field Visit Reports shown directly on the ticket page -->
+        <div class="field-visits-direct-panel" *ngIf="selectedTicket.fieldVisits && selectedTicket.fieldVisits.length > 0" style="margin-top: 20px; margin-bottom: 20px; border-right: 4px solid var(--warning); padding-right: 15px; background: rgba(245, 158, 11, 0.05); border-radius: 4px; padding-top: 10px; padding-bottom: 10px; padding-left: 10px;">
+          <h3 style="color: var(--text-primary); font-size: 1.1rem; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+            🔍 تقارير الفحص الميداني المرتبطة بالتذكرة:
+          </h3>
+          <div class="field-visits-list">
+            <div class="field-visit-card" *ngFor="let visit of selectedTicket.fieldVisits" style="background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+              <div class="field-visit-meta" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+                <span class="field-visit-inspector" style="font-weight: bold; color: var(--text-secondary);">👨‍✈️ المفتش الميداني: {{ visit.dispatchedEmployeeName }}</span>
+                <span class="field-visit-status-badge" 
+                      [class.status-completed]="visit.visitStatus === 'Completed'" 
+                      [class.status-dispatched]="visit.visitStatus === 'Dispatched'" 
+                      [class.status-failed]="visit.visitStatus === 'FailedAccess'" 
+                      style="padding: 4px 10px; border-radius: 4px; font-size: 0.85rem; font-weight: bold; background-color: var(--secondary-bg); color: var(--text-primary);">
+                  {{ visit.visitStatusAr }}
+                </span>
+              </div>
+              
+              <div class="evidence-notes-bubble" *ngIf="visit.employeeNotes" style="background-color: var(--secondary-bg); border-radius: 6px; padding: 12px; margin-bottom: 10px; border: 1px solid var(--border-color);">
+                <p style="margin: 0 0 8px 0; font-size: 0.95rem; line-height: 1.5; color: var(--text-primary);"><strong>📝 ملاحظات المفتش:</strong> {{ visit.employeeNotes }}</p>
+                <p *ngIf="visit.fieldVerificationOutcome" style="margin: 0; font-size: 0.95rem; font-weight: bold; color: var(--primary-color);">
+                  <strong>🎯 النتيجة والقرار الموصى به:</strong> 
+                  {{ 
+                    visit.fieldVerificationOutcome === 'JobConfirmed' ? 'تأكيد إتمام العمل (تأييد المزود)' : 
+                    visit.fieldVerificationOutcome === 'JobNotConfirmed' ? 'عدم تأكيد إتمام العمل (تأييد العميل)' :
+                    visit.fieldVerificationOutcome === 'PartiallyConfirmed' ? 'تأكيد جزئي' : 'غير حاسم'
+                  }}
+                </p>
+              </div>
+
+              <!-- Admin Decision on Visit if already made -->
+              <div class="admin-visit-decision" *ngIf="visit.adminDecision !== 'Pending'" style="background-color: rgba(16, 185, 129, 0.08); border-radius: 6px; padding: 12px; margin-bottom: 10px; border: 1px solid rgba(16, 185, 129, 0.2); color: var(--success);">
+                <p style="margin: 0 0 4px 0; font-size: 0.95rem; font-weight: bold;">⚖️ قرار الإدارة بشأن الزيارة الميدانية: 
+                  {{ 
+                    visit.adminDecision === 'ReleaseToProvider' ? 'صرف المستحقات للمزود' : 
+                    visit.adminDecision === 'RefundToCustomer' ? 'إعادة المبلغ للعميل' : 
+                    visit.adminDecision === 'PartialSettlement' ? 'تسوية جزئية للمبلغ' : visit.adminDecision 
+                  }}
+                </p>
+                <p style="margin: 0; font-size: 0.9rem; opacity: 0.9;" *ngIf="visit.adminDecisionNote"><strong>ملاحظات القرار:</strong> {{ visit.adminDecisionNote }}</p>
+              </div>
+              
+              <div class="evidence-photos-row" *ngIf="visit.photos && visit.photos.length > 0">
+                <p style="margin: 0 0 8px 0; font-size: 0.9rem; font-weight: bold; color: var(--text-secondary);">🖼️ صور المرفقات والإثباتات المرفوعة:</p>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                  <div class="evidence-photo-container" *ngFor="let p of visit.photos" [title]="p.caption || 'صورة معاينة'" style="width: 100px; height: 100px; border-radius: 6px; overflow: hidden; border: 1px solid var(--border-color); cursor: pointer; position: relative;">
+                    <a [href]="p.photoUrl" target="_blank">
+                      <img [src]="p.photoUrl" alt="معاينة ميدانية" style="width: 100px; height: 100px; object-fit: cover; transition: transform 0.2s;" />
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
 
         <div class="messages-area" #chatContainer>
           <div class="message-bubble" *ngFor="let msg of selectedTicket.messages"

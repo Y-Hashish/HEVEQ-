@@ -95,6 +95,14 @@
   background-color: var(--warning);
 }
 
+.stat-card.success::before {
+  background-color: var(--success);
+}
+
+.stat-card.info::before {
+  background-color: var(--info);
+}
+
 .stat-card.ai-risk {
   background: linear-gradient(145deg, var(--bg-card) 0%, rgba(139, 92, 246, 0.04) 100%);
   border-color: rgba(139, 92, 246, 0.2);
@@ -119,6 +127,14 @@
   border-color: var(--warning);
 }
 
+.stat-card.link-card.success:hover {
+  border-color: var(--success);
+}
+
+.stat-card.link-card.info:hover {
+  border-color: var(--info);
+}
+
 .stat-card.link-card.ai-risk:hover {
   border-color: #8B5CF6;
   box-shadow: 0 10px 15px -3px rgba(139, 92, 246, 0.15), 0 4px 6px -2px rgba(139, 92, 246, 0.05);
@@ -140,6 +156,8 @@
 .stat-icon-wrapper.disputes { color: var(--danger); background-color: rgba(239, 68, 68, 0.1); }
 .stat-icon-wrapper.field { color: var(--warning); background-color: rgba(245, 158, 11, 0.1); }
 .stat-icon-wrapper.ai { color: #8B5CF6; background-color: rgba(139, 92, 246, 0.1); }
+.stat-icon-wrapper.earnings { color: var(--success); background-color: rgba(16, 185, 129, 0.1); }
+.stat-icon-wrapper.escrow { color: var(--info); background-color: rgba(59, 130, 246, 0.1); }
 
 .stat-card:hover .stat-icon-wrapper {
   transform: scale(1.1);
