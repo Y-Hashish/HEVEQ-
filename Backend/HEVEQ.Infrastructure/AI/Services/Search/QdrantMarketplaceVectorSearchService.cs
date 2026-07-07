@@ -9,27 +9,27 @@ using System.Threading.Tasks;
 
 namespace HEVEQ.Infrastructure.AI.Services.Search;
 
-public sealed class QdrantServiceVectorSearchService : IServiceVectorSearchService
+public sealed class QdrantMarketplaceVectorSearchService : IMarketplaceVectorSearchService
 {
     private readonly SearchServicesPlugin _plugin;
 
-    public QdrantServiceVectorSearchService(SearchServicesPlugin plugin)
+    public QdrantMarketplaceVectorSearchService(SearchServicesPlugin plugin)
         => _plugin = plugin;
 
     public Task<IReadOnlyList<VectorSearchHit>> SearchAsync(
         SearchIntent intent,
         int topK = 15,
         CancellationToken ct = default) =>
-        _plugin.SearchSimilarListingsAsync(
+        _plugin.SearchSimilarListingsAsync( // For now reuse SearchSimilarListingsAsync which just hits qdrant
             intentText: $"{intent.EquipmentType} {intent.TaskDescription}",
             topK: topK,
             ct: ct);
 
     public Task<IReadOnlyDictionary<Guid, string>> ExplainAllMatchesAsync(
         SearchIntent intent,
-        IReadOnlyList<ServiceListingSnapshot> listings,
+        IReadOnlyList<MarketplaceListingSnapshot> listings,
         CancellationToken ct = default) =>
-        _plugin.ExplainAllMatchesAsync(
+        _plugin.ExplainMarketplaceMatchesAsync(
             intent: new SearchIntentResponseDto(
                 intent.Target.ToString(),
                 intent.EquipmentType,

@@ -260,6 +260,7 @@ public sealed class QdrantSyncService
     private readonly ApplicationDbContext _context;      // ADAPT class name
     private readonly ILogger<QdrantSyncService> _logger;
     private readonly string _collectionName;
+    private readonly string _marketplaceCollectionName;
 
     public QdrantSyncService(
         IServiceListingReadRepository listingRepository,
@@ -277,6 +278,7 @@ public sealed class QdrantSyncService
         _context = context;
         _logger = logger;
         _collectionName = configuration["Qdrant:CollectionName"] ?? "service_listings";
+        _marketplaceCollectionName = configuration["Qdrant:MarketplaceCollectionName"] ?? "marketplace_listings";
     }
 
     // ─── Full reindex ──────────────────────────────────────────────────────────
@@ -342,6 +344,12 @@ public sealed class QdrantSyncService
         return new QdrantSyncResult(listings.Count, synced, failed, failedIds, duration);
     }
 
+    public Task<QdrantSyncResult> SyncAllActiveMarketplaceListingsAsync(CancellationToken ct = default)
+    {
+        _logger.LogInformation("Marketplace sync is currently stubbed pending domain models.");
+        return Task.FromResult(new QdrantSyncResult(0, 0, 0, Array.Empty<Guid>(), TimeSpan.Zero));
+    }
+
     // ─── Collection status (GET /api/admin/search/status) ────────────────────
 
     public async Task<QdrantCollectionStatus> GetCollectionStatusAsync(CancellationToken ct = default)
@@ -378,7 +386,7 @@ public sealed class QdrantSyncService
 
         await _qdrantClient.CreateCollectionAsync(
             collectionName: _collectionName,
-            vectorsConfig: 
+            vectorsConfig:
                 new VectorParams
                 {
                     Size = VectorDimension,
@@ -411,6 +419,33 @@ public sealed class QdrantSyncService
             PayloadSchemaType.Keyword, cancellationToken: ct);
 
         _logger.LogInformation("Collection '{Name}' created with 4 payload indexes.", _collectionName);
+
+        // ── Marketplace collection ──────────────────────────────────────────
+        if (!collections.Contains(_marketplaceCollectionName))
+        {
+            _logger.LogInformation("Creating marketplace collection '{Name}' (dim={D}, Cosine).",
+                _marketplaceCollectionName, VectorDimension);
+
+            await _qdrantClient.CreateCollectionAsync(
+                collectionName: _marketplaceCollectionName,
+                vectorsConfig:
+                    new VectorParams
+                    {
+                        Size = VectorDimension,
+                        Distance = Distance.Cosine
+                    }
+                ,
+                cancellationToken: ct);
+
+            await _qdrantClient.CreatePayloadIndexAsync(
+                _marketplaceCollectionName, "is_active",
+                PayloadSchemaType.Bool, cancellationToken: ct);
+            await _qdrantClient.CreatePayloadIndexAsync(
+                _marketplaceCollectionName, "category_id",
+                PayloadSchemaType.Integer, cancellationToken: ct);
+
+            _logger.LogInformation("Collection '{Name}' created.", _marketplaceCollectionName);
+        }
     }
 
     // ─── DB write-back helpers ────────────────────────────────────────────────
@@ -431,6 +466,6 @@ public sealed class QdrantSyncService
         await _context.ServiceListings
             .Where(sl => sl.Id == id)
             .ExecuteUpdateAsync(s => s
-                .SetProperty(sl => sl.EmbeddingStatus,(EmbeddingStatus) EmbeddingStatusFailed), ct);
+                .SetProperty(sl => sl.EmbeddingStatus, (EmbeddingStatus)EmbeddingStatusFailed), ct);
     }
 }

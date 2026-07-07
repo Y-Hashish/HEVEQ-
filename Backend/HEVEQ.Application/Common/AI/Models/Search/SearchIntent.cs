@@ -11,6 +11,7 @@ namespace HEVEQ.Application.Common.AI.Models.Search;
 /// vector query.
 /// </summary>
 public sealed record SearchIntent(
+    SearchTarget Target,
     string? EquipmentType,
     string? Location,
     string TaskDescription,

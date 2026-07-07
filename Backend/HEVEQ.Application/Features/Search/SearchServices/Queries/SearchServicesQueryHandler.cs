@@ -21,6 +21,8 @@ namespace HEVEQ.Application.Features.Search.SearchServices.Queries
         private readonly IClarificationService _clarificationService;
         private readonly IServiceVectorSearchService _vectorSearch;
         private readonly IServiceListingReadRepository _listingRepository;
+        private readonly IMarketplaceVectorSearchService _marketplaceVectorSearch;
+        private readonly IMarketplaceListingReadRepository _marketplaceListingRepository;
         private readonly ISearchQueryLogWriter _searchLogWriter;
 
         public SearchServicesQueryHandler(
@@ -29,6 +31,8 @@ namespace HEVEQ.Application.Features.Search.SearchServices.Queries
             IClarificationService clarificationService,
             IServiceVectorSearchService vectorSearch,
             IServiceListingReadRepository listingRepository,
+                  IMarketplaceVectorSearchService marketplaceVectorSearch,
+            IMarketplaceListingReadRepository marketplaceListingRepository,
             ISearchQueryLogWriter searchLogWriter)
         {
             _intentExtractor = intentExtractor;
@@ -36,6 +40,8 @@ namespace HEVEQ.Application.Features.Search.SearchServices.Queries
             _clarificationService = clarificationService;
             _vectorSearch = vectorSearch;
             _listingRepository = listingRepository;
+            _marketplaceVectorSearch = marketplaceVectorSearch;
+            _marketplaceListingRepository = marketplaceListingRepository;
             _searchLogWriter = searchLogWriter;
         }
 
@@ -51,32 +57,72 @@ namespace HEVEQ.Application.Features.Search.SearchServices.Queries
                 request.ConversationHistory,
                 cancellationToken);
 
-            // ── Step 2: Null-parameter gate ───────────────────────────────────────
+            // ── Step 2: Null-parameter gate 
+       
             var missingParams = new List<MissingSearchParameter>(intent.GetMissingParameters());
+
+          
+            if (intent.Target == SearchTarget.Ambiguous)
+            {
+                missingParams.Add(MissingSearchParameter.SearchTarget);
+            }
+
+            if (intent.Target == SearchTarget.Marketplace)
+            {
+                missingParams.Remove(MissingSearchParameter.Location);
+            }
 
             if (missingParams.Count > 0)
                 return await ReturnClarificationAsync(intent, missingParams, request, sw, cancellationToken);
 
-            // ── Step 3: Geofencing gate ───────────────────────────────────────────
-            var geo = _geofenceValidator.Validate(intent.Location);
+            // ── Step 3: Geofencing gate (تعديل الـ Validation للـ Marketplace) ──
 
-            if (!geo.IsValid)
+
+            if (intent.Target == SearchTarget.Marketplace && string.IsNullOrWhiteSpace(intent.Location))
             {
-                missingParams.Add(MissingSearchParameter.InvalidLocation);
-                return await ReturnClarificationAsync(intent, missingParams, request, sw, cancellationToken);
+                // Skip geofencing validation, location stays null/empty safely
+            }
+            else
+            {
+       
+                var geo = _geofenceValidator.Validate(intent.Location);
+
+                if (!geo.IsValid)
+                {
+          
+                    if (intent.Target == SearchTarget.ServiceListing)
+                    {
+                        missingParams.Add(MissingSearchParameter.InvalidLocation);
+                        return await ReturnClarificationAsync(intent, missingParams, request, sw, cancellationToken);
+                    }
+                    
+                    else if (intent.Target == SearchTarget.Marketplace)
+                    {
+                        intent = intent with { Location = null };
+                    }
+                }
+                else
+                {
+                  
+                    intent = intent with { Location = geo.NormalizedGovernorate };
+                }
             }
 
-            intent = intent with { Location = geo.NormalizedGovernorate };
-
             // ── Step 4: Qdrant vector search ──────────────────────────────────────
-            var hits = await _vectorSearch.SearchAsync(intent, topK: 15, cancellationToken);
+            //var hits = await _vectorSearch.SearchAsync(intent, topK: 15, cancellationToken);
+            var results = new List<SearchResultItem>();
 
             // ── Step 5: SQL Server hydration — Active listings only ───────────────
-            var listingIds = hits.Select(h => h.ServiceListingId).ToList();
-            var activeListings = await _listingRepository.GetActiveSnapshotsByIdAsync(
-                listingIds, cancellationToken);
+            if (intent.Target == SearchTarget.Marketplace)
+            {
+                var hits = await _marketplaceVectorSearch.SearchAsync(intent, topK: 15, cancellationToken);
+                var listingIds = hits.Select(h => h.ServiceListingId).ToList();
+                //var activeListings = await _listingRepository.GetActiveSnapshotsByIdAsync(
+                //    listingIds, cancellationToken);
 
-            var scoreById = hits.ToDictionary(h => h.ServiceListingId, h => h.SimilarityScore);
+                var activeListings = await _marketplaceListingRepository.GetActiveSnapshotsByIdAsync(listingIds, cancellationToken);
+
+                var scoreById = hits.ToDictionary(h => h.ServiceListingId, h => h.SimilarityScore);
             var orderedActive = activeListings
                 .OrderByDescending(l => scoreById.GetValueOrDefault(l.Id))
                 .Take(10)
@@ -87,16 +133,46 @@ namespace HEVEQ.Application.Features.Search.SearchServices.Queries
 
             if (orderedActive.Count > 0)
             {
-                explanations = await _vectorSearch.ExplainAllMatchesAsync(
-                    intent, orderedActive, cancellationToken);
-            }
+                    //explanations = await _vectorSearch.ExplainAllMatchesAsync(
+                    //    intent, orderedActive, cancellationToken);
 
-            var results = orderedActive
-                .Select(l => new SearchResultItem(
-                    l,
-                    scoreById.GetValueOrDefault(l.Id),
-                    explanations.TryGetValue(l.Id, out var ex) ? ex : string.Empty))
-                .ToList();
+                    explanations = await _marketplaceVectorSearch.ExplainAllMatchesAsync(intent, orderedActive, cancellationToken);
+                }
+
+                results = orderedActive
+                         .Select(l => new SearchResultItem(
+                             null,
+                             l,
+                             scoreById.GetValueOrDefault(l.Id),
+                             explanations.TryGetValue(l.Id, out var ex) ? ex : string.Empty))
+                         .ToList();
+            }
+            else
+            {
+                var hits = await _vectorSearch.SearchAsync(intent, topK: 15, cancellationToken);
+                var listingIds = hits.Select(h => h.ServiceListingId).ToList();
+                var activeListings = await _listingRepository.GetActiveSnapshotsByIdAsync(listingIds, cancellationToken);
+
+                var scoreById = hits.ToDictionary(h => h.ServiceListingId, h => h.SimilarityScore);
+                var orderedActive = activeListings
+                    .OrderByDescending(l => scoreById.GetValueOrDefault(l.Id))
+                    .Take(10)
+                    .ToList();
+
+                IReadOnlyDictionary<Guid, string> explanations = new Dictionary<Guid, string>();
+                if (orderedActive.Count > 0)
+                {
+                    explanations = await _vectorSearch.ExplainAllMatchesAsync(intent, orderedActive, cancellationToken);
+                }
+
+                results = orderedActive
+                    .Select(l => new SearchResultItem(
+                        l,
+                        null,
+                        scoreById.GetValueOrDefault(l.Id),
+                        explanations.TryGetValue(l.Id, out var ex) ? ex : string.Empty))
+                    .ToList();
+            }
 
             sw.Stop();
 
@@ -126,20 +202,21 @@ namespace HEVEQ.Application.Features.Search.SearchServices.Queries
         }
 
         private Task WriteLogAsync(
-            SearchServicesQuery request,
-            SearchIntent intent,
-            int resultCount,
-            long elapsedMs,
-            CancellationToken ct) =>
-            _searchLogWriter.LogAsync(new SearchQueryLogEntry(
-                UserId: request.RequestingUserId,
-                SessionId: request.SessionId,
-                RawQuery: request.RawQuery,
-                ExtractedIntentJson: JsonSerializer.Serialize(intent),
-                ContextDomain: SearchContextDomain.Services,
-                SearchMode: SearchMode.Semantic,
-                ResultCount: resultCount,
-                HasZeroResults: resultCount == 0,
-                ProcessingMs: elapsedMs), ct);
+                    SearchServicesQuery request,
+                    SearchIntent intent,
+                    int resultCount,
+                    long elapsedMs,
+                    CancellationToken ct) =>
+                    _searchLogWriter.LogAsync(new SearchQueryLogEntry(
+                        UserId: request.RequestingUserId,
+                        SessionId: request.SessionId,
+                        RawQuery: request.RawQuery,
+                        ExtractedIntentJson: JsonSerializer.Serialize(intent),
+                       
+                        ContextDomain: intent.Target == SearchTarget.Marketplace ? SearchContextDomain.Marketplace : SearchContextDomain.Services,
+                        SearchMode: SearchMode.Semantic,
+                        ResultCount: resultCount,
+                        HasZeroResults: resultCount == 0,
+                        ProcessingMs: elapsedMs), ct);
     }
 }
