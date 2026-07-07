@@ -1,10 +1,21 @@
 <div class="admin-page">
-  <div class="admin-header">
-    <h1 class="page-title">إدارة المستخدمين</h1>
-    <p class="page-subtitle">عرض وتعديل حالات المستخدمين والمزودين والموظفين</p>
+  <div class="admin-header header-with-actions">
+    <div>
+      <h1 class="page-title">إدارة المستخدمين</h1>
+      <p class="page-subtitle">عرض وتعديل حالات المستخدمين والمزودين والموظفين</p>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="btn btn-secondary" (click)="openCreateModal('Employee')">إضافة موظف</button>
+      <button type="button" class="btn btn-primary" (click)="openCreateModal('Admin')">إضافة أدمن</button>
+    </div>
   </div>
 
   <div class="filters-panel">
+    <div class="filter-group search-group">
+      <label class="filter-label">بحث</label>
+      <input class="form-control search-input" type="search" [(ngModel)]="searchTerm" (ngModelChange)="onSearchChange()" placeholder="ابحث بالاسم أو رقم الهاتف أو البريد">
+    </div>
+
     <div class="filter-group">
       <label class="filter-label">الدور</label>
       <select class="form-control" [(ngModel)]="filterRole" (change)="onFilterChange()">
@@ -96,3 +107,57 @@
   (confirm)="handleModalConfirm($event)"
   (close)="isModalOpen = false">
 </app-action-modal>
+
+<div class="modal-backdrop" *ngIf="isCreateModalOpen" (click)="closeCreateModal()">
+  <div class="staff-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div>
+        <h2>{{ createForm.role === 'Admin' ? 'إضافة أدمن جديد' : 'إضافة موظف جديد' }}</h2>
+        <p>سيتم إنشاء حساب نشط داخل النظام بالصلاحيات المحددة.</p>
+      </div>
+      <button type="button" class="modal-close" (click)="closeCreateModal()">×</button>
+    </div>
+
+    <div class="role-tabs">
+      <button type="button" [class.active]="createForm.role === 'Employee'" (click)="createForm = getEmptyCreateForm('Employee')">موظف</button>
+      <button type="button" [class.active]="createForm.role === 'Admin'" (click)="createForm = getEmptyCreateForm('Admin')">أدمن</button>
+    </div>
+
+    <div class="staff-form-grid">
+      <label>الاسم الأول<input class="form-control" [(ngModel)]="createForm.firstName"></label>
+      <label>اسم العائلة<input class="form-control" [(ngModel)]="createForm.lastName"></label>
+      <label>اسم المستخدم<input class="form-control" [(ngModel)]="createForm.userName"></label>
+      <label>البريد الإلكتروني<input class="form-control" type="email" [(ngModel)]="createForm.email"></label>
+      <label>رقم الهاتف<input class="form-control" type="tel" [(ngModel)]="createForm.phoneNumber"></label>
+      <label>كلمة المرور
+        <div class="password-inline">
+          <input class="form-control" [type]="showNewPassword ? 'text' : 'password'" [(ngModel)]="createForm.password">
+          <button type="button" (click)="showNewPassword = !showNewPassword">{{ showNewPassword ? '🙈' : '👁️' }}</button>
+        </div>
+      </label>
+
+      <ng-container *ngIf="createForm.role === 'Employee'">
+        <label>القسم
+          <select class="form-control" [(ngModel)]="createForm.department">
+            <option value="Support">الدعم الفني</option>
+            <option value="Field Verification">الزيارات الميدانية</option>
+            <option value="Documents">مراجعة المستندات</option>
+            <option value="Operations">العمليات</option>
+          </select>
+        </label>
+        <label>المحافظة المسندة<input class="form-control" [(ngModel)]="createForm.assignedGovernorate" placeholder="اختياري"></label>
+        <label class="checkbox-row full-width">
+          <input type="checkbox" [(ngModel)]="createForm.isAvailableForDispatch">
+          <span>متاح للتكليف بالزيارات الميدانية</span>
+        </label>
+      </ng-container>
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" class="btn btn-secondary" (click)="closeCreateModal()">إلغاء</button>
+      <button type="button" class="btn btn-primary" [disabled]="isCreatingStaff" (click)="submitCreateStaff()">
+        {{ isCreatingStaff ? 'جاري الإنشاء...' : 'إنشاء الحساب' }}
+      </button>
+    </div>
+  </div>
+</div>

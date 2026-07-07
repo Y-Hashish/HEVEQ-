@@ -29,6 +29,11 @@ namespace HEVEQ.Application.Features.Admin.DTOs
         public string? AssignedToUserName { get; set; }
         public EscrowSummaryDto? EscrowSummary { get; set; }
         public List<string> AvailableDisputeDecisions { get; set; } = new();
+
+        public string? AiSummary { get; set; }
+        public string? AiIdentifiedIssue { get; set; }
+        public string? AiClaimedImpact { get; set; }
+        public int? AiEscalationPriority { get; set; }
     }
 
     public class EscrowSummaryDto

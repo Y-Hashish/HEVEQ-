@@ -14,7 +14,7 @@ namespace HEVEQ.Application.Features.Admin.Command.ApproveMarketplaceListing
         : IRequestHandler<ApproveMarketplaceListingCommand, ApproveMarketplaceListingResponse>
     {
         
-            private const int MIN_PHOTOS_REQUIRED = 1;
+            private const int MIN_PHOTOS_REQUIRED = 3;
 
         public async Task<ApproveMarketplaceListingResponse> Handle(ApproveMarketplaceListingCommand request, CancellationToken cancellationToken)
         {

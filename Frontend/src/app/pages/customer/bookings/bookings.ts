@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common'
 import { ChangeDetectorRef, Component, NgZone, OnInit } from '@angular/core'
+import { ActivatedRoute } from '@angular/router'
 import { FormsModule } from '@angular/forms'
 import { finalize, forkJoin, of, switchMap } from 'rxjs'
 import { getErrorMessage } from '../../../core/helpers/errorMessageHelper'
@@ -66,7 +67,8 @@ export class Bookings implements OnInit {
   private reviewsService: ReviewsService,
   private mediaUploadService: MediaUploadService,
   private cdr: ChangeDetectorRef,
-  private ngZone: NgZone
+  private ngZone: NgZone,
+  private route: ActivatedRoute
 ) {}
 
   ngOnInit(): void {
@@ -105,7 +107,9 @@ export class Bookings implements OnInit {
             : data.items ?? data.bookings ?? []
 
           if (!this.selectedBooking && this.bookings.length > 0) {
-            this.openBooking(this.bookings[0].id)
+            const targetId = this.route.snapshot.queryParamMap.get('bookingId')
+            const target = targetId && this.bookings.some(b => b.id === targetId) ? targetId : this.bookings[0].id
+            this.openBooking(target)
           }
 
           this.cdr.detectChanges()

@@ -37,11 +37,11 @@ public class CreateEmployeeCommandHandler
     {
         // ── Business Rule 1: email must be unique ──────────────────────────
         if (await _userManager.FindByEmailAsync(request.Email) is not null)
-            throw new InvalidOperationException("This email is already in use.");
+            throw new InvalidOperationException("البريد الإلكتروني مستخدم بالفعل");
 
         // ── Business Rule 2: username must be unique ───────────────────────
         if (await _userManager.FindByNameAsync(request.UserName) is not null)
-            throw new InvalidOperationException("This username is already taken.");
+            throw new InvalidOperationException("اسم المستخدم مستخدم بالفعل");
 
         // ── Create ApplicationUser ─────────────────────────────────────────
         var user = new ApplicationUser
@@ -77,7 +77,7 @@ public class CreateEmployeeCommandHandler
 
         if (profileAlreadyExists)
             throw new InvalidOperationException(
-                "An employee profile already exists for this user.");
+                "يوجد ملف موظف لهذا المستخدم بالفعل");
 
         // ── Auto-generate EmployeeCode (format: EMP-YYYYMMDD-XXXX) ─────────
         // Retry loop guarantees uniqueness — collision chance is extremely low

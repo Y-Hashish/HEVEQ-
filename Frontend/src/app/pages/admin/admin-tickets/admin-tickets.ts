@@ -10,6 +10,7 @@ import { Pagination } from '../../../shared/components/pagination/pagination';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { FormsModule } from '@angular/forms';
 import { TokenStorage } from '../../../core/services/token-storage';
+import { ActivatedRoute } from '@angular/router';
 
 import { AdminUsersService } from '../../../core/services/adminUsersService';
 
@@ -47,6 +48,7 @@ export class AdminTickets implements OnInit {
   availableEmployees: { id: string, displayName: string, isAvailable: boolean }[] = [];
   isDisputeModalOpen = false;
   isDocsModalOpen = false;
+  isAiSummaryModalOpen = false;
 
   // Takeover modal state
   isTakeoverModal = false;
@@ -71,7 +73,8 @@ export class AdminTickets implements OnInit {
     private usersService: AdminUsersService,
     private tokenStorage: TokenStorage,
     private toastService: ToastService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit() {
@@ -91,6 +94,10 @@ export class AdminTickets implements OnInit {
         this.tickets = res.items || [];
         this.totalCount = res.totalCount || 0;
         this.isLoading = false;
+        const targetId = this.route.snapshot.queryParamMap.get('ticketId');
+        if (targetId && !this.selectedTicket) {
+          this.viewTicket(targetId);
+        }
         this.cdr.detectChanges();
       },
       error: () => {
@@ -218,6 +225,26 @@ export class AdminTickets implements OnInit {
 
   closeDocsModal() {
     this.isDocsModalOpen = false;
+    this.cdr.detectChanges();
+  }
+
+  hasAiSummary(): boolean {
+    return !!(this.selectedTicket && (
+      this.selectedTicket.aiSummary ||
+      this.selectedTicket.aiIdentifiedIssue ||
+      this.selectedTicket.aiClaimedImpact ||
+      this.selectedTicket.aiEscalationPriority !== null && this.selectedTicket.aiEscalationPriority !== undefined
+    ));
+  }
+
+  openAiSummaryModal() {
+    if (!this.hasAiSummary()) return;
+    this.isAiSummaryModalOpen = true;
+    this.cdr.detectChanges();
+  }
+
+  closeAiSummaryModal() {
+    this.isAiSummaryModalOpen = false;
     this.cdr.detectChanges();
   }
 

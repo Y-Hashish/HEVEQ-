@@ -3,8 +3,8 @@ import { CommonModule } from '@angular/common'
 import { Subscription } from 'rxjs'
 import { NotificationsService } from '../../../core/services/notificationsService'
 import { NotificationItem } from '../../../core/models/notificationModels'
-
 import { Router } from '@angular/router'
+import { TokenStorage } from '../../../core/services/token-storage'
 
 @Component({
   selector: 'app-notifications',
@@ -26,7 +26,8 @@ export class Notifications implements OnInit, OnDestroy {
     private notificationsService: NotificationsService,
     private cdr: ChangeDetectorRef,
     private ngZone: NgZone,
-    private router: Router
+    private router: Router,
+    private tokenStorage: TokenStorage
   ) {}
 
   ngOnInit(): void {
@@ -64,8 +65,7 @@ export class Notifications implements OnInit, OnDestroy {
         this.isLoading = false
         this.cdr.detectChanges()
       },
-      error: (err) => {
-        console.error('Failed to load notifications', err)
+      error: () => {
         this.errorMessage = 'فشل في تحميل الإشعارات. يرجى المحاولة مرة أخرى.'
         this.isLoading = false
         this.cdr.detectChanges()
@@ -81,12 +81,10 @@ export class Notifications implements OnInit, OnDestroy {
       next: () => {
         notification.read = true
         notification.isRead = true
-        // Decrement local unread count
-        const currentCount = this.unreadCount
-        this.notificationsService.setUnreadCount(Math.max(0, currentCount - 1))
+        this.notificationsService.setUnreadCount(Math.max(0, this.unreadCount - 1))
         this.cdr.detectChanges()
       },
-      error: (err) => console.error('Failed to mark notification as read', err)
+      error: () => {}
     })
   }
 
@@ -99,6 +97,8 @@ export class Notifications implements OnInit, OnDestroy {
     if (type.includes('dispute')) return '⚖️'
     if (type.includes('message')) return '💬'
     if (type.includes('order') || type.includes('marketplace')) return '📦'
+    if (type.includes('fieldverification')) return '📍'
+    if (type.includes('document')) return '📄'
     return '🔔'
   }
 
@@ -114,21 +114,61 @@ export class Notifications implements OnInit, OnDestroy {
     return notification.sentAt || notification.createdAt || ''
   }
 
-  getNavigationLink(notification: NotificationItem): string | null {
-    if (!notification.referenceId) return null
-    const type = (notification.referenceType || notification.eventType || '').toLowerCase()
-    if (type.includes('ticket')) return `/support-tickets`
-    if (type.includes('booking')) return `/bookings`
-    if (type.includes('message')) return `/messages`
-    if (type.includes('order') || type.includes('marketplace')) return `/marketplace`
+  getNavigationCommands(notification: NotificationItem): { commands: any[]; queryParams?: any } | null {
+    const id = notification.referenceId
+    if (!id) return null
+
+    const role = this.tokenStorage.getRole()
+    const eventType = String(notification.eventType || '').toLowerCase()
+    const refType = String(notification.referenceType || '').toLowerCase()
+    const type = `${eventType} ${refType}`
+
+    if (refType.includes('servicelisting')) {
+      if (role === 'admin' || role === 'employee') return { commands: ['/admin/listing-review'], queryParams: { type: 'service', id } }
+      if (eventType.includes('approved')) return { commands: ['/service-details', id] }
+      return { commands: ['/equipment'] }
+    }
+
+    if (refType.includes('marketplacelisting')) {
+      if (role === 'admin' || role === 'employee') return { commands: ['/admin/listing-review'], queryParams: { type: 'marketplace', id } }
+      if (eventType.includes('approved')) return { commands: ['/product-details', id] }
+      return { commands: ['/equipment'] }
+    }
+
+    if (refType.includes('booking') || type.includes('booking')) {
+      if (role === 'provider') return { commands: ['/booking-requests'], queryParams: { bookingId: id } }
+      if (role === 'admin' || role === 'employee') return { commands: ['/admin/disputes'], queryParams: { bookingId: id } }
+      return { commands: ['/bookings'], queryParams: { bookingId: id } }
+    }
+
+    if (refType.includes('marketplaceorder') || type.includes('marketplaceorder') || type.includes('order')) {
+      if (role === 'provider') return { commands: ['/marketplace-sales'], queryParams: { orderId: id } }
+      if (role === 'admin' || role === 'employee') return { commands: ['/admin/disputes'], queryParams: { orderId: id } }
+      return { commands: ['/marketplace-orders'], queryParams: { orderId: id } }
+    }
+
+    if (refType.includes('ticket') || type.includes('ticket')) {
+      if (role === 'admin' || role === 'employee') return { commands: ['/admin/tickets'], queryParams: { ticketId: id } }
+      return { commands: ['/support-tickets'], queryParams: { ticketId: id } }
+    }
+
+    if (refType.includes('fieldverification')) return { commands: ['/employee/field-visits'], queryParams: { visitId: id } }
+    if (refType.includes('document')) return { commands: ['/admin/documents'], queryParams: { documentId: id } }
+    if (refType.includes('message')) return { commands: ['/messages'], queryParams: { messageId: id } }
+    if (refType.includes('escrow')) return role === 'provider' ? { commands: ['/earnings'] } : { commands: ['/wallet'] }
+
     return null
   }
 
+  getNavigationLink(notification: NotificationItem): string | null {
+    const nav = this.getNavigationCommands(notification)
+    return nav ? nav.commands.join('/') : null
+  }
+
   navigateToLink(notification: NotificationItem): void {
-    const link = this.getNavigationLink(notification)
-    if (link) {
-      this.router.navigate([link])
-    }
+    this.markAsRead(notification)
+    const nav = this.getNavigationCommands(notification)
+    if (nav) this.router.navigate(nav.commands, { queryParams: nav.queryParams })
   }
 
   ngOnDestroy(): void {

@@ -167,6 +167,10 @@ export class Navbar implements OnInit, OnDestroy {
     return 'لوحة التحكم'
   }
 
+  get showAccountVerificationLink(): boolean {
+    return this.role === 'customer' || this.role === 'provider'
+  }
+
   toggleDropdown(event?: Event): void {
     event?.stopPropagation()
     this.isDropdownOpen = !this.isDropdownOpen

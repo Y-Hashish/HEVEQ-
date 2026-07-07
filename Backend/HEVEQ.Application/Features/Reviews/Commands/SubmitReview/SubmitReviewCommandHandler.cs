@@ -34,6 +34,8 @@ public class SubmitReviewCommandHandler
             ?? throw new ForbiddenAccessException("User is not authenticated.");
 
         Guid reviewedUserId;
+        Guid? serviceListingId = null;
+        Guid? marketplaceListingId = null;
         string serviceContext = string.Empty; // المتغير الذي سنرسله للـ AI لمعرفة السياق
 
         if (request.BookingId.HasValue)
@@ -65,6 +67,7 @@ public class SubmitReviewCommandHandler
                     "You have already submitted a review for this booking.");
 
             reviewedUserId = booking.ServiceListing.ProviderProfile.UserId;
+            serviceListingId = booking.ServiceListingId;
 
             // تحديد سياق الخدمة للـ AI (افترضت وجود خاصية Title، قم بتغييرها إن كانت Name)
             serviceContext = $"خدمة تأجير معدات ثقيلة: {booking.ServiceListing.Title}";
@@ -97,6 +100,7 @@ public class SubmitReviewCommandHandler
                     "You have already submitted a review for this order.");
 
             reviewedUserId = order.Listing.SellerId;
+            marketplaceListingId = order.ListingId;
 
             // تحديد سياق الخدمة للـ AI
             serviceContext = $"شراء معدة من السوق: {order.Listing.Title}";
@@ -131,7 +135,9 @@ public class SubmitReviewCommandHandler
             ReviewerId = reviewerId,
             ReviewedUserId = reviewedUserId,
             BookingId = request.BookingId,
+            ServiceListingId = serviceListingId,
             MarketplaceOrderId = request.MarketplaceOrderId,
+            MarketplaceListingId = marketplaceListingId,
             Rating = request.Rating,
             Comment = request.Comment,
             ModerationStatus = modStatus,

@@ -15,6 +15,9 @@ namespace HEVEQ.Application.Features.Admin.DTOs
         public int ActiveBookings { get; set; }
         public int OpenTickets { get; set; }
         public int DisputedBookings { get; set; }
+        public int DisputedMarketplaceOrders { get; set; }
+        public int FrozenEscrowRecords { get; set; }
         public int EscrowFrozenCount { get; set; }
+        public int PendingFieldVerifications { get; set; }
     }
 }

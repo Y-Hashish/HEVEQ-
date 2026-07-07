@@ -174,6 +174,34 @@
           <span class="rating-count">({{ listing.seller.totalReviewsCount ?? 0 }} تقييم)</span>
         </div>
       </div>
+
+      <div class="card pd-seller-card marketplace-reviews-card">
+        <h2>تقييمات المشترين لهذا البائع</h2>
+        <p class="text-muted">هذه التقييمات من طلبات سوق سابقة لنفس البائع، وتساعدك على تقييمه قبل الشراء.</p>
+        <div class="pd-seller-rating" *ngIf="sellerReviewsTotal > 0">
+          <span class="stars">
+            <span *ngFor="let filled of ratingStars(sellerReviewsAverage)" [class.filled]="filled">★</span>
+          </span>
+          <span class="rating-value">{{ sellerReviewsAverage | number: '1.1-1' }}</span>
+          <span class="rating-count">({{ sellerReviewsTotal }} تقييم سوق)</span>
+        </div>
+        <p class="text-muted" *ngIf="sellerReviewsLoading">جاري تحميل التقييمات...</p>
+        <div class="empty-reviews" *ngIf="!sellerReviewsLoading && sellerReviews.length === 0">
+          لا توجد تقييمات منشورة لهذا البائع حتى الآن.
+        </div>
+        <div class="reviews-list" *ngIf="!sellerReviewsLoading && sellerReviews.length > 0">
+          <div class="review-item" *ngFor="let review of sellerReviews">
+            <div class="review-top">
+              <strong>{{ review.reviewerName || 'مشتري' }}</strong>
+              <span class="stars">
+                <span *ngFor="let filled of ratingStars(review.rating)" [class.filled]="filled">★</span>
+              </span>
+            </div>
+            <p *ngIf="review.comment">{{ review.comment }}</p>
+            <small class="text-muted">{{ review.createdAt | date:'shortDate' }}</small>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>

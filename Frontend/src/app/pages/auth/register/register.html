@@ -58,8 +58,12 @@
 
             <div class="form-group">
                 <label class="form-label">كلمة المرور</label>
-                <input type="password" class="form-input" name="password" [(ngModel)]="password" placeholder="••••••••"
-                    required>
+                <div class="password-field">
+                    <input [type]="showPassword ? 'text' : 'password'" class="form-input" name="password" [(ngModel)]="password" placeholder="••••••••" required>
+                    <button type="button" class="password-toggle" (click)="showPassword = !showPassword" [attr.aria-label]="showPassword ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'">
+                        {{ showPassword ? '🙈' : '👁️' }}
+                    </button>
+                </div>
             </div>
 
             <p class="success-message" *ngIf="successMessage">

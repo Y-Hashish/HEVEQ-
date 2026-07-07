@@ -1,8 +1,10 @@
 import { CommonModule } from '@angular/common'
 import { Component, DestroyRef, OnInit, inject, ChangeDetectorRef } from '@angular/core'
 import { FormsModule } from '@angular/forms'
+import { ActivatedRoute } from '@angular/router'
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop'
 import { EmployeeFieldVisitsService } from '../../../core/services/employeeFieldVisitsService'
+import { MediaUploadService } from '../../../core/services/mediaUploadService'
 import { FieldVisit } from '../../../core/models/admin.models'
 import { Loading } from '../../../shared/components/loading/loading'
 import { EmptyState } from '../../../shared/components/empty-state/empty-state'
@@ -27,14 +29,17 @@ export class EmployeeFieldVisits implements OnInit {
   nextStatus = ''
   employeeNotes = ''
   outcome = 'JobConfirmed'
-  photoUrlsText = ''
+  selectedPhotoUrls: string[] = []
+  isUploadingPhotos = false
 
   private destroyRef = inject(DestroyRef)
 
   constructor(
     private fieldVisitsService: EmployeeFieldVisitsService,
     private toastService: ToastService,
-    private cdr: ChangeDetectorRef
+    private mediaUploadService: MediaUploadService,
+    private cdr: ChangeDetectorRef,
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
@@ -57,6 +62,10 @@ export class EmployeeFieldVisits implements OnInit {
           if (this.selectedVisit) {
             const updated = this.visits.find(v => v.id === this.selectedVisit?.id)
             if (updated) this.selectedVisit = updated
+          } else {
+            const targetId = this.route.snapshot.queryParamMap.get('visitId')
+            const target = targetId ? this.visits.find(v => v.id === targetId) : null
+            if (target) this.openVisit(target)
           }
           this.cdr.detectChanges()
         },
@@ -78,7 +87,7 @@ export class EmployeeFieldVisits implements OnInit {
           this.nextStatus = res.visitStatus
           this.employeeNotes = res.employeeNotes || ''
           this.outcome = res.fieldVerificationOutcome || 'JobConfirmed'
-          this.photoUrlsText = (res.photos || []).map(p => p.photoUrl).join('\n')
+          this.selectedPhotoUrls = (res.photos || []).map(p => p.photoUrl).filter(Boolean)
           this.isDetailsLoading = false
           this.cdr.detectChanges()
         },
@@ -95,7 +104,7 @@ export class EmployeeFieldVisits implements OnInit {
     this.nextStatus = ''
     this.employeeNotes = ''
     this.outcome = 'JobConfirmed'
-    this.photoUrlsText = ''
+    this.selectedPhotoUrls = []
   }
 
   updateStatus(): void {
@@ -119,6 +128,60 @@ export class EmployeeFieldVisits implements OnInit {
       })
   }
 
+
+  onPhotoFilesChange(event: Event): void {
+    if (!this.selectedVisit) {
+      this.toastService.error('اختر الزيارة أولا قبل رفع الصور')
+      return
+    }
+
+    const input = event.target as HTMLInputElement
+    const files = Array.from(input.files || [])
+    if (!files.length) return
+
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp']
+    const invalidFile = files.find(file => !allowedTypes.includes(file.type))
+    if (invalidFile) {
+      this.toastService.error('مسموح برفع صور فقط بصيغة PNG أو JPG أو WEBP')
+      input.value = ''
+      return
+    }
+
+    this.isUploadingPhotos = true
+    let completed = 0
+    let failed = 0
+
+    files.forEach(file => {
+      this.mediaUploadService.uploadImage(file, 'field-verification', this.selectedVisit!.id)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: res => {
+            if (res?.url) this.selectedPhotoUrls.push(res.url)
+            completed += 1
+            if (completed + failed === files.length) {
+              this.isUploadingPhotos = false
+              input.value = ''
+              this.toastService.success('تم رفع الصور بنجاح')
+              this.cdr.detectChanges()
+            }
+          },
+          error: err => {
+            failed += 1
+            if (completed + failed === files.length) {
+              this.isUploadingPhotos = false
+              input.value = ''
+              this.toastService.error(err.error?.message || 'فشل رفع بعض الصور')
+              this.cdr.detectChanges()
+            }
+          }
+        })
+    })
+  }
+
+  removePhotoUrl(index: number): void {
+    this.selectedPhotoUrls.splice(index, 1)
+  }
+
   submitEvidence(): void {
     if (!this.selectedVisit) return
     if (!this.employeeNotes.trim()) {
@@ -126,10 +189,7 @@ export class EmployeeFieldVisits implements OnInit {
       return
     }
 
-    const photoUrls = this.photoUrlsText
-      .split('\n')
-      .map(url => url.trim())
-      .filter(Boolean)
+    const photoUrls = [...this.selectedPhotoUrls]
 
     this.isSubmittingEvidence = true
     this.fieldVisitsService.submitEvidence(this.selectedVisit.id, {

@@ -2,7 +2,9 @@
   <div class="admin-header-panel">
     <div class="header-content">
       <h1 class="page-title">مركز قيادة المنصة</h1>
-      <p class="page-subtitle">نظرة عامة على نشاط هيڤيك وحالة المعاملات والمراجعات المعلقة</p>
+      <p class="page-subtitle" *ngIf="isAdminMode">نظرة عامة على نشاط هيڤيك وحالة المعاملات والمراجعات المعلقة</p>
+      <p class="page-subtitle" *ngIf="isFieldEmployeeMode">مهام الزيارات الميدانية المسندة إليك فقط</p>
+      <p class="page-subtitle" *ngIf="isSupportEmployeeMode">تذاكر الدعم المسموحة لك حسب التعيين والصلاحيات</p>
     </div>
     <div class="header-badge">
       <span class="live-indicator"></span>
@@ -12,160 +14,125 @@
 
   <app-loading *ngIf="isLoadingSummary || isLoadingActions" [fullScreen]="true"></app-loading>
 
-  <!-- Metrics Dashboard Grid -->
-  <div class="dashboard-grid" *ngIf="summary && !isLoadingSummary">
-    
-    <!-- Users & Providers Card -->
-    <a [routerLink]="['/admin/users']" class="stat-card link-card">
-      <div class="stat-icon-wrapper users">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-      </div>
-      <div class="stat-info">
-        <h3 class="stat-value">{{ summary.totalUsers }}</h3>
-        <p class="stat-label">المستخدمين المسجلين</p>
-      </div>
-      <div class="stat-meta">
-        <span>نشط: {{ summary.activeUsers }}</span>
-        <span>مزود: {{ summary.totalProviders }}</span>
-      </div>
-      <div class="card-arrow">
-        <span>إدارة المستخدمين</span>
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-      </div>
-    </a>
+  <ng-container *ngIf="isAdminMode">
+    <div class="dashboard-grid" *ngIf="summary && !isLoadingSummary">
+      <a [routerLink]="['/admin/users']" class="stat-card link-card">
+        <div class="stat-icon-wrapper users">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        </div>
+        <div class="stat-info">
+          <h3 class="stat-value">{{ summary.totalUsers || 0 }}</h3>
+          <p class="stat-label">المستخدمين المسجلين</p>
+        </div>
+        <div class="stat-meta">
+          <span>نشط: {{ summary.activeUsers || 0 }}</span>
+          <span>مزود: {{ summary.totalProviders || 0 }}</span>
+        </div>
+        <div class="card-arrow"><span>إدارة المستخدمين</span></div>
+      </a>
 
-    <!-- Listings Review Card -->
-    <a [routerLink]="['/admin/listing-review']" class="stat-card link-card">
-      <div class="stat-icon-wrapper listings">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
-      </div>
-      <div class="stat-info">
-        <h3 class="stat-value">{{ summary.pendingServiceListings + summary.pendingMarketplaceListings }}</h3>
-        <p class="stat-label">قوائم بانتظار المراجعة</p>
-      </div>
-      <div class="stat-meta">
-        <span>خدمات: {{ summary.pendingServiceListings }}</span>
-        <span>منتجات: {{ summary.pendingMarketplaceListings }}</span>
-      </div>
-      <div class="card-arrow">
-        <span>مراجعة القوائم</span>
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-      </div>
-    </a>
+      <a [routerLink]="['/admin/listing-review']" class="stat-card link-card">
+        <div class="stat-icon-wrapper listings">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+        </div>
+        <div class="stat-info">
+          <h3 class="stat-value">{{ totalPendingListings }}</h3>
+          <p class="stat-label">قوائم بانتظار المراجعة</p>
+        </div>
+        <div class="stat-meta">
+          <span>خدمات: {{ summary.pendingServiceListings || 0 }}</span>
+          <span>منتجات: {{ summary.pendingMarketplaceListings || 0 }}</span>
+        </div>
+        <div class="card-arrow"><span>مراجعة القوائم</span></div>
+      </a>
 
-    <!-- Disputes Card -->
-    <a [routerLink]="['/admin/disputes']" class="stat-card danger link-card">
-      <div class="stat-icon-wrapper disputes">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-      </div>
-      <div class="stat-info">
-        <h3 class="stat-value">{{ summary.disputedBookings + summary.disputedMarketplaceOrders }}</h3>
-        <p class="stat-label">النزاعات والشكاوى المفتوحة</p>
-      </div>
-      <div class="stat-meta">
-        <span>حجوزات: {{ summary.disputedBookings }}</span>
-        <span>طلبات شراء: {{ summary.disputedMarketplaceOrders }}</span>
-      </div>
-      <div class="card-arrow">
-        <span>حل النزاعات</span>
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-      </div>
-    </a>
+      <a [routerLink]="['/admin/disputes']" class="stat-card danger link-card">
+        <div class="stat-icon-wrapper disputes">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        </div>
+        <div class="stat-info">
+          <h3 class="stat-value">{{ totalOpenDisputes }}</h3>
+          <p class="stat-label">النزاعات والشكاوى المفتوحة</p>
+        </div>
+        <div class="stat-meta">
+          <span>حجوزات: {{ summary.disputedBookings || 0 }}</span>
+          <span>طلبات شراء: {{ summary.disputedMarketplaceOrders || 0 }}</span>
+        </div>
+        <div class="card-arrow"><span>حل النزاعات</span></div>
+      </a>
 
-    <!-- Field Verifications Card -->
-    <a [routerLink]="['/admin/field-verifications']" class="stat-card warning link-card">
-      <div class="stat-icon-wrapper field">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-      </div>
-      <div class="stat-info">
-        <h3 class="stat-value">{{ summary.pendingFieldVerifications }}</h3>
-        <p class="stat-label">الزيارات الميدانية المعلقة</p>
-      </div>
-      <div class="stat-meta">
-        <span>بانتظار التكليف والتقارير</span>
-      </div>
-      <div class="card-arrow">
-        <span>جدولة الزيارات</span>
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-      </div>
-    </a>
+      <a [routerLink]="['/admin/field-verifications']" class="stat-card warning link-card">
+        <div class="stat-icon-wrapper field">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+        </div>
+        <div class="stat-info">
+          <h3 class="stat-value">{{ pendingFieldVisitsCount }}</h3>
+          <p class="stat-label">الزيارات الميدانية المعلقة</p>
+        </div>
+        <div class="stat-meta"><span>بانتظار التكليف أو التقرير أو قرار الإدارة</span></div>
+        <div class="card-arrow"><span>جدولة الزيارات</span></div>
+      </a>
 
-    <!-- Open Tickets Card -->
-    <a [routerLink]="['/admin/tickets']" class="stat-card link-card">
-      <div class="stat-icon-wrapper tickets">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-      </div>
-      <div class="stat-info">
-        <h3 class="stat-value">{{ summary.openTickets }}</h3>
-        <p class="stat-label">تذاكر الدعم المفتوحة</p>
-      </div>
-      <div class="stat-meta">
-        <span>تحتاج إلى استجابة عاجلة</span>
-      </div>
-      <div class="card-arrow">
-        <span>مركز الدعم الفني</span>
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-      </div>
-    </a>
-
-    <!-- AI High Risk Card -->
-    <a [routerLink]="['/admin/listing-review']" class="stat-card ai-risk link-card">
-      <div class="stat-icon-wrapper ai">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
-      </div>
-      <div class="stat-info">
-        <h3 class="stat-value">{{ summary.aiHighRiskItems }}</h3>
-        <p class="stat-label">عناصر عالية الخطورة الذكية</p>
-      </div>
-      <div class="stat-meta">
-        <span>تحذيرات تم كشفها بالذكاء الاصطناعي</span>
-      </div>
-      <div class="card-arrow">
-        <span>فحص المخاطر</span>
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-      </div>
-    </a>
-  </div>
-
-  <!-- Pending Actions Feed Section -->
-  <div class="actions-section" *ngIf="!isLoadingActions">
-    <div class="section-header">
-      <div class="section-title-group">
-        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-        <h2>المهام العاجلة والمعلقة</h2>
-      </div>
-      <button class="btn btn-secondary btn-sm" (click)="loadPendingActions()">
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
-        تحديث القائمة
-      </button>
+      <a [routerLink]="['/admin/tickets']" class="stat-card link-card">
+        <div class="stat-icon-wrapper tickets">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+        </div>
+        <div class="stat-info">
+          <h3 class="stat-value">{{ summary.openTickets || 0 }}</h3>
+          <p class="stat-label">تذاكر الدعم المفتوحة</p>
+        </div>
+        <div class="stat-meta"><span>تحتاج إلى استجابة أو متابعة</span></div>
+        <div class="card-arrow"><span>مركز الدعم الفني</span></div>
+      </a>
     </div>
 
-    <app-empty-state *ngIf="pendingActions.length === 0" 
-      title="لا توجد مهام معلقة" 
-      message="جميع المراجعات والنزاعات مكتملة حالياً. عمل رائع!">
-    </app-empty-state>
+  </ng-container>
 
-    <div class="action-feed" *ngIf="pendingActions.length > 0">
-      <div class="action-item" *ngFor="let action of pendingActions" [ngClass]="'priority-' + (action.priority ? action.priority.toLowerCase() : 'normal')">
-        <div class="action-indicator"></div>
-        <div class="action-content">
-          <div class="action-meta">
-            <span class="action-type-badge">{{ action.type }}</span>
-            <span class="action-time">
-              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-              {{ action.createdAt | date:'short' }}
-            </span>
+  <ng-container *ngIf="isFieldEmployeeMode && !isLoadingActions">
+    <div class="actions-section">
+      <div class="section-header">
+        <div class="section-title-group"><h2>مهامي الميدانية</h2></div>
+        <a routerLink="/employee/field-visits" class="btn btn-primary btn-sm">فتح صفحة الزيارات</a>
+      </div>
+      <app-empty-state *ngIf="employeeFieldVisits.length === 0" title="لا توجد زيارات مسندة" message="لا توجد مهام ميدانية مطلوبة منك حالياً."></app-empty-state>
+      <div class="action-feed" *ngIf="employeeFieldVisits.length > 0">
+        <div class="action-item" *ngFor="let visit of employeeFieldVisits">
+          <div class="action-indicator"></div>
+          <div class="action-content">
+            <div class="action-meta">
+              <span class="action-type-badge">{{ getFieldVisitStatusLabel(visit.visitStatus) }}</span>
+              <span class="action-time">{{ visit.dispatchedAt | date:'short' }}</span>
+            </div>
+            <h4 class="action-title">زيارة ميدانية مسندة إليك</h4>
+            <span class="action-ref">{{ visit.dispatchInstructions || 'راجع تفاصيل المهمة وأرفق تقرير الزيارة' }}</span>
           </div>
-          <h4 class="action-title">{{ action.title }}</h4>
-          <span class="action-ref">مرجع الطلب: {{ action.referenceId }}</span>
-        </div>
-        <div class="action-cta">
-          <a [routerLink]="action.actionUrl" class="btn btn-primary btn-sm flex-btn">
-            <span>المراجعة الآن</span>
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-          </a>
+          <div class="action-cta"><a routerLink="/employee/field-visits" class="btn btn-primary btn-sm flex-btn">المراجعة الآن</a></div>
         </div>
       </div>
     </div>
-  </div>
+  </ng-container>
+
+  <ng-container *ngIf="isSupportEmployeeMode && !isLoadingActions">
+    <div class="actions-section">
+      <div class="section-header">
+        <div class="section-title-group"><h2>تذاكر الدعم الخاصة بك</h2></div>
+        <a routerLink="/admin/tickets" class="btn btn-primary btn-sm">فتح تذاكر الدعم</a>
+      </div>
+      <app-empty-state *ngIf="employeeTickets.length === 0" title="لا توجد تذاكر" message="لا توجد تذاكر دعم مسندة أو متاحة لك حالياً."></app-empty-state>
+      <div class="action-feed" *ngIf="employeeTickets.length > 0">
+        <div class="action-item" *ngFor="let ticket of employeeTickets">
+          <div class="action-indicator"></div>
+          <div class="action-content">
+            <div class="action-meta">
+              <span class="action-type-badge">{{ ticket.priority }}</span>
+              <span class="action-time">{{ ticket.createdAt | date:'short' }}</span>
+            </div>
+            <h4 class="action-title">{{ ticket.title || ticket.ticketNumber }}</h4>
+            <span class="action-ref">رقم التذكرة: {{ ticket.ticketNumber || ticket.id }}</span>
+          </div>
+          <div class="action-cta"><a [routerLink]="['/admin/tickets']" [queryParams]="{ ticketId: ticket.id }" class="btn btn-primary btn-sm flex-btn">المراجعة الآن</a></div>
+        </div>
+      </div>
+    </div>
+  </ng-container>
 </div>

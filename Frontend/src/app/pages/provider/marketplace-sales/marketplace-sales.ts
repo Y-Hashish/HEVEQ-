@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common'
 import { Component, OnInit } from '@angular/core'
+import { ActivatedRoute } from '@angular/router'
 import { FormsModule } from '@angular/forms'
 import { finalize, forkJoin } from 'rxjs'
 import { getErrorMessage } from '../../../core/helpers/errorMessageHelper'
@@ -32,7 +33,7 @@ export class MarketplaceSales implements OnInit {
   trackingNumber = ''
   cancelReason = ''
 
-  constructor(private ordersService: MarketplaceOrdersService) {}
+  constructor(private ordersService: MarketplaceOrdersService, private route: ActivatedRoute) {}
 
   ngOnInit(): void {
     this.loadOrders()
@@ -46,7 +47,9 @@ export class MarketplaceSales implements OnInit {
       next: orders => {
         this.orders = orders ?? []
         if (!this.selectedOrder && this.orders.length) {
-          this.openOrder(this.orders[0].id)
+          const targetId = this.route.snapshot.queryParamMap.get('orderId')
+          const target = targetId && this.orders.some(o => o.id === targetId) ? targetId : this.orders[0].id
+          this.openOrder(target)
         }
       },
       error: error => {

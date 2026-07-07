@@ -20,6 +20,10 @@ import { BookingsService } from '../../../core/services/bookingsService'
 export class CreateBooking implements OnInit {
   serviceListingId = ''
   context: BookingCreateContext | null = null
+  availableTimeSlots: string[] = []
+  scheduleWarning = ''
+  minBookingDate = ''
+  maxBookingDate = ''
 
   isLoading = false
   isCreating = false
@@ -95,6 +99,8 @@ export class CreateBooking implements OnInit {
           this.ngZone.run(() => {
             this.context = response
             this.form.estimatedDurationHours = response.minimumBookingHours || 1
+            this.setNativeDateRange()
+            this.refreshTimeSlots()
 
             if (response.defaultAddress) {
               this.useDefaultAddress = true
@@ -140,13 +146,25 @@ export class CreateBooking implements OnInit {
     }
 
     if (!this.form.requestedStartDate) {
-      this.errorMessage = 'من فضلك اختر تاريخ بداية الحجز'
+      this.errorMessage = 'من فضلك اختر يوم متاح من التقويم'
+      this.updateView()
+      return
+    }
+
+    if (!this.isSelectedDateAvailable()) {
+      this.errorMessage = 'اليوم المحدد غير متاح لهذه الخدمة. اختر يوماً من الأيام المفعلة في التقويم'
       this.updateView()
       return
     }
 
     if (!this.form.requestedStartTime) {
-      this.errorMessage = 'من فضلك اختر وقت بداية الحجز'
+      this.errorMessage = 'من فضلك اختر وقت بداية الحجز من الأوقات المتاحة'
+      this.updateView()
+      return
+    }
+
+    if (!this.isSelectedTimeAvailable()) {
+      this.errorMessage = 'وقت البداية مع مدة الحجز يتجاوز مواعيد عمل المزود. اختر وقتاً يسمح بانتهاء الحجز قبل نهاية وقت العمل'
       this.updateView()
       return
     }
@@ -234,6 +252,179 @@ export class CreateBooking implements OnInit {
     return this.context.availability
       .map(item => `${item.dayNameAr || item.dayName}: ${item.openTime} - ${item.closeTime}`)
       .join(' | ')
+  }
+
+  getAvailableDaysText(): string {
+    if (!this.context?.availability?.length) {
+      return 'لا توجد أيام متاحة'
+    }
+
+    return this.context.availability
+      .map(item => item.dayNameAr || item.dayName || this.getArabicDayName(Number(item.dayOfWeek)))
+      .join('، ')
+  }
+
+  onDateChanged(): void {
+    if (!this.form.requestedStartDate) {
+      this.availableTimeSlots = []
+      this.form.requestedStartTime = ''
+      this.scheduleWarning = ''
+      this.updateView()
+      return
+    }
+
+    if (!this.isSelectedDateAvailable()) {
+      const selectedDate = this.form.requestedStartDate
+      this.form.requestedStartDate = ''
+      this.form.requestedStartTime = ''
+      this.availableTimeSlots = []
+      this.scheduleWarning = `التاريخ ${selectedDate} غير متاح لهذه الخدمة. اختر واحداً من الأيام المتاحة فقط: ${this.getAvailableDaysText()}`
+      this.updateView()
+      return
+    }
+
+    this.refreshTimeSlots()
+    this.updateView()
+  }
+
+
+
+  onDurationChanged(): void {
+    this.form.estimatedDurationHours = Number(this.form.estimatedDurationHours || 0)
+    this.refreshTimeSlots()
+    this.updateView()
+  }
+
+  onTimeChanged(): void {
+    if (this.form.requestedStartTime && !this.isSelectedTimeAvailable()) {
+      this.scheduleWarning = 'هذا الوقت لا يسمح بانتهاء الحجز داخل مواعيد عمل المزود.'
+    } else {
+      this.scheduleWarning = ''
+    }
+    this.updateView()
+  }
+
+  getSelectedDayAvailabilityText(): string {
+    const availability = this.getAvailabilityForDate(this.form.requestedStartDate)
+    if (!availability) {
+      return 'اختر يوماً متاحاً لعرض الأوقات المناسبة'
+    }
+
+    return `متاح من ${this.formatTime(availability.openTime)} إلى ${this.formatTime(availability.closeTime)}`
+  }
+
+  private setNativeDateRange(): void {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const max = new Date(today)
+    max.setDate(today.getDate() + 60)
+
+    this.minBookingDate = this.toDateIso(today)
+    this.maxBookingDate = this.toDateIso(max)
+  }
+
+  private refreshTimeSlots(): void {
+    this.scheduleWarning = ''
+    this.availableTimeSlots = this.getAvailableTimeSlots()
+
+    if (this.form.requestedStartTime && !this.availableTimeSlots.includes(this.normalizeTime(this.form.requestedStartTime))) {
+      this.form.requestedStartTime = ''
+      this.scheduleWarning = 'تم مسح وقت البداية لأن مدة الحجز لا تناسب مواعيد العمل في اليوم المحدد.'
+    }
+  }
+
+  private getAvailableTimeSlots(): string[] {
+    const availability = this.getAvailabilityForDate(this.form.requestedStartDate)
+    if (!availability) {
+      return []
+    }
+
+    const durationMinutes = Math.ceil(Number(this.form.estimatedDurationHours || 0) * 60)
+    const openMinutes = this.timeToMinutes(availability.openTime)
+    const closeMinutes = this.timeToMinutes(availability.closeTime)
+    const latestStart = closeMinutes - durationMinutes
+
+    if (durationMinutes <= 0 || latestStart < openMinutes) {
+      this.scheduleWarning = 'مدة الحجز أطول من فترة العمل المتاحة في هذا اليوم.'
+      return []
+    }
+
+    const slots: string[] = []
+    for (let minutes = openMinutes; minutes <= latestStart; minutes += 30) {
+      slots.push(this.minutesToTime(minutes))
+    }
+
+    return slots
+  }
+
+  private isSelectedDateAvailable(): boolean {
+    return !!this.getAvailabilityForDate(this.form.requestedStartDate)
+  }
+
+  private isSelectedTimeAvailable(): boolean {
+    if (!this.form.requestedStartTime) {
+      return false
+    }
+
+    return this.availableTimeSlots.includes(this.normalizeTime(this.form.requestedStartTime))
+  }
+
+  private getAvailabilityForDate(dateIso: string | null | undefined) {
+    if (!dateIso || !this.context?.availability?.length) {
+      return null
+    }
+
+    const date = this.parseLocalDate(dateIso)
+    if (!date) {
+      return null
+    }
+
+    const day = date.getDay()
+    return this.context.availability.find(item => Number(item.dayOfWeek) === day) || null
+  }
+
+  private parseLocalDate(dateIso: string): Date | null {
+    const parts = dateIso.split('-').map(x => Number(x))
+    if (parts.length !== 3 || parts.some(x => Number.isNaN(x))) {
+      return null
+    }
+
+    return new Date(parts[0], parts[1] - 1, parts[2])
+  }
+
+  private toDateIso(date: Date): string {
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+  }
+
+  private timeToMinutes(value: string): number {
+    const [hours, minutes] = this.normalizeTime(value).split(':').map(x => Number(x))
+    return hours * 60 + minutes
+  }
+
+  private minutesToTime(totalMinutes: number): string {
+    const hours = Math.floor(totalMinutes / 60)
+    const minutes = totalMinutes % 60
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
+  }
+
+  private normalizeTime(value: string): string {
+    const [hours = '00', minutes = '00'] = String(value).split(':')
+    return `${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}`
+  }
+
+  private formatTime(value: string): string {
+    return this.normalizeTime(value)
+  }
+
+  private getArabicDayName(day: number): string {
+    return ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'][day] || ''
+  }
+
+  private getArabicMonthName(month: number): string {
+    return ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'][month] || ''
   }
 
   private emptyToNull(value: string | null): string | null {

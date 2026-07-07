@@ -53,6 +53,24 @@ export class Sidebar implements OnInit, OnDestroy {
     return this.tokenStorage.getRole()
   }
 
+
+  get isFieldEmployee(): boolean {
+    if (this.role !== 'employee') {
+      return false
+    }
+
+    const currentUser: any = this.tokenStorage.getCurrentUser()
+    const department = String(currentUser?.employeeDepartment || currentUser?.department || '').toLowerCase()
+    return currentUser?.isAvailableForDispatch === true ||
+      department.includes('field') ||
+      department.includes('verification') ||
+      department.includes('ميد')
+  }
+
+  get isSupportEmployee(): boolean {
+    return this.role === 'employee' && !this.isFieldEmployee
+  }
+
   get showSidebar(): boolean {
     const url = this.currentUrl
 

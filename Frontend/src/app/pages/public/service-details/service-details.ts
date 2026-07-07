@@ -6,6 +6,8 @@ import { ServiceListings } from '../../../core/services/service-listings'
 import { ConversationsService } from '../../../core/services/conversationsService'
 import { TokenStorage } from '../../../core/services/token-storage'
 import { Toast } from '../../../core/services/toast'
+import { ReviewsService } from '../../../core/services/reviewsService'
+import { ReviewItem } from '../../../core/models/reviewModels'
 import { extractErrorMessage } from '../../../core/models/api-error.models'
 import { PublicServiceListingDetail } from '../../../core/models/service-listing.models'
 
@@ -21,6 +23,10 @@ export class ServiceDetails implements OnInit {
   isLoading = false
   notFound = false
   isStartingConversation = false
+  reviews: ReviewItem[] = []
+  reviewsAverage = 0
+  reviewsTotal = 0
+  reviewsLoading = false
 
   readonly dayNames = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت']
 
@@ -29,6 +35,7 @@ export class ServiceDetails implements OnInit {
     private router: Router,
     private serviceListings: ServiceListings,
     private conversationsService: ConversationsService,
+    private reviewsService: ReviewsService,
     private tokenStorage: TokenStorage,
     private toast: Toast
   ) {}
@@ -46,6 +53,7 @@ export class ServiceDetails implements OnInit {
       next: listing => {
         this.listing = listing
         this.isLoading = false
+        this.loadServiceReviews(listing.id)
       },
       error: (err: HttpErrorResponse) => {
         this.isLoading = false
@@ -92,6 +100,30 @@ export class ServiceDetails implements OnInit {
         this.toast.error(extractErrorMessage(err))
       }
     })
+  }
+
+
+  loadServiceReviews(serviceListingId: string): void {
+    this.reviewsLoading = true
+    this.reviewsService.getReviewsForServiceListing(serviceListingId).subscribe({
+      next: res => {
+        this.reviews = res.items ?? []
+        this.reviewsAverage = res.averageRating ?? 0
+        this.reviewsTotal = res.totalCount ?? 0
+        this.reviewsLoading = false
+      },
+      error: () => {
+        this.reviews = []
+        this.reviewsAverage = 0
+        this.reviewsTotal = 0
+        this.reviewsLoading = false
+      }
+    })
+  }
+
+  ratingStars(rating: number | null): boolean[] {
+    const rounded = Math.round(rating ?? 0)
+    return Array.from({ length: 5 }, (_, i) => i < rounded)
   }
 
   // Stopgap only — equipmentCondition should really carry its own Arabic

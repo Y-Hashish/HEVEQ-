@@ -96,7 +96,10 @@ export interface AdminDocument {
   extractedText?: string;
   confidenceScore?: number;
   keyFieldsPresent?: boolean;
+  failureReason?: string | null;
+  adminNote?: string | null;
 }
+
 
 export interface AdminTicketMessage {
   id: string;
@@ -178,6 +181,10 @@ export interface AdminTicketDetails extends AdminTicket {
   customerAttachments?: TicketAttachment[];
   providerCompletionEvidence?: ProviderCompletionEvidence;
   fieldVisits?: FieldVisit[];
+  aiSummary?: string | null;
+  aiIdentifiedIssue?: string | null;
+  aiClaimedImpact?: string | null;
+  aiEscalationPriority?: number | null;
 }
 
 export interface AdminDispute {

@@ -39,6 +39,11 @@ namespace HEVEQ.Application.Features.Admin.DTOs
         public List<TicketMessageDto> Messages { get; set; } = new();
 
         public List<string> AvailableDisputeDecisions { get; set; } = new();
+
+        public string? AiSummary { get; set; }
+        public string? AiIdentifiedIssue { get; set; }
+        public string? AiClaimedImpact { get; set; }
+        public int? AiEscalationPriority { get; set; }
     }
 
     public class BookingDisputeDetailsDto

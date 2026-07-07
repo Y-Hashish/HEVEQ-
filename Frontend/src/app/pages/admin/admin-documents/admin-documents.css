@@ -347,3 +347,29 @@
     display: block;
   }
 }
+
+.ai-note {
+  margin-top: var(--s3);
+  padding: var(--s3);
+  border-radius: var(--radius-sm);
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.22);
+}
+
+.ai-note h4 {
+  margin: 0 0 var(--s2);
+  color: var(--primary);
+  font-size: var(--text-sm);
+}
+
+.ai-note p {
+  margin: 0;
+  color: var(--text-main);
+  line-height: 1.8;
+  white-space: pre-line;
+}
+
+.ai-note.warning {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.2);
+}

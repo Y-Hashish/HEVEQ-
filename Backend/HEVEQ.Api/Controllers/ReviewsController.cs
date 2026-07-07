@@ -1,5 +1,7 @@
 ﻿using HEVEQ.Application.Features.Reviews.Commands.SubmitReview;
 using HEVEQ.Application.Features.Reviews.Queries.GetUserReviews;
+using HEVEQ.Application.Features.Reviews.Queries.GetServiceListingReviews;
+using HEVEQ.Application.Features.Reviews.Queries.GetMarketplaceSellerReviews;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -42,6 +44,25 @@ public class ReviewsController : ControllerBase
         CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(new GetUserReviewsQuery(userId), cancellationToken);
+        return Ok(result);
+    }
+
+
+    [HttpGet("service-listing/{serviceListingId:guid}")]
+    public async Task<IActionResult> GetForServiceListing(
+        Guid serviceListingId,
+        CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new GetServiceListingReviewsQuery(serviceListingId), cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpGet("marketplace-seller/{sellerId:guid}")]
+    public async Task<IActionResult> GetForMarketplaceSeller(
+        Guid sellerId,
+        CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new GetMarketplaceSellerReviewsQuery(sellerId), cancellationToken);
         return Ok(result);
     }
 }

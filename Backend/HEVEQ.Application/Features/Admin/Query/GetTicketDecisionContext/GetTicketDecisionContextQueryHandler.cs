@@ -87,6 +87,10 @@ namespace HEVEQ.Application.Features.Admin.Query.GetTicketDecisionContext
                 Category = ticket.Category.ToString(),
                 Priority = GetPriorityString(ticket.Priority),
                 CreatedAt = ticket.CreatedAt,
+                AiSummary = ticket.AiSummary,
+                AiIdentifiedIssue = ticket.AiIdentifiedIssue,
+                AiClaimedImpact = ticket.AiClaimedImpact,
+                AiEscalationPriority = ticket.AiEscalationPriority,
                 SubmittedBy = new TicketSubmitterDto
                 {
                     Id = ticket.SubmittedById,

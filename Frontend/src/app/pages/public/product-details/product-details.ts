@@ -9,6 +9,8 @@ import { MarketplaceOrdersService } from '../../../core/services/marketplace-ord
 import { ConversationsService } from '../../../core/services/conversationsService'
 import { MarketplaceService } from '../../../core/services/marketplace'
 import { TokenStorage } from '../../../core/services/token-storage'
+import { ReviewsService } from '../../../core/services/reviewsService'
+import { ReviewItem } from '../../../core/models/reviewModels'
 
 @Component({
   selector: 'app-product-details',
@@ -39,12 +41,18 @@ export class ProductDetails implements OnInit {
   chatError = ''
   orderResult: { orderNumber: string; message: string; statusAr: string } | null = null
 
+  sellerReviews: ReviewItem[] = []
+  sellerReviewsAverage = 0
+  sellerReviewsTotal = 0
+  sellerReviewsLoading = false
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private marketplaceService: MarketplaceService,
     private ordersService: MarketplaceOrdersService,
     private conversationsService: ConversationsService,
+    private reviewsService: ReviewsService,
     private tokenStorage: TokenStorage,
     private cdr: ChangeDetectorRef
   ) {}
@@ -81,6 +89,7 @@ export class ProductDetails implements OnInit {
 
           const currentUserId = this.tokenStorage.getCurrentUser()?.id
           this.isOwnListing = !!currentUserId && currentUserId === listing.seller.id
+          this.loadSellerMarketplaceReviews(listing.seller.id)
         },
         error: error => {
           this.listing = null
@@ -203,6 +212,25 @@ export class ProductDetails implements OnInit {
           this.chatError = error.error?.message || error.error?.Message || 'تعذر بدء المحادثة مع البائع'
         }
       })
+  }
+
+
+  loadSellerMarketplaceReviews(sellerId: string): void {
+    this.sellerReviewsLoading = true
+    this.reviewsService.getMarketplaceSellerReviews(sellerId).subscribe({
+      next: res => {
+        this.sellerReviews = res.items ?? []
+        this.sellerReviewsAverage = res.averageRating ?? 0
+        this.sellerReviewsTotal = res.totalCount ?? 0
+        this.sellerReviewsLoading = false
+      },
+      error: () => {
+        this.sellerReviews = []
+        this.sellerReviewsAverage = 0
+        this.sellerReviewsTotal = 0
+        this.sellerReviewsLoading = false
+      }
+    })
   }
 
   get riskLevelBadgeClass(): string {

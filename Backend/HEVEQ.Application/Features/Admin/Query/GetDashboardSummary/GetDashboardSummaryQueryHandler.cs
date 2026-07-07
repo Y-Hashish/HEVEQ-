@@ -54,13 +54,25 @@ namespace HEVEQ.Application.Features.Admin.Query.GetDashboardSummary
                 .CountAsync(b => b.Status == BookingStatus.InProgress, cancellationToken);
 
             response.DisputedBookings = await context.Bookings
-                .CountAsync(b => b.DisputeOpenedAt.HasValue);
+                .CountAsync(b => b.DisputeOpenedAt.HasValue || b.Status == BookingStatus.Disputed, cancellationToken);
+
+            response.DisputedMarketplaceOrders = await context.MarketplaceOrders
+                .CountAsync(o => o.Status == MarketplaceOrderStatus.Disputed, cancellationToken);
 
             response.OpenTickets = await context.Tickets
-                .CountAsync(t => t.Status == TicketStatus.Open, cancellationToken);
+                .CountAsync(t => t.Status == TicketStatus.Open ||
+                                 t.Status == TicketStatus.PendingCustomerReply ||
+                                 t.Status == TicketStatus.PendingProviderReply ||
+                                 t.Status == TicketStatus.PendingFieldVerification, cancellationToken);
 
-            response.EscrowFrozenCount = await context.EscrowRecords
+            response.FrozenEscrowRecords = await context.EscrowRecords
                 .CountAsync(e => e.Status == EscrowStatus.Frozen, cancellationToken);
+            response.EscrowFrozenCount = response.FrozenEscrowRecords;
+
+            response.PendingFieldVerifications = await context.FieldVerificationForms
+                .CountAsync(f => f.VisitStatus == VisitStatus.Dispatched ||
+                                 f.VisitStatus == VisitStatus.OnSite ||
+                                 (f.VisitStatus == VisitStatus.Completed && f.AdminDecision == FieldVerificationAdminDecision.Pending), cancellationToken);
 
             return response;
         }

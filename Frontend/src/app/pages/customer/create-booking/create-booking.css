@@ -185,3 +185,31 @@
     flex-direction: column;
   }
 }
+.calendar-help,
+.field-hint,
+.selected-availability {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin-top: 6px;
+  line-height: 1.7;
+}
+
+.selected-availability {
+  margin-top: 10px;
+  color: var(--text-main);
+  font-weight: 800;
+}
+
+.native-date-input {
+  direction: ltr;
+  text-align: left;
+}
+
+.native-date-input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+}
+
+.alert.warning {
+  background: rgba(245, 158, 11, 0.13);
+  color: #b45309;
+}
