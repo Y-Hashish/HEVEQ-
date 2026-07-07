@@ -1,0 +1,151 @@
+<div class="container">
+  <div class="marketplace-hero animate-on-scroll">
+    <h1>سوق هيڤيك المركزي (مبيعات)</h1>
+    <p>شراء وبيع المعدات الثقيلة المستعملة والجديدة، وقطع الغيار الأصلية</p>
+
+    <div class="nav-search">
+      <input
+        type="text"
+        placeholder="ابحث عن محركات، هيدروليك، أو معدات للبيع..."
+        [(ngModel)]="searchTerm"
+        (ngModelChange)="onSearchChange()"
+      />
+      <span class="search-icon">🔍</span>
+    </div>
+  </div>
+
+  <section class="filters-section animate-on-scroll">
+    <div class="filters-bar">
+      <div class="filter-field">
+        <label for="mp-category">الفئة</label>
+        <select id="mp-category" [(ngModel)]="categoryId" (ngModelChange)="onFilterChange()">
+          <option [ngValue]="null">كل الفئات</option>
+          <option *ngFor="let cat of categories" [ngValue]="cat.id">{{ cat.name }}</option>
+        </select>
+      </div>
+
+      <div class="filter-field">
+        <label for="mp-condition">الحالة</label>
+        <select id="mp-condition" [(ngModel)]="condition" (ngModelChange)="onFilterChange()">
+          <option *ngFor="let c of conditions" [value]="c.value">{{ c.label }}</option>
+        </select>
+      </div>
+
+      <div class="filter-field">
+        <label for="mp-governorate">المحافظة</label>
+        <select id="mp-governorate" [(ngModel)]="governorate" (ngModelChange)="onFilterChange()">
+          <option value="">كل المحافظات</option>
+          <option *ngFor="let g of governorates" [value]="g.value">{{ g.label }}</option>
+        </select>
+      </div>
+
+      <div class="filter-field">
+        <label for="mp-min-price">أقل سعر</label>
+        <input
+          id="mp-min-price"
+          type="number"
+          min="0"
+          placeholder="0"
+          [(ngModel)]="minPrice"
+          (ngModelChange)="onFilterChange()"
+        />
+      </div>
+
+      <div class="filter-field">
+        <label for="mp-max-price">أعلى سعر</label>
+        <input
+          id="mp-max-price"
+          type="number"
+          min="0"
+          placeholder="بدون حد"
+          [(ngModel)]="maxPrice"
+          (ngModelChange)="onFilterChange()"
+        />
+      </div>
+
+      <button type="button" class="btn btn-outline reset-btn" (click)="resetFilters()">
+        إعادة تعيين
+      </button>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-header animate-on-scroll">
+      <div class="section-title">
+        <h2>أحدث المعدات والقطع المعروضة للبيع</h2>
+        <p *ngIf="!isLoading && !errorMessage">{{ totalCount }} إعلان متاح حاليًا</p>
+      </div>
+    </div>
+
+    <!-- Skeleton loaders -->
+    <div class="marketplace-grid" *ngIf="isLoading">
+      <div class="card skeleton" style="height: 340px;" *ngFor="let s of [1,2,3,4,5,6]"></div>
+    </div>
+
+    <!-- Error state -->
+    <div class="empty-state" *ngIf="!isLoading && errorMessage">
+      <p class="text-muted">{{ errorMessage }}</p>
+      <button type="button" class="btn btn-outline" (click)="loadListings()">إعادة المحاولة</button>
+    </div>
+
+    <!-- Empty state -->
+    <div class="empty-state" *ngIf="!isLoading && !errorMessage && listings.length === 0">
+      <p class="text-muted">لا توجد إعلانات مطابقة لبحثك حاليًا، جرّب تعديل الفلاتر</p>
+    </div>
+
+    <!-- Listings grid -->
+    <div class="marketplace-grid" *ngIf="!isLoading && !errorMessage && listings.length > 0">
+      <div class="marketplace-card animate-on-scroll" *ngFor="let lst of listings; trackBy: trackById">
+        <div class="marketplace-img">
+          <img *ngIf="lst.coverPhotoUrl; else noImage" [src]="lst.coverPhotoUrl" [alt]="lst.title" />
+          <ng-template #noImage>
+            <div class="no-image">📦</div>
+          </ng-template>
+
+          <span class="badge badge-warning listing-badge">للبيع</span>
+          <span
+            class="badge listing-status"
+            [ngClass]="lst.status === 'Active' ? 'badge-success' : 'badge-warning'"
+          >{{ lst.statusAr || lst.status }}</span>
+        </div>
+
+        <div class="marketplace-info">
+          <div class="marketplace-price">{{ lst.price | number }} ج.م</div>
+          <h3 class="marketplace-title">{{ lst.title }}</h3>
+
+          <div class="marketplace-rating" *ngIf="lst.averageRating">
+            <span class="stars">
+              <span *ngFor="let filled of ratingStars(lst.averageRating)" [class.filled]="filled">★</span>
+            </span>
+            <span class="rating-value">{{ lst.averageRating | number: '1.1-1' }}</span>
+            <span class="rating-count">({{ lst.totalReviewsCount ?? 0 }} تقييم)</span>
+          </div>
+
+          <div class="marketplace-meta">
+            <span>📍 الموقع: {{ lst.location || 'غير محدد' }} | الحالة: <strong>{{ lst.conditionAr || lst.condition }}</strong></span>
+            <span>🤝 المعاملة: {{ transactionMethodLabel(lst.transactionMethod) }}</span>
+            <span>🏷️ الفئة: {{ lst.categoryName }}</span>
+            <span>👤 البائع: {{ lst.sellerName }}</span>
+          </div>
+
+          <a class="btn btn-primary w-full" [routerLink]="['/product-details', lst.id]">عرض تفاصيل السلعة</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination" *ngIf="!isLoading && !errorMessage && totalPages > 1">
+      <button type="button" class="page-btn" [disabled]="page === 1" (click)="goToPage(page - 1)">السابق</button>
+
+      <button
+        type="button"
+        class="page-btn"
+        *ngFor="let p of pageNumbers"
+        [class.active]="p === page"
+        (click)="goToPage(p)"
+      >{{ p }}</button>
+
+      <button type="button" class="page-btn" [disabled]="page === totalPages" (click)="goToPage(page + 1)">التالي</button>
+    </div>
+  </section>
+</div>

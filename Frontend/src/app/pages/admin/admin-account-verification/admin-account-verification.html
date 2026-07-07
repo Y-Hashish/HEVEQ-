@@ -1,0 +1,40 @@
+<div class="admin-page">
+  <div class="admin-header">
+    <h1 class="page-title">تحقق من الحسابات</h1>
+    <p class="page-subtitle">مراجعة هويات المستخدمين والمزودين المعلقة</p>
+  </div>
+
+  <app-loading *ngIf="isLoading" [fullScreen]="false"></app-loading>
+
+  <app-empty-state *ngIf="!isLoading && verifications.length === 0" 
+    title="لا توجد طلبات تحقق" 
+    message="جميع الحسابات مكتملة التحقق.">
+  </app-empty-state>
+
+  <div class="table-container" *ngIf="!isLoading && verifications.length > 0">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>اسم المستخدم</th>
+          <th>البريد الإلكتروني</th>
+          <th>الدور</th>
+          <th>تاريخ الطلب</th>
+          <th>الإجراءات</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let item of verifications">
+          <td class="font-medium">{{ item.userName }}</td>
+          <td class="text-muted">{{ item.email }}</td>
+          <td><span class="badge">{{ item.role }}</span></td>
+          <td class="text-muted">{{ item.submittedAt | date:'mediumDate' }}</td>
+          <td>
+            <a routerLink="/admin/documents" [queryParams]="{ userId: item.userId, role: item.role }" class="btn btn-primary btn-sm">
+              مراجعة المستندات
+            </a>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

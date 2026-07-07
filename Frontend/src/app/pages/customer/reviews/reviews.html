@@ -1,0 +1,135 @@
+<section class="reviews-page">
+    <div class="page-header">
+        <div>
+            <h1>التقييمات</h1>
+            <p>أضف تقييمًا بعد اكتمال الحجز أو طلب السوق، واعرض تقييمات المزودين والبائعين.</p>
+        </div>
+    </div>
+
+    <div class="alert error" *ngIf="errorMessage">
+        {{ errorMessage }}
+    </div>
+
+    <div class="alert success" *ngIf="successMessage">
+        {{ successMessage }}
+    </div>
+
+    <div class="reviews-grid">
+        <div class="card review-form-card">
+            <h2>إضافة تقييم</h2>
+            <p class="card-subtitle">
+                يمكن إرسال التقييم فقط بعد اكتمال الحجز أو اكتمال طلب السوق.
+            </p>
+
+            <div class="target-tabs">
+                <button type="button"
+                    [class.active]="targetType === 'booking'"
+                    (click)="setTargetType('booking')">
+                    حجز خدمة
+                </button>
+
+                <button type="button"
+                    [class.active]="targetType === 'marketplaceOrder'"
+                    (click)="setTargetType('marketplaceOrder')">
+                    طلب من السوق
+                </button>
+            </div>
+
+            <div class="form-group" *ngIf="targetType === 'booking'">
+                <label class="form-label">Booking Id</label>
+                <input class="form-input" type="text" [(ngModel)]="bookingId"
+                    placeholder="اكتب رقم الحجز المكتمل">
+            </div>
+
+            <div class="form-group" *ngIf="targetType === 'marketplaceOrder'">
+                <label class="form-label">Marketplace Order Id</label>
+                <input class="form-input" type="text" [(ngModel)]="marketplaceOrderId"
+                    placeholder="اكتب رقم طلب السوق المكتمل">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">التقييم</label>
+                <select class="form-input" [(ngModel)]="rating">
+                    <option *ngFor="let option of ratingOptions" [ngValue]="option">
+                        {{ option }} / 5
+                    </option>
+                </select>
+
+                <div class="stars-preview">
+                    {{ getStars(rating) }}
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">تعليق اختياري</label>
+                <textarea class="form-input textarea" rows="5" [(ngModel)]="comment"
+                    placeholder="اكتب تجربتك باختصار"></textarea>
+            </div>
+
+            <button class="btn btn-primary w-full" type="button" [disabled]="isSubmitting"
+                (click)="submitReview()">
+                {{ isSubmitting ? 'جاري إرسال التقييم...' : 'إرسال التقييم' }}
+            </button>
+        </div>
+
+        <div class="card reviews-list-card">
+            <h2>عرض تقييمات مزود أو بائع</h2>
+            <p class="card-subtitle">
+                هذا الجزء يستخدم الـ public endpoint لعرض تقييمات أي user منشورة.
+            </p>
+
+            <div class="form-row">
+                <input class="form-input" type="text" [(ngModel)]="userIdToView"
+                    placeholder="اكتب UserId الخاص بالمزود أو البائع">
+
+                <button class="btn btn-secondary" type="button" [disabled]="isLoadingReviews"
+                    (click)="loadUserReviews()">
+                    {{ isLoadingReviews ? 'جاري التحميل...' : 'عرض' }}
+                </button>
+            </div>
+
+            <div class="reviews-summary" *ngIf="reviewsSummary">
+                <div>
+                    <strong>{{ reviewsSummary.averageRating }}</strong>
+                    <span>متوسط التقييم</span>
+                </div>
+
+                <div>
+                    <strong>{{ reviewsSummary.totalCount }}</strong>
+                    <span>عدد التقييمات</span>
+                </div>
+            </div>
+
+            <div class="state-message" *ngIf="isLoadingReviews">
+                جاري تحميل التقييمات...
+            </div>
+
+            <div class="empty-state" *ngIf="!isLoadingReviews && reviewsSummary && userReviews.length === 0">
+                <div class="empty-icon">⭐</div>
+                <h3>لا توجد تقييمات منشورة</h3>
+                <p>لا توجد تقييمات لهذا المستخدم حتى الآن.</p>
+            </div>
+
+            <div class="reviews-list" *ngIf="!isLoadingReviews && userReviews.length > 0">
+                <div class="review-item" *ngFor="let review of userReviews; trackBy: trackById">
+                    <div class="review-header">
+                        <strong>{{ review.reviewerName }}</strong>
+                        <span>{{ review.createdAt | date:'short' }}</span>
+                    </div>
+
+                    <div class="review-stars">
+                        {{ getStars(review.rating) }}
+                    </div>
+
+                    <p *ngIf="review.comment">
+                        {{ review.comment }}
+                    </p>
+
+                    <p class="muted" *ngIf="!review.comment">
+                        لا يوجد تعليق مكتوب.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

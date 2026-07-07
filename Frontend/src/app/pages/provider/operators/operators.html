@@ -1,0 +1,71 @@
+<section class="operators-page">
+  <div class="page-header">
+    <div>
+      <h1>المشغلين</h1>
+      <p>أضف مشغلين المعدات واربطهم بإعلانات الخدمات.</p>
+    </div>
+    <button class="btn btn-secondary" type="button" (click)="load()" [disabled]="isLoading">تحديث</button>
+  </div>
+
+  <div class="alert error" *ngIf="errorMessage">{{ errorMessage }}</div>
+  <div class="alert success" *ngIf="successMessage">{{ successMessage }}</div>
+
+  <div class="operators-grid">
+    <div class="card">
+      <h2>{{ editingId ? 'تعديل مشغل' : 'مشغل جديد' }}</h2>
+      <div class="form-group">
+        <label class="form-label">الاسم الكامل</label>
+        <input class="form-input" type="text" [(ngModel)]="form.fullName">
+      </div>
+      <div class="form-group">
+        <label class="form-label">سنوات الخبرة</label>
+        <input class="form-input" type="number" min="0" [(ngModel)]="form.yearsOfExperience">
+      </div>
+      <div class="form-group">
+        <label class="form-label">التخصص</label>
+        <input class="form-input" type="text" [(ngModel)]="form.specialization">
+      </div>
+      <div class="form-group">
+        <label class="form-label">نوع الرخصة</label>
+        <input class="form-input" type="text" [(ngModel)]="form.licenseType">
+      </div>
+      <div class="form-group">
+        <label class="form-label">رقم الرخصة</label>
+        <input class="form-input" type="text" [(ngModel)]="form.licenseNumber">
+      </div>
+      <div class="form-group">
+        <label class="form-label">تاريخ انتهاء الرخصة</label>
+        <input class="form-input" type="date" [(ngModel)]="form.licenseExpiryDate">
+      </div>
+      <label class="checkbox-row" *ngIf="editingId">
+        <input type="checkbox" [(ngModel)]="form.isActive"> نشط
+      </label>
+      <div class="actions-row">
+        <button class="btn btn-primary" type="button" [disabled]="isSaving" (click)="save()">{{ isSaving ? 'جاري الحفظ...' : 'حفظ' }}</button>
+        <button class="btn btn-outline" type="button" *ngIf="editingId" (click)="resetForm()">إلغاء التعديل</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>قائمة المشغلين</h2>
+      <div class="state-message" *ngIf="isLoading">جاري التحميل...</div>
+      <div class="empty-state" *ngIf="!isLoading && operators.length === 0">
+        <div class="empty-icon">👷</div>
+        <h3>لا توجد مشغلين</h3>
+        <p>أضف مشغل واحد على الأقل لإرسال الخدمة للمراجعة.</p>
+      </div>
+      <div class="operator-card" *ngFor="let operator of operators; trackBy: trackById">
+        <div>
+          <h3>{{ operator.fullName }}</h3>
+          <p>{{ operator.specialization || 'بدون تخصص' }} - {{ operator.yearsOfExperience }} سنوات خبرة</p>
+          <small>{{ operator.licenseType || 'رخصة غير محددة' }} {{ operator.licenseNumber || '' }}</small>
+        </div>
+        <div class="actions-row">
+          <span class="status-badge" [class.inactive]="!operator.isActive">{{ operator.isActive ? 'نشط' : 'غير نشط' }}</span>
+          <button class="btn btn-outline" type="button" (click)="edit(operator)">تعديل</button>
+          <button class="btn btn-danger" type="button" (click)="remove(operator)">حذف</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

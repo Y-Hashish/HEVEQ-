@@ -1,0 +1,263 @@
+.product-details-page {
+  padding-top: var(--s2);
+}
+
+.pd-layout {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: var(--s6);
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .pd-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pd-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s6);
+}
+
+.pd-gallery {
+  padding: var(--s4);
+}
+
+.pd-main-photo {
+  width: 100%;
+  height: 420px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--bg-main);
+}
+
+.pd-main-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pd-main-photo .no-image {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  color: var(--text-muted);
+}
+
+.pd-thumbs {
+  display: flex;
+  gap: var(--s3);
+  margin-top: var(--s4);
+  overflow-x: auto;
+}
+
+.pd-thumb {
+  flex: 0 0 auto;
+  width: 80px;
+  height: 80px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 2px solid transparent;
+  padding: 0;
+  cursor: pointer;
+  background: var(--bg-main);
+  transition: var(--transition);
+}
+
+.pd-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pd-thumb.active {
+  border-color: var(--primary);
+}
+
+.pd-section h2 {
+  font-size: var(--text-lg);
+  font-weight: 800;
+  margin-bottom: var(--s3);
+}
+
+.pd-description {
+  color: var(--text-main);
+  line-height: 1.8;
+  white-space: pre-line;
+}
+
+.pd-management {
+  border-color: var(--warning);
+}
+
+.pd-management-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  font-size: var(--text-sm);
+  margin-bottom: var(--s2);
+}
+
+.pd-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s5);
+  position: sticky;
+  top: var(--s5);
+}
+
+.pd-buy-box,
+.pd-seller-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+}
+
+.pd-price {
+  font-size: var(--text-3xl);
+  font-weight: 900;
+  color: var(--primary);
+}
+
+.pd-title {
+  font-size: var(--text-xl);
+  font-weight: 800;
+  margin: 0;
+}
+
+.pd-condition {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+.pd-note {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  background: var(--bg-main);
+  border-radius: var(--radius-sm);
+  padding: var(--s3);
+}
+
+.pd-order-success {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success);
+  border-radius: var(--radius-sm);
+  padding: var(--s3);
+  font-size: var(--text-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+}
+
+.pd-buy-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
+}
+
+.pd-buy-form .filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+}
+
+.pd-buy-form label {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.pd-buy-form select,
+.pd-buy-form input {
+  padding: var(--s2) var(--s3);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+  background: var(--bg-main);
+  color: var(--text-main);
+  font-family: var(--font-cairo);
+}
+
+.pd-order-error {
+  color: var(--danger);
+  font-size: var(--text-sm);
+}
+
+.pd-buy-form-actions {
+  display: flex;
+  gap: var(--s3);
+}
+
+.pd-buy-form-actions .btn {
+  flex: 1;
+}
+
+.pd-seller-name {
+  font-weight: 800;
+  font-size: var(--text-lg);
+}
+
+.pd-seller-rating {
+  display: flex;
+  align-items: center;
+  gap: var(--s1);
+  font-size: var(--text-sm);
+}
+
+.pd-seller-rating .stars {
+  color: var(--border-color);
+  letter-spacing: 2px;
+}
+
+.pd-seller-rating .stars span.filled {
+  color: var(--primary);
+}
+
+.pd-seller-rating .rating-value {
+  font-weight: 700;
+}
+
+.pd-seller-rating .rating-count {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
+.pd-loading {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: var(--s6);
+}
+
+@media (max-width: 1024px) {
+  .pd-loading {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pd-gallery-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
+}
+
+.pd-thumbs-skeleton {
+  display: flex;
+  gap: var(--s3);
+}
+
+.pd-thumbs-skeleton .skeleton {
+  flex: 1;
+}
+
+.empty-state {
+  text-align: center;
+  padding: var(--s10) var(--s4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s4);
+}

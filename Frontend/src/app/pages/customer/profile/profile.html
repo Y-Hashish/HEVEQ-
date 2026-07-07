@@ -1,0 +1,188 @@
+<section class="profile-page">
+    <div class="page-header">
+        <div>
+            <h1>الملف الشخصي</h1>
+            <p>إدارة بيانات الحساب ومعلومات الثقة داخل المنصة.</p>
+        </div>
+
+        <a routerLink="/saved-addresses" class="btn btn-secondary" *ngIf="isCustomer">
+            إدارة العناوين
+        </a>
+    </div>
+
+    <div class="alert error" *ngIf="errorMessage">
+        {{ errorMessage }}
+    </div>
+
+    <div class="alert success" *ngIf="successMessage">
+        {{ successMessage }}
+    </div>
+
+    <div class="state-message" *ngIf="isLoading">
+        جاري تحميل البيانات...
+    </div>
+
+    <div class="profile-grid" *ngIf="!isLoading">
+        <div class="card profile-card">
+            <h2>بيانات أساسية</h2>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">الاسم الأول</label>
+                    <input class="form-input" type="text" [(ngModel)]="form.firstName">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">اسم العائلة</label>
+                    <input class="form-input" type="text" [(ngModel)]="form.lastName">
+                </div>
+
+                <div class="form-group" *ngIf="isProvider">
+                    <label class="form-label">اسم المستخدم</label>
+                    <input class="form-input" type="text" [(ngModel)]="form.userName">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">البريد الإلكتروني</label>
+                    <input class="form-input" type="email" [(ngModel)]="form.email">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">رقم الهاتف</label>
+                    <input class="form-input" type="text" [(ngModel)]="form.phoneNumber">
+                </div>
+            </div>
+
+            <div class="provider-section" *ngIf="isProvider">
+                <h3>بيانات الشركة</h3>
+
+                <div class="form-group">
+                    <label class="form-label">اسم الشركة</label>
+                    <input class="form-input" type="text" [(ngModel)]="form.companyName">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">وصف النشاط</label>
+                    <textarea class="form-input textarea" rows="4" [(ngModel)]="form.businessDescription"></textarea>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">خط العرض</label>
+                        <input class="form-input" type="number" [(ngModel)]="form.baseLatitude">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">خط الطول</label>
+                        <input class="form-input" type="number" [(ngModel)]="form.baseLongitude">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">نطاق الخدمة بالكيلومتر</label>
+                        <input class="form-input" type="number" [(ngModel)]="form.serviceRadiusKm">
+                    </div>
+                </div>
+            </div>
+
+            <div class="customer-section" *ngIf="isCustomer">
+                <h3>العنوان الافتراضي</h3>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">اسم العنوان</label>
+                        <input class="form-input" type="text" [(ngModel)]="form.defaultAddressLabel">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">المحافظة</label>
+                        <input class="form-input" type="text" [(ngModel)]="form.defaultAddressGovernorate">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">المنطقة</label>
+                        <input class="form-input" type="text" [(ngModel)]="form.defaultAddressDistrict">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">الشارع</label>
+                        <input class="form-input" type="text" [(ngModel)]="form.defaultAddressStreet">
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn btn-primary w-full" type="button" [disabled]="isSaving" (click)="saveProfile()">
+                {{ isSaving ? 'جاري الحفظ...' : 'حفظ التعديلات' }}
+            </button>
+        </div>
+
+        <div class="card stats-card" *ngIf="isCustomer && customerProfile">
+            <h2>مؤشرات الحساب</h2>
+
+            <div class="stats-list">
+                <div class="stat-item">
+                    <span>درجة الثقة</span>
+                    <strong>{{ formatNumber(customerProfile.trustScore) }}</strong>
+                </div>
+
+                <div class="stat-item">
+                    <span>إجمالي الحجوزات</span>
+                    <strong>{{ customerProfile.totalBookings }}</strong>
+                </div>
+
+                <div class="stat-item">
+                    <span>عدد فشل الدفع</span>
+                    <strong>{{ customerProfile.paymentFailureCount }}</strong>
+                </div>
+
+                <div class="stat-item">
+                    <span>معدل الإلغاء</span>
+                    <strong>{{ formatNumber(customerProfile.cancellationRate) }}</strong>
+                </div>
+            </div>
+
+            <p class="readonly-note">
+                هذه المؤشرات يتم حسابها من النظام ولا يمكن تعديلها يدويًا.
+            </p>
+        </div>
+
+        <div class="card stats-card" *ngIf="isProvider && providerProfile">
+            <h2>مؤشرات المزود</h2>
+
+            <div class="stats-list">
+                <div class="stat-item">
+                    <span>درجة الثقة</span>
+                    <strong>{{ formatNumber(providerProfile.trustScore) }}</strong>
+                </div>
+
+                <div class="stat-item">
+                    <span>متوسط التقييم</span>
+                    <strong>{{ formatNumber(providerProfile.averageRating) }}</strong>
+                </div>
+
+                <div class="stat-item">
+                    <span>عدد المراجعات</span>
+                    <strong>{{ providerProfile.totalReviewsCount }}</strong>
+                </div>
+
+                <div class="stat-item">
+                    <span>الحجوزات المكتملة</span>
+                    <strong>{{ providerProfile.completedBookingsCount }}</strong>
+                </div>
+
+                <div class="stat-item">
+                    <span>معدل الاستجابة</span>
+                    <strong>{{ formatPercent(providerProfile.responseRate) }}</strong>
+                </div>
+
+                <div class="stat-item">
+                    <span>نطاق الخدمة</span>
+                    <strong>{{ providerProfile.serviceRadiusKm }} كم</strong>
+                </div>
+            </div>
+
+            <p class="readonly-note">
+                مؤشرات الثقة والتقييم والترتيب يتم حسابها من النظام ولا يمكن تعديلها يدويًا.
+            </p>
+        </div>
+    </div>
+</section>

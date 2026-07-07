@@ -1,0 +1,27 @@
+<section class="payment-result-page">
+    <div class="card result-card">
+        <div class="state-message" *ngIf="isLoading">
+            جاري تأكيد الدفع داخل النظام...
+        </div>
+
+        <div *ngIf="!isLoading && successMessage">
+            <div class="result-icon success">✓</div>
+            <h1>تم الدفع بنجاح</h1>
+            <p>{{ successMessage }}</p>
+
+            <a [routerLink]="returnLink" class="btn btn-primary">
+                {{ returnLabel }}
+            </a>
+        </div>
+
+        <div *ngIf="!isLoading && errorMessage">
+            <div class="result-icon error">!</div>
+            <h1>حدثت مشكلة في تأكيد الدفع</h1>
+            <p>{{ errorMessage }}</p>
+
+            <a [routerLink]="returnLink" class="btn btn-secondary">
+                {{ returnLabel }}
+            </a>
+        </div>
+    </div>
+</section>

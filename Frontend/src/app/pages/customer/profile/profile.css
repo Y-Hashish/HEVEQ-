@@ -1,0 +1,151 @@
+.profile-page {
+  padding: 32px;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.page-header h1 {
+  margin: 0 0 8px;
+  color: var(--text-main);
+  font-size: 2rem;
+  font-weight: 900;
+}
+
+.page-header p {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.profile-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 24px;
+  align-items: start;
+}
+
+.profile-card,
+.stats-card {
+  padding: 24px;
+}
+
+.profile-card h2,
+.stats-card h2 {
+  margin: 0 0 20px;
+  color: var(--text-main);
+  font-size: 1.25rem;
+  font-weight: 900;
+}
+
+.provider-section,
+.customer-section {
+  margin-top: 24px;
+  padding-top: 22px;
+  border-top: 1px solid var(--border-color);
+}
+
+.provider-section h3,
+.customer-section h3 {
+  margin: 0 0 16px;
+  color: var(--text-main);
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 110px;
+}
+
+.w-full {
+  width: 100%;
+  margin-top: 22px;
+}
+
+.alert {
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  margin-bottom: 14px;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.alert.success {
+  background: rgba(22, 163, 74, 0.12);
+  color: #15803d;
+}
+
+.alert.error {
+  background: rgba(220, 38, 38, 0.12);
+  color: #dc2626;
+}
+
+.state-message {
+  padding: 32px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.stats-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px;
+  border-radius: var(--radius);
+  background: var(--bg-main);
+  border: 1px solid var(--border-color);
+}
+
+.stat-item span {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.stat-item strong {
+  color: var(--text-main);
+  font-weight: 900;
+}
+
+.readonly-note {
+  margin: 18px 0 0;
+  color: var(--text-muted);
+  line-height: 1.7;
+  font-size: 0.86rem;
+}
+
+@media (max-width: 992px) {
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .profile-page {
+    padding: 20px;
+  }
+
+  .page-header {
+    flex-direction: column;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}

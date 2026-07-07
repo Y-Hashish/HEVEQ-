@@ -1,0 +1,51 @@
+<section class="earnings-page">
+  <div class="page-header">
+    <div>
+      <h1>الأرباح</h1>
+      <p>ملخص إيرادات الخدمات والضمان خلال الفترة المحددة.</p>
+    </div>
+    <button class="btn btn-secondary" type="button" (click)="load()" [disabled]="isLoading">تحديث</button>
+  </div>
+
+  <div class="card filters-card">
+    <div class="form-group">
+      <label class="form-label">من</label>
+      <input class="form-input" type="date" [(ngModel)]="from">
+    </div>
+    <div class="form-group">
+      <label class="form-label">إلى</label>
+      <input class="form-input" type="date" [(ngModel)]="to">
+    </div>
+    <button class="btn btn-primary" type="button" (click)="load()" [disabled]="isLoading">تطبيق</button>
+  </div>
+
+  <div class="alert error" *ngIf="errorMessage">{{ errorMessage }}</div>
+  <div class="card" *ngIf="isLoading">جاري التحميل...</div>
+
+  <div class="section-heading" *ngIf="serviceSummary && !isLoading">
+    <h2>أرباح الخدمات</h2>
+  </div>
+
+  <div class="dashboard-grid" *ngIf="serviceSummary && !isLoading">
+    <div class="card widget-card"><p>إجمالي عمليات الخدمات</p><h3>{{ money(serviceSummary.grossAmount) }}</h3></div>
+    <div class="card widget-card"><p>عمولة المنصة</p><h3>{{ money(serviceSummary.platformCommission) }}</h3></div>
+    <div class="card widget-card"><p>صافي مستحقاتك</p><h3>{{ money(serviceSummary.providerPayout) }}</h3></div>
+    <div class="card widget-card"><p>مبالغ محجوزة</p><h3>{{ money(serviceSummary.heldAmount) }}</h3></div>
+    <div class="card widget-card"><p>مبالغ مصروفة</p><h3>{{ money(serviceSummary.releasedAmount) }}</h3></div>
+    <div class="card widget-card"><p>حجوزات مكتملة</p><h3>{{ serviceSummary.completedBookingsCount }}</h3></div>
+  </div>
+
+  <div class="section-heading" *ngIf="marketplaceSummary && !isLoading">
+    <h2>أرباح السوق</h2>
+    <p>عند تأكيد العميل لاستلام الطلب يتم الإفراج عن الضمان ويظهر المبلغ ضمن المبالغ المصروفة.</p>
+  </div>
+
+  <div class="dashboard-grid" *ngIf="marketplaceSummary && !isLoading">
+    <div class="card widget-card"><p>إجمالي مبيعات السوق</p><h3>{{ money(marketplaceSummary.grossSales) }}</h3></div>
+    <div class="card widget-card"><p>عمولة المنصة</p><h3>{{ money(marketplaceSummary.platformCommission) }}</h3></div>
+    <div class="card widget-card"><p>صافي مستحقات البائع</p><h3>{{ money(marketplaceSummary.sellerPayout) }}</h3></div>
+    <div class="card widget-card"><p>مبالغ محجوزة</p><h3>{{ money(marketplaceSummary.heldAmount) }}</h3></div>
+    <div class="card widget-card"><p>مبالغ مصروفة</p><h3>{{ money(marketplaceSummary.releasedAmount) }}</h3></div>
+    <div class="card widget-card"><p>طلبات مكتملة</p><h3>{{ marketplaceSummary.completedOrdersCount }}</h3></div>
+  </div>
+</section>

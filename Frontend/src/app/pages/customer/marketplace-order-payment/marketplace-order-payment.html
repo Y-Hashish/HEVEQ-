@@ -1,0 +1,39 @@
+<section class="marketplace-payment-page">
+  <div class="page-header">
+    <div>
+      <h1>دفع طلب السوق</h1>
+      <p>راجع بيانات الطلب ثم أكمل الدفع لإرسال الطلب إلى البائع.</p>
+    </div>
+    <a class="btn btn-outline" routerLink="/marketplace-orders">طلبات السوق</a>
+  </div>
+
+  <div class="alert error" *ngIf="errorMessage">{{ errorMessage }}</div>
+  <div class="alert success" *ngIf="successMessage">{{ successMessage }}</div>
+
+  <div class="card" *ngIf="isLoading">جاري تحميل بيانات الدفع...</div>
+
+  <div class="payment-layout" *ngIf="!isLoading && order">
+    <div class="card">
+      <h2>{{ order.listingTitle }}</h2>
+      <div class="summary-grid">
+        <div><span>رقم الطلب</span><strong>{{ order.id }}</strong></div>
+        <div><span>الحالة</span><strong>{{ order.statusAr || order.status }}</strong></div>
+        <div><span>البائع</span><strong>{{ order.sellerName }}</strong></div>
+        <div><span>طريقة الاستلام</span><strong>{{ order.deliveryPreference || 'غير محدد' }}</strong></div>
+      </div>
+    </div>
+
+    <div class="card payment-card">
+      <p class="text-muted">إجمالي المبلغ</p>
+      <h2>{{ money(order.amount) }}</h2>
+      <p class="text-muted" *ngIf="escrow">حالة الضمان: {{ escrow.statusAr || escrow.status }}</p>
+
+      <button class="btn btn-primary w-full" type="button" [disabled]="isPaying" (click)="payNow()">
+        {{ isPaying ? 'جاري إنشاء رابط الدفع...' : 'الدفع الآن' }}
+      </button>
+      <button class="btn btn-outline w-full" type="button" [disabled]="isMockConfirming" (click)="confirmMockPayment()">
+        {{ isMockConfirming ? 'جاري التأكيد...' : 'تأكيد دفع تجريبي للديمو' }}
+      </button>
+    </div>
+  </div>
+</section>

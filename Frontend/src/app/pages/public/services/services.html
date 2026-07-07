@@ -1,0 +1,119 @@
+<div class="container">
+    <div class="services-hero animate-on-scroll">
+        <h1>منصة تأجير المعدات الثقيلة (Rentals)</h1>
+        <p>احجز معداتك الثقيلة والآليات الإنشائية فوراً مع المشغلين والشركات المعتمدة</p>
+
+        <div class="nav-search services-search">
+            <input type="text" placeholder="ابحث عن ونش، رافعة، جرافة، أو مولدات للإيجار..." name="search"
+                [(ngModel)]="filters.search" (keyup.enter)="search()">
+            <span class="search-icon" (click)="search()" style="cursor: pointer;">🔍</span>
+        </div>
+    </div>
+
+    <section class="services-section">
+        <div class="section-header animate-on-scroll">
+            <div class="section-title">
+                <h2>استكشف فئات التأجير</h2>
+                <p>آليات الرفع، تسوية التربة، وحلول الطاقة الكهربائية</p>
+            </div>
+        </div>
+
+        <div class="categories-grid">
+            <div class="category-card animate-on-scroll">
+                <span class="category-icon">🏗️</span>
+                <span class="category-name">رافعات وأوناش</span>
+            </div>
+
+            <div class="category-card animate-on-scroll">
+                <span class="category-icon">🚜</span>
+                <span class="category-name">حفارات وجرافات</span>
+            </div>
+
+            <div class="category-card animate-on-scroll">
+                <span class="category-icon">⚡</span>
+                <span class="category-name">مولدات كهرباء</span>
+            </div>
+
+            <div class="category-card animate-on-scroll">
+                <span class="category-icon">🚚</span>
+                <span class="category-name">شاحنات نقل ثقيل</span>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <div class="section-header animate-on-scroll">
+            <div class="section-title">
+                <h2>المعدات المتاحة للحجز والطلب الفوري</h2>
+                <p>خدمات تأجير متكاملة مدعومة بفريق المشغلين المرخصين</p>
+            </div>
+        </div>
+
+        <!-- Real filters wired to GET /api/public/service-listings -->
+        <div class="card flex gap-3" style="margin-bottom: var(--s5); flex-wrap: wrap; align-items: flex-end;">
+            <div class="form-group" style="flex: 1; min-width: 160px;">
+                <label class="form-label">الفئة</label>
+                <select class="form-input" name="categoryId" [(ngModel)]="filters.categoryId" (change)="search()">
+                    <option [ngValue]="undefined">كل الفئات</option>
+                    <option *ngFor="let category of categories" [ngValue]="category.id">{{ category.name }}</option>
+                </select>
+            </div>
+            <div class="form-group" style="flex: 1; min-width: 160px;">
+                <label class="form-label">المحافظة</label>
+                <input class="form-input" name="governorate" [(ngModel)]="filters.governorate" (keyup.enter)="search()">
+            </div>
+            <div class="form-group" style="flex: 1; min-width: 120px;">
+                <label class="form-label">أقل سعر/ساعة</label>
+                <input class="form-input" type="number" min="0" name="minRate" [(ngModel)]="filters.minRate" (keyup.enter)="search()">
+            </div>
+            <div class="form-group" style="flex: 1; min-width: 120px;">
+                <label class="form-label">أعلى سعر/ساعة</label>
+                <input class="form-input" type="number" min="0" name="maxRate" [(ngModel)]="filters.maxRate" (keyup.enter)="search()">
+            </div>
+            <button type="button" class="btn btn-primary" (click)="search()">تصفية النتائج</button>
+        </div>
+
+        <div *ngIf="isLoading" class="card">
+            <p class="text-muted">جاري التحميل...</p>
+        </div>
+
+        <div *ngIf="!isLoading && listings.length === 0" class="card">
+            <p class="text-muted">لا توجد نتائج مطابقة لبحثك.</p>
+        </div>
+
+        <div class="services-grid" *ngIf="!isLoading && listings.length > 0">
+            <div class="services-card animate-on-scroll" *ngFor="let listing of listings">
+                <div class="services-img">
+                    <img *ngIf="listing.coverPhotoUrl" [src]="listing.coverPhotoUrl" [alt]="listing.title">
+                    <span class="badge badge-info service-badge">{{ listing.categoryName }}</span>
+                </div>
+
+                <div class="services-info">
+                    <div class="services-rate">
+                        <strong>{{ listing.hourlyRate }} ج.م/ساعة</strong>
+                        <span *ngIf="listing.dailyRate">({{ listing.dailyRate }} ج.م/يومي)</span>
+                    </div>
+
+                    <h3>{{ listing.title }}</h3>
+
+                    <div class="services-meta">
+                        <span *ngIf="listing.location">📍 {{ listing.location }}</span>
+                        <span>🕒 {{ listing.availabilityText }}</span>
+                        <span>⭐ {{ listing.averageRating.toFixed(1) }} ({{ listing.totalReviewsCount }} تقييم)</span>
+                        <span>🏢 {{ listing.providerCompany }} — {{ listing.trustLevel }}</span>
+                    </div>
+
+                    <button type="button" class="btn btn-primary w-full" (click)="viewListing(listing.id)">
+                        عرض التفاصيل والحجز 🚜
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex gap-3 justify-center" style="margin-top: var(--s6);" *ngIf="!isLoading && listings.length > 0">
+            <button type="button" class="btn btn-outline" [disabled]="(filters.page ?? 1) <= 1" (click)="previousPage()">السابق</button>
+            <span class="text-muted" style="align-self: center;">صفحة {{ filters.page }}</span>
+            <button type="button" class="btn btn-outline" [disabled]="(filters.page ?? 1) * (filters.pageSize ?? 9) >= totalCount" (click)="nextPage()">التالي</button>
+        </div>
+    </section>
+</div>

@@ -1,0 +1,221 @@
+<section class="orders-page">
+  <div class="page-header">
+    <div>
+      <h1>طلبات البيع في السوق</h1>
+      <p>تابع طلبات العملاء، الدفع، الشحن، التسليم، والضمان بنفس تجربة صفحة الحجوزات.</p>
+    </div>
+
+    <button class="btn btn-secondary" type="button" (click)="loadOrders()" [disabled]="isLoading">
+      تحديث
+    </button>
+  </div>
+
+  <div class="alert error" *ngIf="errorMessage">
+    {{ errorMessage }}
+  </div>
+
+  <div class="alert success" *ngIf="successMessage">
+    {{ successMessage }}
+  </div>
+
+  <div class="orders-grid">
+    <div class="card orders-list-card">
+      <h2>طلبات العملاء</h2>
+
+      <div class="state-message" *ngIf="isLoading">
+        جاري تحميل طلبات البيع...
+      </div>
+
+      <div class="empty-state" *ngIf="!isLoading && orders.length === 0">
+        <div class="empty-icon">🧾</div>
+        <h3>لا توجد طلبات بيع</h3>
+        <p>عند شراء أحد منتجاتك ستظهر الطلبات هنا.</p>
+      </div>
+
+      <div class="orders-list" *ngIf="!isLoading && orders.length > 0">
+        <button
+          type="button"
+          class="order-item"
+          *ngFor="let order of orders; trackBy: trackById"
+          [class.active]="selectedOrder?.id === order.id"
+          (click)="openOrder(order.id)"
+        >
+          <div class="order-title-row">
+            <h3>{{ order.listingTitle || 'طلب بيع' }}</h3>
+
+            <span class="status-badge" [class]="getStatusClass(order.status)">
+              {{ statusText(order) }}
+            </span>
+          </div>
+
+          <p>{{ order.buyerName || 'المشتري' }} - {{ money(order.amount) }}</p>
+
+          <small>{{ order.createdAt | date:'short' }}</small>
+        </button>
+      </div>
+    </div>
+
+    <div class="card order-details-card">
+      <div class="state-message" *ngIf="isDetailsLoading">
+        جاري تحميل تفاصيل طلب البيع...
+      </div>
+
+      <div class="empty-state details-empty" *ngIf="!selectedOrder && !isDetailsLoading">
+        <div class="empty-icon">📦</div>
+        <h3>اختر طلب</h3>
+        <p>اضغط على أي طلب من القائمة لعرض التفاصيل والإجراءات المتاحة.</p>
+      </div>
+
+      <div *ngIf="selectedOrder && !isDetailsLoading">
+        <div class="details-header">
+          <div>
+            <h2>{{ selectedOrder.listingTitle || 'طلب بيع' }}</h2>
+            <p>المشتري: {{ selectedOrder.buyerName || 'غير محدد' }}</p>
+          </div>
+
+          <span class="status-badge" [class]="getStatusClass(selectedOrder.status)">
+            {{ statusText(selectedOrder) }}
+          </span>
+        </div>
+
+        <div class="details-grid">
+          <div>
+            <span>رقم الطلب</span>
+            <strong>{{ selectedOrder.id }}</strong>
+          </div>
+
+          <div>
+            <span>المبلغ</span>
+            <strong>{{ money(selectedOrder.amount) }}</strong>
+          </div>
+
+          <div>
+            <span>طريقة الاستلام</span>
+            <strong>{{ selectedOrder.deliveryPreference || 'غير محدد' }}</strong>
+          </div>
+
+          <div>
+            <span>عنوان التسليم</span>
+            <strong>{{ selectedOrder.deliveryAddress || 'غير محدد' }}</strong>
+          </div>
+
+          <div>
+            <span>رقم التتبع</span>
+            <strong>{{ selectedOrder.trackingNumber || 'لم يحدد بعد' }}</strong>
+          </div>
+
+          <div>
+            <span>تاريخ الطلب</span>
+            <strong>{{ selectedOrder.createdAt | date:'short' }}</strong>
+          </div>
+        </div>
+
+        <div class="tracker-section" *ngIf="tracking">
+          <div class="tracker-header-row">
+            <div>
+              <h3>مسار الطلب</h3>
+              <p class="tracker-subtitle">
+                {{ tracking.statusAr || tracking.status }}
+              </p>
+            </div>
+          </div>
+
+          <div class="timeline-ui" *ngIf="tracking.timeline.length">
+            <div
+              class="timeline-step"
+              *ngFor="let step of tracking.timeline; let i = index"
+              [ngClass]="getTimelineItemState(step, i)"
+            >
+              <div class="timeline-marker">
+                <span class="timeline-dot"></span>
+                <span class="timeline-line" *ngIf="i < (tracking.timeline.length - 1)"></span>
+              </div>
+
+              <div class="timeline-card">
+                <div class="timeline-card-top">
+                  <div class="timeline-texts">
+                    <strong>{{ step.labelAr || step.label }}</strong>
+
+                    <span *ngIf="step.date">
+                      {{ step.date | date:'d MMMM yyyy - h:mm a' }}
+                    </span>
+
+                    <span *ngIf="!step.date">
+                      {{ getTimelineHint(step, i) }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="escrow-section">
+          <h3>حالة الدفع والضمان</h3>
+
+          <div class="escrow-grid">
+            <div>
+              <span>الحالة</span>
+              <strong>{{ escrow?.statusAr || escrow?.status || 'غير متاح' }}</strong>
+            </div>
+
+            <div>
+              <span>إجمالي المبلغ</span>
+              <strong>{{ money(escrow?.grossAmount ?? selectedOrder.amount) }}</strong>
+            </div>
+
+            <div>
+              <span>عمولة المنصة</span>
+              <strong>{{ money(escrow?.platformCommission ?? 0) }}</strong>
+            </div>
+
+            <div>
+              <span>صافي مستحق البائع</span>
+              <strong>{{ money(escrow?.providerPayout ?? 0) }}</strong>
+            </div>
+
+            <div>
+              <span>تاريخ التحصيل</span>
+              <strong>{{ escrow?.capturedAt ? ((escrow?.capturedAt ?? '') | date:'short') : 'لم يتم التحصيل' }}</strong>
+            </div>
+
+            <div>
+              <span>تاريخ الإفراج</span>
+              <strong>{{ escrow?.releasedAt ? ((escrow?.releasedAt ?? '') | date:'short') : 'لم يتم الإفراج بعد' }}</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="actions-section" *ngIf="canSellerConfirm() || canDeliver()">
+          <h3>الإجراءات المتاحة</h3>
+
+          <div class="action-buttons">
+            <button class="btn btn-primary" type="button" *ngIf="canSellerConfirm()" [disabled]="isActionLoading" (click)="sellerConfirm()">
+              تأكيد قبول الطلب
+            </button>
+
+            <button class="btn btn-primary" type="button" *ngIf="canDeliver()" [disabled]="isActionLoading" (click)="markDelivered()">
+              تم التسليم للعميل
+            </button>
+          </div>
+        </div>
+
+        <div class="form-panel" *ngIf="canDispatch()">
+          <h3>تسجيل الشحن</h3>
+          <input class="form-input" type="text" [(ngModel)]="trackingNumber" placeholder="رقم التتبع اختياري">
+          <button class="btn btn-primary" type="button" [disabled]="isActionLoading" (click)="dispatchOrder()">
+            تسجيل الشحن
+          </button>
+        </div>
+
+        <div class="form-panel" *ngIf="canCancel()">
+          <h3>إلغاء الطلب</h3>
+          <textarea class="form-input textarea" rows="3" [(ngModel)]="cancelReason" placeholder="سبب الإلغاء"></textarea>
+          <button class="btn btn-danger" type="button" [disabled]="isActionLoading" (click)="cancelOrder()">
+            إلغاء الطلب
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

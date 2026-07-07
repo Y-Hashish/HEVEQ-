@@ -1,0 +1,9 @@
+.search-page { padding: var(--s5); }
+.page-header { margin-bottom: var(--s5); }
+.page-header h1 { margin: 0; }
+.page-header p { color: var(--text-muted); }
+.results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--s4); }
+.result-card { color: inherit; text-decoration: none; }
+.result-card img { width: 100%; height: 140px; object-fit: cover; border-radius: var(--radius); margin-bottom: var(--s3); }
+.result-card h3 { margin: 0 0 var(--s2); }
+.result-card p { color: var(--text-muted); }

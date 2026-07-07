@@ -1,0 +1,24 @@
+<div class="container">
+    <div class="section-header">
+        <div class="section-title">
+            <h1>لوحة المزود</h1>
+            <p>نظرة عامة على أداء حسابك</p>
+        </div>
+    </div>
+
+    <div *ngIf="isLoading" class="card">
+        <p class="text-muted">جاري التحميل...</p>
+    </div>
+
+    <div class="dashboard-grid" *ngIf="!isLoading">
+        <div class="card widget-card" *ngFor="let widget of widgets">
+            <div class="widget-info">
+                <p class="text-muted">{{ widget.label }}</p>
+                <h3>{{ widget.value }}</h3>
+            </div>
+            <div class="widget-icon" [style.background]="widget.background">
+                {{ widget.icon }}
+            </div>
+        </div>
+    </div>
+</div>

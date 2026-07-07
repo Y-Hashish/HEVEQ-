@@ -1,0 +1,133 @@
+<div class="admin-page">
+  <div class="admin-header">
+    <h1 class="page-title">إدارة النزاعات</h1>
+    <p class="page-subtitle">مراجعة وحل النزاعات المالية بين العملاء والمزودين</p>
+  </div>
+
+  <div class="filters-panel">
+    <div class="filter-group">
+      <label class="filter-label">الحالة</label>
+      <select class="form-control" [(ngModel)]="filterStatus" (change)="onFilterChange()">
+        <option value="">الكل</option>
+        <option value="Open">مفتوح</option>
+        <option value="UnderReview">قيد المراجعة</option>
+        <option value="Resolved">تم الحل</option>
+      </select>
+    </div>
+  </div>
+
+  <app-loading *ngIf="isLoading" [fullScreen]="false"></app-loading>
+
+  <div class="split-layout" *ngIf="!isLoading">
+    <!-- List Column -->
+    <div class="list-column" [class.hidden-mobile]="selectedDispute">
+      <app-empty-state *ngIf="disputes.length === 0" 
+        title="لا توجد نزاعات" 
+        message="لا يوجد نزاعات مطابقة لمعايير البحث.">
+      </app-empty-state>
+
+      <div class="dispute-cards" *ngIf="disputes.length > 0">
+        <div class="dispute-card" 
+             *ngFor="let dispute of disputes" 
+             [class.active]="selectedDispute?.id === dispute.id"
+             (click)="viewDispute(dispute.id)">
+          <div class="card-header">
+            <h3 class="item-title">مبلغ النزاع: {{ dispute.amount }} {{ dispute.currency }}</h3>
+            <span class="status-badge" [ngClass]="dispute.status ? dispute.status.toLowerCase() : ''">{{ dispute.status }}</span>
+          </div>
+          <div class="parties">
+            <p><strong>العميل:</strong> {{ dispute.customerName }}</p>
+            <p><strong>المزود:</strong> {{ dispute.providerName }}</p>
+          </div>
+          <p class="reason-text">{{ dispute.reason }}</p>
+          <div class="item-meta">
+            <span>طلب: {{ dispute.createdAt | date:'shortDate' }}</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="pagination-simple" *ngIf="totalCount > pageSize">
+        <app-pagination 
+          [page]="page" 
+          [pageSize]="pageSize" 
+          [totalCount]="totalCount" 
+          (pageChange)="onPageChange($event)">
+        </app-pagination>
+      </div>
+    </div>
+
+    <!-- Details Column -->
+    <div class="details-column" *ngIf="selectedDispute || isDetailsLoading" [class.visible-mobile]="selectedDispute || isDetailsLoading">
+      <div class="mobile-back">
+        <button class="btn btn-secondary btn-sm" (click)="closeDispute()">&rarr; عودة للنزاعات</button>
+      </div>
+
+      <app-loading *ngIf="isDetailsLoading" [fullScreen]="false"></app-loading>
+
+      <div class="details-content" *ngIf="selectedDispute && !isDetailsLoading">
+        <div class="details-header">
+          <div class="header-titles">
+            <h2>تفاصيل النزاع</h2>
+            <p class="subtitle">رقم الحجز: {{ selectedDispute.bookingId }} | الخدمة: {{ selectedDispute.serviceTitle }}</p>
+          </div>
+          <div class="status-box">
+            <span class="status-badge" [ngClass]="selectedDispute.status ? selectedDispute.status.toLowerCase() : ''">{{ selectedDispute.status }}</span>
+          </div>
+        </div>
+
+        <div class="content-grid">
+          <div class="main-info">
+            <div class="info-section">
+              <h3>سبب النزاع: {{ selectedDispute.reason }}</h3>
+              <p class="description-text">{{ selectedDispute.description }}</p>
+            </div>
+
+
+          </div>
+
+          <div class="side-info">
+            <div class="info-card amount-card">
+              <h3>المبلغ المتنازع عليه</h3>
+              <div class="amount-value">{{ selectedDispute.amount }} <small>{{ selectedDispute.currency }}</small></div>
+            </div>
+
+            <div class="info-card resolution-card" *ngIf="selectedDispute.status !== 'Resolved'">
+              <h3>اتخاذ قرار (حل النزاع)</h3>
+              
+              <div class="form-group">
+                <label>نوع الحل المالي</label>
+                <select class="form-control full-width" [(ngModel)]="resolutionType">
+                  <option value="">-- اختر الحل --</option>
+                  <option value="RefundCustomer">استرداد كامل للعميل</option>
+                  <option value="ReleaseToProvider">صرف كامل للمزود</option>
+                  <option value="PartialRefund">استرداد جزئي (تقسيم المبلغ)</option>
+                </select>
+              </div>
+
+              <div class="form-group" *ngIf="resolutionType === 'PartialRefund'">
+                <label>مبلغ الاسترداد للعميل (أقل من {{ selectedDispute.amount }})</label>
+                <input type="number" class="form-control full-width" [(ngModel)]="refundAmount" placeholder="المبلغ المسترد">
+                <small class="hint-text">الباقي ({{ selectedDispute.amount - (refundAmount || 0) }}) سيتم صرفه للمزود.</small>
+              </div>
+
+              <div class="form-group">
+                <label>ملاحظة إدارية (إلزامية)</label>
+                <textarea class="form-control full-width" rows="3" [(ngModel)]="adminNote" placeholder="سبب القرار (سيظهر للأطراف)"></textarea>
+              </div>
+
+              <button class="btn btn-primary full-width" 
+                      [disabled]="!resolutionType || !adminNote || isResolving" 
+                      (click)="resolveDispute()">
+                {{ isResolving ? 'جاري التنفيذ...' : 'تأكيد وحل النزاع' }}
+              </button>
+            </div>
+            
+            <div class="info-card resolved-card" *ngIf="selectedDispute.status === 'Resolved'">
+              <h3>النزاع مغلق وتم اتخاذ القرار.</h3>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

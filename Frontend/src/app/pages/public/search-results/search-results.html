@@ -1,0 +1,35 @@
+<section class="search-page">
+  <div class="page-header">
+    <div>
+      <h1>نتائج البحث</h1>
+      <p *ngIf="query">نتائج عن: {{ query }}</p>
+      <p *ngIf="!query">أحدث الخدمات والمنتجات المتاحة.</p>
+    </div>
+  </div>
+
+  <div class="alert error" *ngIf="errorMessage">{{ errorMessage }}</div>
+  <div class="card" *ngIf="isLoading">جاري البحث...</div>
+
+  <div *ngIf="!isLoading">
+    <h2>الخدمات</h2>
+    <div class="results-grid" *ngIf="services.length; else noServices">
+      <a class="card result-card" *ngFor="let item of services" [routerLink]="['/service-details', item.id]">
+        <h3>{{ item.title }}</h3>
+        <p>{{ item.categoryName }}</p>
+        <strong>{{ item.hourlyRate | number }} ج.م/ساعة</strong>
+      </a>
+    </div>
+    <ng-template #noServices><div class="card empty-state">لا توجد خدمات مطابقة.</div></ng-template>
+
+    <h2 style="margin-top: var(--s5);">السوق</h2>
+    <div class="results-grid" *ngIf="marketplace.length; else noMarket">
+      <a class="card result-card" *ngFor="let item of marketplace" [routerLink]="['/product-details', item.id]">
+        <img *ngIf="item.coverPhotoUrl" [src]="item.coverPhotoUrl" [alt]="item.title">
+        <h3>{{ item.title }}</h3>
+        <p>{{ item.categoryName }}</p>
+        <strong>{{ item.price | number }} ج.م</strong>
+      </a>
+    </div>
+    <ng-template #noMarket><div class="card empty-state">لا توجد منتجات مطابقة.</div></ng-template>
+  </div>
+</section>

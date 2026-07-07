@@ -1,0 +1,127 @@
+<section class="addresses-page">
+    <div class="page-header">
+        <div>
+            <h1>العناوين المحفوظة</h1>
+            <p>أضف مواقع العمل أو العناوين التي تستخدمها في الحجوزات.</p>
+        </div>
+    </div>
+
+    <div class="alert error" *ngIf="errorMessage">
+        {{ errorMessage }}
+    </div>
+
+    <div class="alert success" *ngIf="successMessage">
+        {{ successMessage }}
+    </div>
+
+    <div class="addresses-grid">
+        <div class="card address-form-card">
+            <h2>{{ isEditMode ? 'تعديل العنوان' : 'إضافة عنوان جديد' }}</h2>
+
+            <div class="form-group">
+                <label class="form-label">اسم العنوان</label>
+                <input class="form-input" type="text" [(ngModel)]="form.label" placeholder="مثال: موقع المشروع">
+            </div>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">المحافظة</label>
+                    <input class="form-input" type="text" [(ngModel)]="form.governorate" placeholder="القاهرة">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">المنطقة</label>
+                    <input class="form-input" type="text" [(ngModel)]="form.district" placeholder="مدينة نصر">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">الشارع</label>
+                <input class="form-input" type="text" [(ngModel)]="form.street" placeholder="اسم الشارع أو وصف الموقع">
+            </div>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">خط العرض</label>
+                    <input class="form-input" type="number" [(ngModel)]="form.latitude">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">خط الطول</label>
+                    <input class="form-input" type="number" [(ngModel)]="form.longitude">
+                </div>
+            </div>
+
+            <label class="checkbox-row">
+                <input type="checkbox" [(ngModel)]="form.isDefault">
+                <span>تعيين كعنوان افتراضي</span>
+            </label>
+
+            <div class="form-actions">
+                <button class="btn btn-primary" type="button" [disabled]="isSaving" (click)="saveAddress()">
+                    {{ isSaving ? 'جاري الحفظ...' : isEditMode ? 'حفظ التعديل' : 'إضافة العنوان' }}
+                </button>
+
+                <button class="btn btn-secondary" type="button" *ngIf="isEditMode" (click)="resetForm()">
+                    إلغاء التعديل
+                </button>
+            </div>
+        </div>
+
+        <div class="card addresses-list-card">
+            <div class="card-header-row">
+                <div>
+                    <h2>قائمة العناوين</h2>
+                    <p>العنوان الافتراضي يستخدم تلقائيًا في بعض خطوات الحجز.</p>
+                </div>
+
+                <button class="btn btn-secondary btn-sm" type="button" [disabled]="isLoading" (click)="loadAddresses()">
+                    تحديث
+                </button>
+            </div>
+
+            <div class="state-message" *ngIf="isLoading">
+                جاري تحميل العناوين...
+            </div>
+
+            <div class="empty-state" *ngIf="!isLoading && addresses.length === 0">
+                <div class="empty-icon">📍</div>
+                <h3>لا توجد عناوين محفوظة</h3>
+                <p>ابدأ بإضافة عنوان جديد لاستخدامه في الحجوزات.</p>
+            </div>
+
+            <div class="addresses-list" *ngIf="!isLoading && addresses.length > 0">
+                <div class="address-item" *ngFor="let address of addresses; trackBy: trackById">
+                    <div>
+                        <div class="address-title-row">
+                            <h3>{{ address.label }}</h3>
+                            <span class="default-badge" *ngIf="address.isDefault">افتراضي</span>
+                        </div>
+
+                        <p>{{ address.governorate }}، {{ address.district }}</p>
+                        <p>{{ address.street }}</p>
+
+                        <small *ngIf="address.latitude !== null && address.longitude !== null">
+                            {{ address.latitude }}, {{ address.longitude }}
+                        </small>
+                    </div>
+
+                    <div class="address-actions">
+                        <button class="btn btn-secondary btn-sm" type="button" (click)="editAddress(address)">
+                            تعديل
+                        </button>
+
+                        <button class="btn btn-secondary btn-sm" type="button" *ngIf="!address.isDefault"
+                            (click)="setDefault(address)">
+                            افتراضي
+                        </button>
+
+                        <button class="btn btn-danger btn-sm" type="button" (click)="deleteAddress(address)">
+                            حذف
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

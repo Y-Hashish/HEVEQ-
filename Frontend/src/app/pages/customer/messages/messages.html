@@ -1,0 +1,126 @@
+<section class="messages-page">
+    <div class="page-header">
+        <div>
+            <h1>الرسائل</h1>
+            <p>تابع محادثاتك المرتبطة بالحجوزات والخدمات والسوق.</p>
+        </div>
+
+        <button class="btn btn-secondary" type="button" [disabled]="isLoading" (click)="loadConversations()">
+            تحديث
+        </button>
+    </div>
+
+    <div class="alert error" *ngIf="errorMessage">
+        {{ errorMessage }}
+    </div>
+
+    <div class="alert success" *ngIf="successMessage">
+        {{ successMessage }}
+    </div>
+
+    <div class="messages-grid">
+        <div class="card conversations-card">
+            <h2>المحادثات</h2>
+
+            <div class="state-message" *ngIf="isLoading">
+                جاري تحميل المحادثات...
+            </div>
+
+            <div class="empty-state" *ngIf="!isLoading && conversations.length === 0">
+                <div class="empty-icon">💬</div>
+                <h3>لا توجد محادثات حتى الآن</h3>
+                <p>المحادثات تظهر عند بدء تواصل من حجز أو خدمة أو منتج.</p>
+            </div>
+
+            <div class="conversations-list" *ngIf="!isLoading && conversations.length > 0">
+                <button type="button" class="conversation-item"
+                    *ngFor="let conversation of conversations; trackBy: trackConversationById"
+                    [class.active]="selectedConversation?.id === conversation.id"
+                    (click)="openConversation(conversation)">
+
+                    <div class="conversation-title-row">
+                        <h3>{{ getConversationTitle(conversation) }}</h3>
+
+                        <span class="unread-badge" *ngIf="conversation.unreadCount > 0">
+                            {{ conversation.unreadCount }}
+                        </span>
+                    </div>
+
+                    <p>{{ conversation.otherPartyName }}</p>
+
+                    <small>
+                        {{ getContextText(conversation.contextType) }}
+                    </small>
+
+                    <div class="last-message" *ngIf="conversation.lastMessagePreview">
+                        {{ conversation.lastMessagePreview }}
+                    </div>
+
+                    <div class="conversation-time" *ngIf="conversation.lastMessageAt">
+                        {{ conversation.lastMessageAt | date:'short' }}
+                    </div>
+                </button>
+            </div>
+        </div>
+
+        <div class="card chat-card">
+            <div *ngIf="!selectedConversation && !isMessagesLoading" class="empty-state chat-empty">
+                <div class="empty-icon">💬</div>
+                <h3>اختر محادثة</h3>
+                <p>اختر محادثة من القائمة لعرض الرسائل.</p>
+            </div>
+
+            <div *ngIf="selectedConversation">
+                <div class="chat-header">
+                    <div>
+                        <h2>{{ getConversationTitle(selectedConversation) }}</h2>
+                        <p>
+                            {{ selectedConversation.otherPartyName }} ·
+                            {{ getContextText(selectedConversation.contextType) }}
+                        </p>
+                    </div>
+
+                    <span class="locked-badge" *ngIf="selectedConversation.isLocked">
+                        مغلقة
+                    </span>
+                </div>
+
+                <div class="state-message" *ngIf="isMessagesLoading">
+                    جاري تحميل الرسائل...
+                </div>
+
+                <div class="messages-list" *ngIf="!isMessagesLoading && messages.length > 0">
+                    <div class="message-item"
+                        *ngFor="let message of messages; trackBy: trackMessageById">
+
+                        <div class="message-header">
+                            <strong>{{ message.senderName || 'مستخدم' }}</strong>
+                            <span>{{ message.createdAt | date:'short' }}</span>
+                        </div>
+
+                        <p>{{ message.body }}</p>
+                    </div>
+                </div>
+
+                <div class="empty-state" *ngIf="!isMessagesLoading && messages.length === 0">
+                    <h3>لا توجد رسائل</h3>
+                    <p>ابدأ المحادثة بإرسال أول رسالة.</p>
+                </div>
+
+                <div class="message-form" *ngIf="!selectedConversation.isLocked">
+                    <textarea class="form-input textarea" rows="3" [(ngModel)]="newMessageBody"
+                        placeholder="اكتب رسالتك هنا"></textarea>
+
+                    <button class="btn btn-primary" type="button" [disabled]="isSending"
+                        (click)="sendMessage()">
+                        {{ isSending ? 'جاري الإرسال...' : 'إرسال' }}
+                    </button>
+                </div>
+
+                <div class="closed-note" *ngIf="selectedConversation.isLocked">
+                    هذه المحادثة مغلقة ولا يمكن إرسال رسائل جديدة.
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

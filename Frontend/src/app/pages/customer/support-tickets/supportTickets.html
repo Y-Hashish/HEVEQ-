@@ -1,0 +1,176 @@
+<section class="support-page">
+    <div class="page-header">
+        <div>
+            <h1>الدعم الفني</h1>
+            <p>أنشئ تذكرة دعم وتابع الردود الخاصة بها من فريق HEVEQ.</p>
+        </div>
+
+        <button class="btn btn-secondary" type="button" [disabled]="isLoading" (click)="loadTickets()">
+            تحديث
+        </button>
+    </div>
+
+    <div class="alert error" *ngIf="errorMessage">
+        {{ errorMessage }}
+    </div>
+
+    <div class="alert success" *ngIf="successMessage">
+        {{ successMessage }}
+    </div>
+
+    <div class="support-grid">
+        <div class="card create-ticket-card">
+            <h2>تذكرة جديدة</h2>
+
+            <div class="form-group">
+                <label class="form-label">عنوان التذكرة</label>
+                <input class="form-input" type="text" [(ngModel)]="newTicketForm.subject"
+                    placeholder="مثال: مشكلة في حجز خدمة">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">نوع التذكرة</label>
+                <select class="form-input" [(ngModel)]="newTicketForm.category">
+                    <option *ngFor="let category of categoryOptions" [ngValue]="category.value">
+                        {{ category.label }}
+                    </option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">رقم الحجز اختياري</label>
+                <input class="form-input" type="text" [(ngModel)]="newTicketForm.bookingId"
+                    placeholder="Booking Id إن وجد">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">رقم طلب السوق اختياري</label>
+                <input class="form-input" type="text" [(ngModel)]="newTicketForm.marketplaceOrderId"
+                    placeholder="Marketplace Order Id إن وجد">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">وصف المشكلة</label>
+                <textarea class="form-input textarea" rows="5" [(ngModel)]="newTicketForm.message"
+                    placeholder="اكتب تفاصيل المشكلة بوضوح"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">صور مرفقة اختياري</label>
+                <input class="form-input" type="file" multiple accept="image/png,image/jpeg,image/webp"
+                    (change)="onTicketFilesSelected($event)">
+                <small class="text-muted" *ngIf="selectedTicketFiles.length">
+                    تم اختيار {{ selectedTicketFiles.length }} صورة
+                </small>
+            </div>
+
+            <button class="btn btn-primary w-full" type="button" [disabled]="isCreating" (click)="createTicket()">
+                {{ isCreating ? 'جاري إنشاء التذكرة...' : 'إنشاء تذكرة' }}
+            </button>
+        </div>
+
+        <div class="card tickets-list-card">
+            <h2>تذاكري</h2>
+
+            <div class="state-message" *ngIf="isLoading">
+                جاري تحميل التذاكر...
+            </div>
+
+            <div class="empty-state" *ngIf="!isLoading && tickets.length === 0">
+                <div class="empty-icon">🎫</div>
+                <h3>لا توجد تذاكر حتى الآن</h3>
+                <p>ابدأ بإنشاء تذكرة جديدة عند الحاجة للدعم.</p>
+            </div>
+
+            <div class="tickets-list" *ngIf="!isLoading && tickets.length > 0">
+                <button type="button" class="ticket-item" *ngFor="let ticket of tickets; trackBy: trackById"
+                    [class.active]="selectedTicket?.id === ticket.id" (click)="openTicket(ticket.id)">
+
+                    <div class="ticket-main">
+                        <div class="ticket-title-row">
+                            <h3>{{ ticket.subject }}</h3>
+                            <span class="status-badge" [class]="getStatusClass(ticket.status)">
+                                {{ getStatusText(ticket.status, ticket.statusAr) }}
+                            </span>
+                        </div>
+
+                        <p>
+                            {{ ticket.ticketNumber }}
+                        </p>
+
+                        <small>
+                            آخر تحديث:
+                            {{ (ticket.updatedAt || ticket.createdAt) | date:'short' }}
+                        </small>
+                    </div>
+                </button>
+            </div>
+        </div>
+
+        <div class="card ticket-details-card">
+            <div *ngIf="!selectedTicket && !isDetailsLoading" class="empty-state details-empty">
+                <div class="empty-icon">💬</div>
+                <h3>اختر تذكرة</h3>
+                <p>اضغط على أي تذكرة من القائمة لعرض التفاصيل والرسائل.</p>
+            </div>
+
+            <div class="state-message" *ngIf="isDetailsLoading">
+                جاري تحميل تفاصيل التذكرة...
+            </div>
+
+            <div *ngIf="selectedTicket && !isDetailsLoading">
+                <div class="details-header">
+                    <div>
+                        <h2>{{ selectedTicket.subject }}</h2>
+                        <p>
+                            {{ selectedTicket.ticketNumber }}
+                        </p>
+                    </div>
+
+                    <span class="status-badge" [class]="getStatusClass(selectedTicket.status)">
+                        {{ getStatusText(selectedTicket.status, selectedTicket.statusAr) }}
+                    </span>
+                </div>
+
+                <div class="messages-list" *ngIf="selectedTicket.messages.length > 0">
+                    <div class="message-item" *ngFor="let message of selectedTicket.messages; trackBy: trackMessageById"
+                        [class.internal]="message.isInternal">
+
+                        <div class="message-header">
+                            <strong>{{ message.senderName || 'مستخدم' }}</strong>
+                            <span>{{ message.createdAt | date:'short' }}</span>
+                        </div>
+
+                        <p>{{ message.body }}</p>
+
+                        <div class="attachments-list" *ngIf="message.attachments?.length">
+                            <a *ngFor="let attachment of message.attachments" [href]="attachment.fileUrl"
+                                target="_blank">
+                                {{ attachment.fileName || 'ملف مرفق' }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="empty-state" *ngIf="selectedTicket.messages.length === 0">
+                    <h3>لا توجد رسائل</h3>
+                    <p>لا توجد محادثة داخل هذه التذكرة حتى الآن.</p>
+                </div>
+
+                <div class="reply-box" *ngIf="!isTicketClosed(selectedTicket)">
+                    <label class="form-label">رسالة متابعة</label>
+                    <textarea class="form-input textarea" rows="4" [(ngModel)]="replyBody"
+                        placeholder="اكتب رسالتك لفريق الدعم"></textarea>
+
+                    <button class="btn btn-primary" type="button" [disabled]="isSendingMessage" (click)="sendReply()">
+                        {{ isSendingMessage ? 'جاري الإرسال...' : 'إرسال الرسالة' }}
+                    </button>
+                </div>
+
+                <div class="closed-note" *ngIf="isTicketClosed(selectedTicket)">
+                    هذه التذكرة مغلقة أو تم حلها، ولا يمكن إضافة رسائل جديدة.
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

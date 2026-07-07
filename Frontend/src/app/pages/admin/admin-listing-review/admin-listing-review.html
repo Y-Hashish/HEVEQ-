@@ -1,0 +1,132 @@
+<div class="admin-page">
+  <div class="admin-header">
+    <h1 class="page-title">مراجعة الإدراجات</h1>
+    <p class="page-subtitle">مراجعة واعتماد أو رفض خدمات ومعدات المزودين</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn" [class.active]="activeTab === 'services'" (click)="switchTab('services')">قوائم الخدمات</button>
+    <button class="tab-btn" [class.active]="activeTab === 'marketplace'" (click)="switchTab('marketplace')">سوق المعدات</button>
+  </div>
+
+  <app-loading *ngIf="isLoading" [fullScreen]="false"></app-loading>
+
+  <div class="split-layout" *ngIf="!isLoading">
+    <!-- List Column -->
+    <div class="list-column" [class.hidden-mobile]="selectedDetails">
+      <app-empty-state *ngIf="pendingListings.length === 0" 
+        title="لا يوجد قوائم معلقة" 
+        message="تمت مراجعة جميع القوائم في هذا القسم بنجاح.">
+      </app-empty-state>
+
+      <div class="listing-cards" *ngIf="pendingListings.length > 0">
+        <div class="listing-card" 
+             *ngFor="let item of pendingListings" 
+             [class.active]="selectedDetails?.id === item.id"
+             (click)="viewDetails(item.id)">
+          <div class="card-header">
+            <h3 class="item-title">{{ item.title }}</h3>
+            <span class="badge" [class.high-risk]="item.aiRiskLevel === 'High'">{{ item.aiRiskLevel || 'Normal' }}</span>
+          </div>
+          <p class="item-owner">{{ item.ownerName }}</p>
+          <div class="item-meta">
+            <span>{{ item.categoryName }}</span>
+            <span>{{ item.submittedAt | date:'shortDate' }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Details Column -->
+    <div class="details-column" *ngIf="selectedDetails || isDetailsLoading" [class.visible-mobile]="selectedDetails || isDetailsLoading">
+      <div class="mobile-back">
+        <button class="btn btn-secondary btn-sm" (click)="closeDetails()">&rarr; عودة للقائمة</button>
+      </div>
+
+      <app-loading *ngIf="isDetailsLoading" [fullScreen]="false"></app-loading>
+
+      <div class="details-content" *ngIf="selectedDetails && !isDetailsLoading">
+        <div class="details-header">
+          <div class="header-titles">
+            <h2>{{ selectedDetails.title }}</h2>
+            <span class="category-tag">{{ selectedDetails.categoryName }}</span>
+          </div>
+          <div class="header-actions">
+            <button class="btn btn-danger" (click)="openRejectModal()">رفض الإدراج</button>
+            <button class="btn btn-success" (click)="openApproveModal()">اعتماد ونشر</button>
+          </div>
+        </div>
+
+        <div class="content-grid">
+          <div class="main-info">
+            <div class="info-section">
+              <h3>الوصف</h3>
+              <p class="description-text">{{ selectedDetails.description }}</p>
+            </div>
+
+            <div class="info-section" *ngIf="selectedDetails.photos.length">
+              <h3>الصور المرفقة</h3>
+              <div class="photo-gallery">
+                <img *ngFor="let photo of selectedDetails.photos" [src]="photo.url" alt="Listing photo" class="gallery-img">
+              </div>
+            </div>
+
+            <div class="info-section" *ngIf="selectedDetails.documents?.length">
+              <h3>المستندات</h3>
+              <ul class="docs-list">
+                <li *ngFor="let doc of selectedDetails.documents">
+                  <a [href]="doc.fileUrl" target="_blank">{{ doc.type }}</a>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="side-info">
+            <!-- AI Assessment Panel (Read-Only) -->
+            <div class="info-card ai-panel">
+              <div class="ai-header">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                <h3>تحليل الذكاء الاصطناعي</h3>
+              </div>
+              <div class="ai-body">
+                <div class="ai-stat">
+                  <span>مستوى المخاطرة:</span>
+                  <strong [class.text-danger]="selectedDetails.aiRiskLevel === 'High'">{{ selectedDetails.aiRiskLevel || 'غير متوفر' }}</strong>
+                </div>
+                <div class="ai-flags" *ngIf="selectedDetails.aiRiskFlags">
+                  <h4>علامات التحذير:</h4>
+                  <p>{{ selectedDetails.aiRiskFlags }}</p>
+                </div>
+                <div class="ai-rec" *ngIf="selectedDetails.aiRecommendation">
+                  <h4>توصية النظام:</h4>
+                  <p>{{ selectedDetails.aiRecommendation }}</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="info-card provider-info">
+              <h3>بيانات المزود</h3>
+              <div class="provider-details" *ngIf="selectedDetails.provider">
+                <p><strong>الشركة:</strong> {{ selectedDetails.provider.companyName }}</p>
+                <p><strong>البريد:</strong> {{ selectedDetails.provider.email }}</p>
+                <p><strong>الهاتف:</strong> <span dir="ltr">{{ selectedDetails.provider.phoneNumber }}</span></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<app-action-modal 
+  [isOpen]="isModalOpen"
+  [title]="modalTitle"
+  [description]="modalDesc"
+  [confirmText]="modalConfirmText"
+  [confirmColor]="modalConfirmColor"
+  [requireNote]="requireNote"
+  noteLabel="ملاحظات الرفض"
+  (confirm)="handleModalConfirm($event)"
+  (close)="isModalOpen = false">
+</app-action-modal>

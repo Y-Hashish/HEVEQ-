@@ -1,0 +1,81 @@
+<nav class="navbar">
+    <div class="container">
+        <a routerLink="/" class="nav-brand">
+            <span>هيڤ</span>يك
+        </a>
+
+        <div class="navbar-links" *ngIf="showNavLinks">
+            <a routerLink="/marketplace" class="navbar-link" [class.active]="isMarketplaceActive">
+                السوق
+            </a>
+
+            <a routerLink="/services" class="navbar-link" [class.active]="isServicesActive">
+                المتجر
+            </a>
+        </div>
+
+        <div class="nav-actions">
+            <button type="button" class="action-btn" title="تغيير المظهر" (click)="toggleTheme()">
+                {{ themeIcon }}
+            </button>
+
+
+            <ng-container *ngIf="isAuth; else guestActions">
+                <button type="button" class="action-btn notification-action" title="الإشعارات" routerLink="/notifications">
+                    🔔
+                    <span class="notification-badge" *ngIf="unreadNotifications > 0">{{ unreadNotifications > 99 ? '99+' : unreadNotifications }}</span>
+                </button>
+
+                <div class="user-profile-dropdown-wrapper">
+                    <button type="button" class="user-profile" aria-haspopup="true"
+                        [attr.aria-expanded]="isDropdownOpen" (click)="toggleDropdown($event)">
+                        <div class="avatar">
+                            {{ userInitials }}
+                        </div>
+
+                        <span class="user-name">
+                            {{ userName }}
+                        </span>
+
+                        <span class="dropdown-caret">
+                            ▼
+                        </span>
+                    </button>
+
+                    <div class="dropdown-menu" [class.show]="isDropdownOpen" (click)="$event.stopPropagation()">
+                        <a [routerLink]="dashboardLink" class="dropdown-item" (click)="isDropdownOpen = false">
+                            {{ dashboardLabel }}
+                        </a>
+
+                        <a routerLink="/account-verification" class="dropdown-item" (click)="isDropdownOpen = false">
+                            توثيق الحساب
+                        </a>
+
+                        <a routerLink="/support-tickets" class="dropdown-item" (click)="isDropdownOpen = false">
+                            الدعم الفني
+                        </a>
+
+                        <a routerLink="/reviews" class="dropdown-item" (click)="isDropdownOpen = false">
+                            التقييمات
+                        </a>
+
+                        <button type="button" class="dropdown-item logout-btn-item" (click)="logout()">
+                            تسجيل الخروج
+                        </button>
+                    </div>
+                </div>
+
+                <button *ngIf="showMobileButton" type="button" class="btn btn-primary btn-icon mobile-menu-btn"
+                    (click)="toggleMobileMenu()">
+                    ☰
+                </button>
+            </ng-container>
+
+            <ng-template #guestActions>
+                <a routerLink="/login" class="btn btn-primary btn-sm">
+                    تسجيل الدخول
+                </a>
+            </ng-template>
+        </div>
+    </div>
+</nav>

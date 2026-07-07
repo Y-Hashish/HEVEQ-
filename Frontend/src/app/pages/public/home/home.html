@@ -1,0 +1,169 @@
+<main class="home-page">
+    <section class="hero-section">
+        <div class="container hero-grid">
+            <div class="hero-content">
+                <span class="hero-tag">المنصة الأولى للمعدات الثقيلة</span>
+
+                <h1>
+                    ابحث عن المعدات الثقيلة والخدمات الصناعية في دقائق
+                </h1>
+
+                <p>
+                    HEVEQ تساعدك في الوصول إلى مزودي خدمات موثوقين ومعدات مناسبة لمشروعك،
+                    مع تجربة حجز وتتبع ودفع أكثر وضوحًا واحترافية.
+                </p>
+
+                <div class="hero-actions">
+                    <a routerLink="/services" class="btn btn-primary">
+                        احجز خدمة
+                    </a>
+
+                    <a routerLink="/marketplace" class="btn btn-outline">
+                        استكشف السوق
+                    </a>
+                </div>
+
+                <div class="hero-trust-row">
+                    <div>
+                        <strong>موثوق</strong>
+                        <span>مراجعة مستندات ومزودين</span>
+                    </div>
+
+                    <div>
+                        <strong>Realtime</strong>
+                        <span>إشعارات ورسائل فورية</span>
+                    </div>
+
+                    <div>
+                        <strong>Escrow</strong>
+                        <span>تتبع حالة الدفع والحجز</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hero-visual">
+                <div class="equipment-card main-card">
+                    <div class="equipment-icon">🏗️</div>
+                    <div>
+                        <h3>ونش هيدروليك</h3>
+                        <p>متاح للحجز اليوم</p>
+                    </div>
+                    <span>نشط</span>
+                </div>
+
+                <div class="equipment-card floating-card top-card">
+                    <strong>+3200</strong>
+                    <p>معدة وخدمة</p>
+                </div>
+
+                <div class="equipment-card floating-card bottom-card">
+                    <strong>99%</strong>
+                    <p>نسبة نجاح</p>
+                </div>
+
+                <div class="hero-shape"></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="smart-search-section">
+        <div class="container">
+            <div class="smart-search-card">
+                <div class="search-title">
+                    <span>🔎</span>
+                    <div>
+                        <h2>ابدأ البحث عن الخدمة المناسبة</h2>
+                        <p>اختر من الخدمات أو السوق حسب احتياجك.</p>
+                    </div>
+                </div>
+
+                <div class="search-actions">
+                    <a routerLink="/services" class="btn btn-primary">
+                        تصفح الخدمات
+                    </a>
+
+                    <a routerLink="/marketplace" class="btn btn-secondary">
+                        تصفح السوق
+                    </a>
+                </div>
+
+                <div class="search-suggestions">
+                    <span>اقتراحات:</span>
+                    <a routerLink="/services">حفار لأعمال أساسات</a>
+                    <a routerLink="/services">ونش لرفع معدات</a>
+                    <a routerLink="/marketplace">مولد كهرباء للبيع</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="container section-block">
+        <div class="section-header">
+            <div>
+                <h2>تصفح حسب الفئة</h2>
+                <p>اختار نوع المعدة أو الخدمة التي تبحث عنها.</p>
+            </div>
+
+            <a routerLink="/services" class="btn btn-outline">
+                عرض كل الخدمات
+            </a>
+        </div>
+
+        <div class="categories-grid">
+            <a routerLink="/services" class="category-card" *ngFor="let category of categories">
+                <span class="category-icon">{{ category.icon }}</span>
+                <h3>{{ category.name }}</h3>
+                <p>{{ category.description }}</p>
+            </a>
+        </div>
+    </section>
+
+    <section class="features-section">
+        <div class="container">
+            <div class="section-header centered">
+                <div>
+                    <h2>ليه تستخدم HEVEQ؟</h2>
+                    <p>منصة واحدة تجمع الحجز، السوق، التوثيق، الدفع، والدعم.</p>
+                </div>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card" *ngFor="let feature of features">
+                    <div class="feature-icon">{{ feature.icon }}</div>
+                    <h3>{{ feature.title }}</h3>
+                    <p>{{ feature.description }}</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="container section-block">
+        <div class="stats-grid">
+            <div class="stat-card" *ngFor="let stat of stats">
+                <strong>{{ stat.value }}</strong>
+                <span>{{ stat.label }}</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="container cta-section">
+        <div class="cta-card">
+            <div>
+                <h2>جاهز تبدأ؟</h2>
+                <p>
+                    سجل حسابك كعميل لحجز خدمة، أو كمزود لإضافة معداتك وخدماتك على المنصة.
+                </p>
+            </div>
+
+            <div class="cta-actions">
+                <a routerLink="/register" class="btn btn-primary">
+                    إنشاء حساب
+                </a>
+
+                <a routerLink="/login" class="btn btn-outline">
+                    تسجيل الدخول
+                </a>
+            </div>
+        </div>
+    </section>
+</main>

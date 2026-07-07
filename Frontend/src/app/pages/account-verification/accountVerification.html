@@ -1,0 +1,123 @@
+<section class="verification-page">
+    <div class="page-header">
+        <div>
+            <h1>توثيق الحساب</h1>
+            <p>ارفع المستندات المطلوبة لمراجعة حسابك وتفعيل مميزات المنصة</p>
+        </div>
+    </div>
+
+    <div class="verification-grid">
+        <div class="card upload-card">
+            <h2>رفع مستند جديد</h2>
+            <p class="card-subtitle">
+                يتم رفع الصورة أولًا على Cloudinary، وبعدها يتم حفظ رابط الصورة في النظام.
+            </p>
+
+            <div class="alert success" *ngIf="successMessage">
+                {{ successMessage }}
+            </div>
+
+            <div class="alert error" *ngIf="errorMessage">
+                {{ errorMessage }}
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">نوع المستند</label>
+                <select class="form-input" name="documentType" [(ngModel)]="selectedDocumentType">
+                    <option *ngFor="let option of documentTypeOptions" [ngValue]="option.value">
+                        {{ option.label }}
+                    </option>
+                </select>
+
+                <p class="field-hint">
+                    {{ selectedDocumentDescription }}
+                </p>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">تاريخ الانتهاء</label>
+                <input type="date" class="form-input" name="expiryDate" [(ngModel)]="expiryDate">
+                <p class="field-hint">
+                    اتركه فارغًا لو المستند ليس له تاريخ انتهاء.
+                </p>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">صورة المستند</label>
+
+                <label class="file-box">
+                    <input type="file" accept="image/jpeg,image/jpg,image/png,image/webp"
+                        (change)="onFileSelected($event)">
+                    <span class="file-icon">📄</span>
+                    <strong>{{ selectedFileName || 'اختر صورة المستند' }}</strong>
+                    <small>JPG, PNG, WEBP بحد أقصى 10MB</small>
+                </label>
+            </div>
+
+            <button type="button" class="btn btn-primary w-full" [disabled]="isUploading"
+                (click)="uploadDocument()">
+                {{ isUploading ? 'جاري الرفع...' : 'رفع المستند' }}
+            </button>
+        </div>
+
+        <div class="card documents-card">
+            <div class="card-header-row">
+                <div>
+                    <h2>مستنداتي</h2>
+                    <p class="card-subtitle">تابع حالة مراجعة المستندات الخاصة بك</p>
+                </div>
+
+                <button type="button" class="btn btn-secondary btn-sm" [disabled]="isLoading" (click)="loadDocuments()">
+                    تحديث
+                </button>
+            </div>
+
+            <div class="state-message" *ngIf="isLoading">
+                جاري تحميل المستندات...
+            </div>
+
+            <div class="empty-state" *ngIf="!isLoading && documents.length === 0">
+                <div class="empty-icon">📄</div>
+                <h3>لا توجد مستندات حتى الآن</h3>
+                <p>ارفع أول مستند ليظهر هنا.</p>
+            </div>
+
+            <div class="documents-list" *ngIf="!isLoading && documents.length > 0">
+                <div class="document-item" *ngFor="let document of documents; trackBy: trackById">
+                    <div class="document-main">
+                        <div class="document-icon">📎</div>
+
+                        <div>
+                            <h3>{{ getDocumentName(document.documentType) }}</h3>
+
+                            <p>
+                                تم الرفع:
+                                {{ document.uploadedAt | date:'short' }}
+                            </p>
+
+                            <p *ngIf="document.expiryDate">
+                                تاريخ الانتهاء:
+                                {{ document.expiryDate }}
+                            </p>
+
+                            <p class="failure-reason" *ngIf="document.failureReason">
+                                سبب الرفض:
+                                {{ document.failureReason }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="document-actions">
+                        <span class="status-badge" [class]="getStatusClass(document.status)">
+                            {{ getStatusText(document.status, document.statusAr) }}
+                        </span>
+
+                        <a class="btn btn-secondary btn-sm" [href]="document.fileUrl" target="_blank">
+                            عرض
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

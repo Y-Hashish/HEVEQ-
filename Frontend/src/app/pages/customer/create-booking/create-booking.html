@@ -1,0 +1,209 @@
+<section class="create-booking-page">
+    <div class="page-header">
+        <div>
+            <h1>إنشاء حجز خدمة</h1>
+            <p>املأ بيانات الموقع والموعد المطلوب لإرسال طلب الحجز إلى المزود.</p>
+        </div>
+
+        <a routerLink="/bookings" class="btn btn-secondary">
+            حجوزاتي
+        </a>
+    </div>
+
+    <div class="alert error" *ngIf="errorMessage">
+        {{ errorMessage }}
+    </div>
+
+    <div class="alert success" *ngIf="successMessage">
+        {{ successMessage }}
+    </div>
+
+    <div class="state-message" *ngIf="isLoading">
+        جاري تحميل بيانات الخدمة...
+    </div>
+
+    <div class="booking-layout" *ngIf="context && !isLoading">
+        <div class="card context-card">
+            <h2>{{ context.serviceTitle }}</h2>
+            <p>{{ context.providerCompany }}</p>
+
+            <div class="summary-grid">
+                <div>
+                    <span>السعر بالساعة</span>
+                    <strong>{{ context.hourlyRate || 0 }} جنيه</strong>
+                </div>
+
+                <div>
+                    <span>السعر اليومي</span>
+                    <strong>{{ context.dailyRate || 0 }} جنيه</strong>
+                </div>
+
+                <div>
+                    <span>أقل مدة</span>
+                    <strong>{{ context.minimumBookingHours }} ساعة</strong>
+                </div>
+            </div>
+
+            <div class="availability-box">
+                <h3>مواعيد المزود</h3>
+                <p>{{ getAvailabilityText() }}</p>
+            </div>
+
+            <div class="eligibility-warning" *ngIf="!context.customerEligibility.canBook">
+                <strong>لا يمكنك إنشاء حجز الآن</strong>
+
+                <ul>
+                    <li *ngFor="let item of context.customerEligibility.missingRequirements">
+                        {{ item }}
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card form-card">
+            <h2>بيانات الحجز</h2>
+
+            <div class="form-group">
+                <label class="form-label">عنوان العمل</label>
+                <input class="form-input"
+                    type="text"
+                    [(ngModel)]="form.jobTitle"
+                    placeholder="مثال: تحميل رمل في موقع أكتوبر">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">وصف العمل</label>
+                <textarea class="form-input textarea"
+                    rows="4"
+                    [(ngModel)]="form.jobDescription"
+                    placeholder="اكتب تفاصيل العمل المطلوب"></textarea>
+            </div>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">تاريخ البداية</label>
+                    <input class="form-input"
+                        type="date"
+                        [(ngModel)]="form.requestedStartDate">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">وقت البداية</label>
+                    <input class="form-input"
+                        type="time"
+                        [(ngModel)]="form.requestedStartTime">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">المدة المتوقعة بالساعات</label>
+                <input class="form-input"
+                    type="number"
+                    min="1"
+                    [(ngModel)]="form.estimatedDurationHours">
+            </div>
+
+            <label class="checkbox-row" *ngIf="context.defaultAddress">
+                <input type="checkbox" [(ngModel)]="useDefaultAddress">
+                <span>
+                    استخدام العنوان الافتراضي:
+                    {{ context.defaultAddress.governorate }}،
+                    {{ context.defaultAddress.district }}
+                </span>
+            </label>
+
+            <div class="manual-address" *ngIf="!useDefaultAddress">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">المحافظة</label>
+                        <input class="form-input"
+                            type="text"
+                            [(ngModel)]="form.governorate"
+                            placeholder="مثال: Giza">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">المنطقة</label>
+                        <input class="form-input"
+                            type="text"
+                            [(ngModel)]="form.district"
+                            placeholder="مثال: 6th of October">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">الشارع</label>
+                    <input class="form-input"
+                        type="text"
+                        [(ngModel)]="form.street"
+                        placeholder="اكتب عنوان الموقع بالتفصيل">
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Latitude</label>
+                        <input class="form-input"
+                            type="number"
+                            [(ngModel)]="form.latitude">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Longitude</label>
+                        <input class="form-input"
+                            type="number"
+                            [(ngModel)]="form.longitude">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">اسم مسؤول الموقع</label>
+                    <input class="form-input"
+                        type="text"
+                        [(ngModel)]="form.siteContactName">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">رقم مسؤول الموقع</label>
+                    <input class="form-input"
+                        type="text"
+                        [(ngModel)]="form.siteContactPhone">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">متطلبات الدخول للموقع</label>
+                <input class="form-input"
+                    type="text"
+                    [(ngModel)]="form.accessRequirements"
+                    placeholder="مثال: تصريح دخول، بوابة رقم 2">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">ملاحظات السلامة</label>
+                <input class="form-input"
+                    type="text"
+                    [(ngModel)]="form.safetyNotes"
+                    placeholder="مثال: ارتداء خوذة داخل الموقع">
+            </div>
+
+            <label class="checkbox-row">
+                <input type="checkbox" [(ngModel)]="form.acceptOutOfZoneSurcharge">
+                <span>أوافق على تكلفة إضافية إذا كان الموقع خارج نطاق خدمة المزود</span>
+            </label>
+
+            <div class="total-box">
+                <span>التكلفة التقديرية</span>
+                <strong>{{ getEstimatedTotal() }} جنيه</strong>
+            </div>
+
+            <button class="btn btn-primary w-full"
+                type="button"
+                [disabled]="isCreating || !context.customerEligibility.canBook"
+                (click)="createBooking()">
+                {{ isCreating ? 'جاري إنشاء الحجز...' : 'إرسال طلب الحجز' }}
+            </button>
+        </div>
+    </div>
+</section>

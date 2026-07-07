@@ -1,0 +1,24 @@
+<section class="wallet-page">
+  <div class="page-header">
+    <div>
+      <h1>المحفظة والمدفوعات</h1>
+      <p>ملخص مبسط للمدفوعات والضمانات المرتبطة بحسابك.</p>
+    </div>
+    <button class="btn btn-secondary" type="button" (click)="load()" [disabled]="isLoading">تحديث</button>
+  </div>
+
+  <div class="alert error" *ngIf="errorMessage">{{ errorMessage }}</div>
+  <div class="card" *ngIf="isLoading">جاري التحميل...</div>
+
+  <div class="dashboard-grid" *ngIf="!isLoading">
+    <div class="card widget-card"><p>إجمالي حجوزاتي</p><h3>{{ money(summary.bookingEscrowTotal) }}</h3></div>
+    <div class="card widget-card"><p>مشتريات السوق</p><h3>{{ money(summary.marketplaceOrdersTotal) }}</h3></div>
+    <div class="card widget-card"><p>مدفوعات بانتظار السداد</p><h3>{{ summary.pendingPayments }}</h3></div>
+    <div class="card widget-card"><p>عمليات مكتملة</p><h3>{{ summary.completedPayments }}</h3></div>
+  </div>
+
+  <div class="card note-card">
+    <h3>ملاحظة</h3>
+    <p>المدفوعات الفعلية تتم من داخل صفحات الحجوزات وطلبات السوق، وهذه الصفحة تعرض ملخصاً سريعاً فقط.</p>
+  </div>
+</section>

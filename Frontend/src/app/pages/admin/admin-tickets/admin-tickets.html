@@ -1,0 +1,328 @@
+<div class="admin-page">
+  <div class="admin-header">
+    <h1 class="page-title">الدعم الفني</h1>
+    <p class="page-subtitle">إدارة تذاكر الدعم والردود على المستخدمين</p>
+  </div>
+
+  <div class="filters-panel">
+    <div class="filter-group">
+      <label class="filter-label">الحالة</label>
+      <select class="form-control" [(ngModel)]="filterStatus" (change)="onFilterChange()">
+        <option value="">الكل</option>
+        <option value="Open">مفتوحة</option>
+        <option value="InProgress">قيد المعالجة</option>
+        <option value="Resolved">تم الحل</option>
+        <option value="Closed">مغلقة</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label class="filter-label">الأولوية</label>
+      <select class="form-control" [(ngModel)]="filterPriority" (change)="onFilterChange()">
+        <option value="">الكل</option>
+        <option value="Low">منخفضة</option>
+        <option value="Medium">متوسطة</option>
+        <option value="High">عالية</option>
+        <option value="Urgent">عاجلة</option>
+      </select>
+    </div>
+  </div>
+
+  <app-loading *ngIf="isLoading" [fullScreen]="false"></app-loading>
+
+  <div class="split-layout" *ngIf="!isLoading">
+    <!-- List Column -->
+    <div class="list-column" [class.hidden-mobile]="selectedTicket">
+      <app-empty-state *ngIf="tickets.length === 0" title="لا توجد تذاكر"
+        message="لا يوجد تذاكر دعم مطابقة لمعايير البحث.">
+      </app-empty-state>
+
+      <div class="ticket-cards" *ngIf="tickets.length > 0">
+        <div class="ticket-card" *ngFor="let ticket of tickets" [class.active]="selectedTicket?.id === ticket.id"
+          (click)="viewTicket(ticket.id)">
+          <div class="card-header">
+            <h3 class="item-title">{{ ticket.title }}</h3>
+            <span class="status-badge" [ngClass]="ticket.status ? ticket.status.toLowerCase() : ''">{{ ticket.status
+              }}</span>
+          </div>
+          <div class="item-meta">
+            <span>{{ ticket.userName }}</span>
+            <span class="badge priority-{{ ticket.priority ? ticket.priority.toLowerCase() : '' }}">{{ ticket.priority
+              }}</span>
+          </div>
+          <p class="time-meta">{{ ticket.createdAt | date:'shortTime' }}</p>
+        </div>
+      </div>
+
+      <div class="pagination-simple" *ngIf="totalCount > pageSize">
+        <app-pagination [page]="page" [pageSize]="pageSize" [totalCount]="totalCount"
+          (pageChange)="onPageChange($event)">
+        </app-pagination>
+      </div>
+    </div>
+
+    <!-- Details/Chat Column -->
+    <div class="details-column" *ngIf="selectedTicket || isDetailsLoading"
+      [class.visible-mobile]="selectedTicket || isDetailsLoading">
+      <div class="mobile-back">
+        <button class="btn btn-secondary btn-sm" (click)="closeTicket()">&rarr; عودة للتذاكر</button>
+      </div>
+
+      <app-loading *ngIf="isDetailsLoading" [fullScreen]="false"></app-loading>
+
+      <div class="chat-container" *ngIf="selectedTicket && !isDetailsLoading">
+        <div class="chat-header">
+          <div class="header-info">
+            <h2>{{ selectedTicket.title }}</h2>
+            <p class="ticket-meta">
+              بواسطة: {{ selectedTicket.userName }} |
+              القسم: {{ selectedTicket.category }} |
+              الحالة: <span class="status-text">{{ selectedTicket.status }}</span> |
+              المسؤول:
+              <span *ngIf="selectedTicket.assignedToUserName" class="assignee-name">
+                {{ selectedTicket.assignedToUserName }}
+              </span>
+              <span *ngIf="!selectedTicket.assignedToUserName" class="unassigned-text">غير معين</span>
+            </p>
+          </div>
+          <div class="header-actions">
+            <!-- Claim / Takeover buttons in the header row -->
+            <button
+              *ngIf="!selectedTicket.assignedToUserId && selectedTicket.status !== 'Resolved' && selectedTicket.status !== 'Closed'"
+              class="btn btn-secondary btn-sm" (click)="claimTicket()">
+              استلام التذكرة
+            </button>
+            <button
+              *ngIf="isAdminUser && selectedTicket.assignedToUserId && selectedTicket.assignedToUserId !== currentUserId && selectedTicket.userId !== currentUserId && selectedTicket.status !== 'Resolved' && selectedTicket.status !== 'Closed'"
+              class="btn btn-secondary btn-sm" (click)="openTakeoverModal()">
+              الاستحواذ
+            </button>
+
+            <button class="btn btn-secondary" *ngIf="selectedTicket.customerAttachments?.length || selectedTicket.providerCompletionEvidence || selectedTicket.fieldVisits?.length" (click)="openDocsModal()">
+              📁 ملفات ومستندات التذكرة
+            </button>
+
+            <button *ngIf="selectedTicket.status !== 'Resolved' && selectedTicket.status !== 'Closed'"
+              class="btn btn-success" (click)="openResolveModal()">
+              حل وإغلاق
+            </button>
+          </div>
+        </div>
+
+        <div class="ticket-description">
+          <h3>وصف المشكلة:</h3>
+          <p>{{ selectedTicket.description }}</p>
+        </div>
+
+
+        <div class="messages-area" #chatContainer>
+          <div class="message-bubble" *ngFor="let msg of selectedTicket.messages"
+            [class.admin-msg]="msg.senderRole === 'Admin'" [class.user-msg]="msg.senderRole !== 'Admin'">
+            <div class="msg-header">
+              <span class="sender-name">{{ msg.senderName }} ({{ msg.senderRole }})</span>
+              <span class="msg-time">{{ msg.createdAt | date:'shortTime' }}</span>
+            </div>
+            <div class="msg-content">{{ msg.content }}</div>
+          </div>
+
+          <div class="empty-messages" *ngIf="selectedTicket.messages.length === 0">
+            لا توجد ردود بعد.
+          </div>
+        </div>
+
+        <div class="reply-area" *ngIf="selectedTicket.status !== 'Resolved' && selectedTicket.status !== 'Closed'">
+          <textarea class="form-control" placeholder="اكتب ردك هنا..." [(ngModel)]="replyContent" rows="3"
+            (keyup.enter)="sendReply()"></textarea>
+          <button class="btn btn-primary" [disabled]="!replyContent.trim() || isReplying" (click)="sendReply()">
+            {{ isReplying ? 'جاري الإرسال...' : 'إرسال الرد' }}
+          </button>
+        </div>
+        <div class="ticket-closed-notice"
+          *ngIf="selectedTicket.status === 'Resolved' || selectedTicket.status === 'Closed'">
+          هذه التذكرة مغلقة ولا يمكن إضافة ردود جديدة.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<app-action-modal [isOpen]="isModalOpen" [title]="modalTitle" [description]="modalDesc" [confirmText]="modalConfirmText"
+  [confirmColor]="modalConfirmColor" [requireNote]="requireNote" noteLabel="ملاحظات الحل"
+  (confirm)="handleModalConfirm($event)" (close)="isModalOpen = false">
+</app-action-modal>
+
+<!-- Dispute Resolution Modal Popup Overlay -->
+<div class="dispute-modal-overlay" *ngIf="isDisputeModalOpen" (click)="closeDisputeModal()">
+  <div class="dispute-modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>تسوية نزاع التذكرة رقم {{ selectedTicket?.ticketNumber }}</h3>
+      <button class="close-btn" (click)="closeDisputeModal()">&times;</button>
+    </div>
+
+    <div class="modal-body" *ngIf="selectedTicket">
+      <!-- Receipt Style Escrow Card -->
+      <div class="escrow-summary-card">
+        <h4>تفاصيل الضمان المالي والنزاع (Escrow)</h4>
+        <div class="summary-grid">
+          <div class="summary-item" *ngIf="selectedTicket.linkedBooking">
+            <span class="label">رقم الحجز المرتبط:</span>
+            <span class="value">{{ selectedTicket.linkedBooking.bookingReference }}</span>
+          </div>
+          <div class="summary-item" *ngIf="selectedTicket.linkedMarketplaceOrder">
+            <span class="label">رقم الطلب المرتبط:</span>
+            <span class="value">{{ selectedTicket.linkedMarketplaceOrder.orderNumber }}</span>
+          </div>
+          <div class="summary-item" *ngIf="selectedTicket.escrowSummary">
+            <span class="label">حالة الضمان المالي:</span>
+            <span class="value escrow-status-badge">{{ selectedTicket.escrowSummary.status }}</span>
+          </div>
+          <div class="summary-item" *ngIf="selectedTicket.escrowSummary">
+            <span class="label">المبلغ الإجمالي:</span>
+            <span class="value price-highlight">{{ selectedTicket.escrowSummary.grossAmount | currency }}</span>
+          </div>
+          <div class="summary-item" *ngIf="selectedTicket.escrowSummary">
+            <span class="label">عمولة المنصة:</span>
+            <span class="value">{{ selectedTicket.escrowSummary.platformCommission | currency }}</span>
+          </div>
+          <div class="summary-item" *ngIf="selectedTicket.escrowSummary">
+            <span class="label">مستحقات المزود / البائع:</span>
+            <span class="value">{{ selectedTicket.escrowSummary.providerPayout | currency }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dispute Decision Form -->
+      <div class="dispute-decision-form">
+        <div class="form-group">
+          <label class="field-label">نوع الإجراء والقرار:</label>
+          <select class="form-control" [(ngModel)]="decisionType" (change)="onDecisionTypeChange()">
+            <option value="">-- اختر قرار تسوية النزاع --</option>
+            <option *ngFor="let dec of selectedTicket.availableDisputeDecisions" [value]="dec">
+              {{ getDecisionLabelAr(dec) }}س
+            </option>
+          </select>
+        </div>
+
+        <!-- Settlement Amounts (Visible only for PartialSettlement) -->
+        <div class="settlement-amounts-row" *ngIf="decisionType === 'PartialSettlement'">
+          <div class="form-group">
+            <label class="field-label">مبلغ العميل (المشتري):</label>
+            <input type="number" class="form-control" [(ngModel)]="customerAmount" placeholder="0.00" />
+          </div>
+          <div class="form-group">
+            <label class="field-label">مبلغ المزود (البائع):</label>
+            <input type="number" class="form-control" [(ngModel)]="providerAmount" placeholder="0.00" />
+          </div>
+        </div>
+
+        <!-- Employee Selector (Visible only for SendFieldVerification) -->
+        <div class="form-group" *ngIf="decisionType === 'SendFieldVerification'">
+          <label class="field-label">موظف الفحص الميداني الموفد:</label>
+          <select class="form-control" [(ngModel)]="selectedEmployeeId">
+            <option value="">-- اختر موظف الفحص الميداني --</option>
+            <option *ngFor="let emp of availableEmployees" [value]="emp.id">
+              {{ emp.displayName }}
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="field-label">مبررات اتخاذ القرار والسبب:</label>
+          <textarea class="form-control" rows="3" [(ngModel)]="decisionNote"
+            placeholder="اكتب ملاحظات تفصيلية لتوضيح أسباب اتخاذ هذا القرار..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="closeDisputeModal()">إلغاء</button>
+      <button class="btn btn-primary" [disabled]="!isDecisionValid()" (click)="submitDisputeDecision()">
+        تأكيد وتطبيق القرار
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Case Attachments & Evidence Documents Modal Popup Overlay -->
+<div class="dispute-modal-overlay" *ngIf="isDocsModalOpen" (click)="closeDocsModal()">
+  <div class="dispute-modal-card documents-modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>📂 ملفات ومستندات التذكرة رقم {{ selectedTicket?.ticketNumber }}</h3>
+      <button class="close-btn" (click)="closeDocsModal()">&times;</button>
+    </div>
+
+    <div class="modal-body" *ngIf="selectedTicket">
+      <div class="case-docs-sections popup-sections-layout">
+        <!-- Customer Attachments -->
+        <div class="doc-section">
+          <h4 class="doc-section-title">👤 مرفقات ومستندات العميل:</h4>
+          <div class="attachments-list" *ngIf="selectedTicket.customerAttachments && selectedTicket.customerAttachments.length > 0">
+            <div class="attachment-item-card" *ngFor="let att of selectedTicket.customerAttachments">
+              <div class="file-info-group">
+                <span class="file-icon">📄</span>
+                <span class="file-name" [title]="att.fileName">{{ att.fileName }}</span>
+              </div>
+              <a [href]="att.fileUrl" target="_blank" class="btn-view-file">عرض الملف</a>
+            </div>
+          </div>
+          <div class="empty-section-badge" *ngIf="!selectedTicket.customerAttachments || selectedTicket.customerAttachments.length === 0">
+            لم يتم إرفاق أي مستندات من قبل العميل.
+          </div>
+        </div>
+
+        <!-- Provider Completion Evidence -->
+        <div class="doc-section" *ngIf="selectedTicket.linkedBooking">
+          <h4 class="doc-section-title">⚙️ إثبات إتمام الخدمة (المزود):</h4>
+          <div class="evidence-content" *ngIf="selectedTicket.providerCompletionEvidence">
+            <div class="evidence-notes-bubble" *ngIf="selectedTicket.providerCompletionEvidence.providerNotes">
+              <p><strong>ملاحظات المزود:</strong> {{ selectedTicket.providerCompletionEvidence.providerNotes }}</p>
+            </div>
+            <div class="evidence-photos-row" *ngIf="selectedTicket.providerCompletionEvidence.photos && selectedTicket.providerCompletionEvidence.photos.length > 0">
+              <div class="evidence-photo-container" *ngFor="let p of selectedTicket.providerCompletionEvidence.photos" [title]="p.caption || 'صورة إثبات إتمام'">
+                <a [href]="p.photoUrl" target="_blank">
+                  <img [src]="p.photoUrl" alt="إثبات المزود" />
+                </a>
+              </div>
+            </div>
+            <div class="empty-section-badge" *ngIf="!selectedTicket.providerCompletionEvidence.photos || selectedTicket.providerCompletionEvidence.photos.length === 0">
+              لا توجد صور مرفقة في إثبات المزود.
+            </div>
+          </div>
+          <div class="empty-section-badge" *ngIf="!selectedTicket.providerCompletionEvidence">
+            لم يقم المزود برفع نموذج إثبات إتمام الخدمة بعد.
+          </div>
+        </div>
+
+        <!-- Field Visit Reports -->
+        <div class="doc-section" *ngIf="selectedTicket.fieldVisits && selectedTicket.fieldVisits.length > 0">
+          <h4 class="doc-section-title">🔍 تقارير الفحص الميداني:</h4>
+          <div class="field-visits-list">
+            <div class="field-visit-card" *ngFor="let visit of selectedTicket.fieldVisits">
+              <div class="field-visit-meta">
+                <span class="field-visit-inspector">المفتش: {{ visit.dispatchedEmployeeName }}</span>
+                <span class="field-visit-status-badge" [class.status-completed]="visit.visitStatus === 'Completed'" [class.status-dispatched]="visit.visitStatus === 'Dispatched'" [class.status-failed]="visit.visitStatus === 'FailedAccess'">
+                  {{ visit.visitStatusAr }}
+                </span>
+              </div>
+              <div class="evidence-notes-bubble" *ngIf="visit.employeeNotes">
+                <p><strong>ملاحظات المفتش:</strong> {{ visit.employeeNotes }}</p>
+                <p *ngIf="visit.fieldVerificationOutcome"><strong>النتيجة:</strong> {{ visit.fieldVerificationOutcome === 'JobConfirmed' ? 'تأكيد إتمام العمل' : 'عدم تأكيد إتمام العمل' }}</p>
+              </div>
+              <div class="evidence-photos-row" *ngIf="visit.photos && visit.photos.length > 0">
+                <div class="evidence-photo-container" *ngFor="let p of visit.photos" [title]="p.caption || 'صورة معاينة'">
+                  <a [href]="p.photoUrl" target="_blank">
+                    <img [src]="p.photoUrl" alt="معاينة ميدانية" />
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="closeDocsModal()">إغلاق المعاينة</button>
+    </div>
+  </div>
+</div>

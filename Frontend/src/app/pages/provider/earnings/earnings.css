@@ -1,0 +1,25 @@
+.earnings-page { padding: var(--s5); }
+.page-header { display: flex; justify-content: space-between; align-items: center; gap: var(--s4); margin-bottom: var(--s5); }
+.page-header h1 { margin: 0; }
+.page-header p { color: var(--text-muted); margin: var(--s1) 0 0; }
+.filters-card { display: flex; gap: var(--s3); align-items: end; margin-bottom: var(--s5); }
+.form-group { min-width: 180px; }
+.dashboard-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: var(--s4); }
+.widget-card p { color: var(--text-muted); margin: 0 0 var(--s2); }
+.widget-card h3 { margin: 0; font-size: 1.6rem; }
+@media (max-width: 768px) { .filters-card { flex-direction: column; align-items: stretch; } }
+.section-heading {
+  margin: var(--s5) 0 var(--s3);
+}
+
+.section-heading h2 {
+  margin: 0 0 var(--s1);
+  color: var(--text-main);
+  font-size: 1.2rem;
+  font-weight: 900;
+}
+
+.section-heading p {
+  margin: 0;
+  color: var(--text-muted);
+}

@@ -1,0 +1,43 @@
+<div class="auth-wrapper">
+  <div class="card auth-card animate-on-scroll">
+    <div class="auth-header">
+      <div class="auth-logo"><span>هيڤ</span>يك</div>
+      <h2>تأكيد البريد الإلكتروني</h2>
+      <p *ngIf="!confirmed">فعّل حسابك من خلال رابط التأكيد المرسل إلى بريدك.</p>
+      <p *ngIf="confirmed">تم تفعيل الحساب بنجاح.</p>
+    </div>
+
+    <div class="confirm-state" *ngIf="isConfirming">
+      جاري تأكيد البريد الإلكتروني...
+    </div>
+
+    <p class="success-message" *ngIf="successMessage">
+      {{ successMessage }}
+    </p>
+
+    <p class="error-message" *ngIf="errorMessage">
+      {{ errorMessage }}
+    </p>
+
+    <div class="confirm-panel" *ngIf="!isConfirming && !confirmed">
+      <label class="form-label" for="confirm-email">البريد الإلكتروني</label>
+      <input
+        id="confirm-email"
+        class="form-input"
+        type="email"
+        name="email"
+        placeholder="example@mail.com"
+        [(ngModel)]="email"
+      />
+
+      <button type="button" class="btn btn-primary submit-btn" [disabled]="isResending" (click)="resend()">
+        {{ isResending ? 'جاري إعادة الإرسال...' : 'إعادة إرسال رسالة التفعيل' }}
+      </button>
+    </div>
+
+    <div class="auth-footer actions-footer">
+      <a routerLink="/login" class="btn btn-outline">تسجيل الدخول</a>
+      <a routerLink="/" class="home-link">العودة للرئيسية</a>
+    </div>
+  </div>
+</div>

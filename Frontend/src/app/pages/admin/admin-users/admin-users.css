@@ -1,0 +1,201 @@
+.admin-page {
+  padding: var(--s5);
+  max-width: var(--container-width);
+  margin: 0 auto;
+}
+
+.admin-header {
+  margin-bottom: var(--s5);
+}
+
+.page-title {
+  font-size: var(--text-3xl);
+  font-weight: 800;
+  color: var(--text-main);
+  margin: 0 0 var(--s1) 0;
+}
+
+.page-subtitle {
+  color: var(--text-muted);
+  font-size: var(--text-base);
+  margin: 0;
+}
+
+.filters-panel {
+  display: flex;
+  gap: var(--s4);
+  background-color: var(--bg-card);
+  padding: var(--s4);
+  border-radius: var(--radius);
+  border: 1px solid var(--border-color);
+  margin-bottom: var(--s5);
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+}
+
+.filter-label {
+  font-weight: 600;
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+.form-control {
+  padding: var(--s2) var(--s3);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  min-width: 150px;
+}
+
+/* Table Styles - Can be moved to global if needed */
+.table-container {
+  background-color: var(--bg-card);
+  border-radius: var(--radius);
+  border: 1px solid var(--border-color);
+  overflow-x: auto;
+  margin-bottom: var(--s5);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: right;
+}
+
+.data-table th {
+  background-color: rgba(244, 163, 0, 0.05); /* very subtle primary */
+  color: var(--text-main);
+  font-weight: 700;
+  padding: var(--s3) var(--s4);
+  border-bottom: 2px solid var(--border-color);
+  font-size: var(--text-sm);
+}
+
+.data-table td {
+  padding: var(--s3) var(--s4);
+  border-bottom: 1px solid var(--border-color);
+  font-size: var(--text-sm);
+  vertical-align: middle;
+}
+
+.data-table tbody tr {
+  transition: var(--transition);
+}
+
+.data-table tbody tr:hover {
+  background-color: var(--bg-main);
+}
+
+.font-medium { font-weight: 600; color: var(--text-main); }
+.text-muted { color: var(--text-muted); }
+.text-right { text-align: right; }
+
+.role-badges {
+  display: flex;
+  gap: var(--s1);
+  flex-wrap: wrap;
+}
+
+.badge {
+  background-color: var(--bg-main);
+  color: var(--text-muted);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid var(--border-color);
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.status-badge.active {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: var(--success);
+}
+
+.status-badge.suspended {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--danger);
+}
+
+.actions-cell {
+  display: flex;
+  gap: var(--s2);
+}
+
+.btn-icon {
+  background: none;
+  border: none;
+  padding: var(--s1);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+}
+
+.btn-icon.danger { color: var(--danger); }
+.btn-icon.danger:hover { background-color: rgba(239, 68, 68, 0.1); }
+
+.btn-icon.success { color: var(--success); }
+.btn-icon.success:hover { background-color: rgba(16, 185, 129, 0.1); }
+
+/* Pagination */
+.pagination-panel {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--s3) var(--s4);
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+}
+
+.pagination-info {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+}
+
+.btn-page {
+  padding: var(--s1) var(--s3);
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-main);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--text-main);
+}
+
+.btn-page:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-page:not(:disabled):hover {
+  background-color: var(--border-color);
+}
+
+.page-current {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-main);
+}

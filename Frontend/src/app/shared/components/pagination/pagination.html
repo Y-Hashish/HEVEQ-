@@ -1,0 +1,5 @@
+<div class="pagination-simple" *ngIf="totalCount > pageSize">
+  <button class="btn btn-sm btn-secondary" [disabled]="page === 1" (click)="prevPage()">السابق</button>
+  <span class="page-info">{{ page }} / {{ totalPages }}</span>
+  <button class="btn btn-sm btn-secondary" [disabled]="page === totalPages" (click)="nextPage()">التالي</button>
+</div>

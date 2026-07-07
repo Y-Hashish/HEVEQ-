@@ -1,0 +1,158 @@
+<section class="provider-bookings-page">
+    <div class="page-header">
+        <div>
+            <h1>طلبات الحجز</h1>
+            <p>راجع طلبات العملاء الجديدة واقبل أو ارفض الطلب حسب التوفر.</p>
+        </div>
+
+        <button class="btn btn-secondary" type="button" [disabled]="isLoading" (click)="loadRequests()">
+            تحديث
+        </button>
+    </div>
+
+    <div class="alert error" *ngIf="errorMessage">
+        {{ errorMessage }}
+    </div>
+
+    <div class="alert success" *ngIf="successMessage">
+        {{ successMessage }}
+    </div>
+
+    <div class="provider-bookings-grid">
+        <div class="card requests-list-card">
+            <h2>الطلبات الجديدة</h2>
+
+            <div class="state-message" *ngIf="isLoading">
+                جاري تحميل طلبات الحجز...
+            </div>
+
+            <div class="empty-state" *ngIf="!isLoading && requests.length === 0">
+                <div class="empty-icon">📥</div>
+                <h3>لا توجد طلبات جديدة</h3>
+                <p>أي طلب حجز جديد من العملاء سيظهر هنا.</p>
+            </div>
+
+            <div class="requests-list" *ngIf="!isLoading && requests.length > 0">
+                <button type="button"
+    class="request-item"
+    *ngFor="let request of requests; trackBy: trackById"
+    [class.active]="selectedRequest?.id === request.id"
+    (click)="selectRequest(request)">
+
+    <div class="request-title-row">
+        <h3>{{ request.jobTitle || request.serviceTitle }}</h3>
+
+        <span class="status-badge">
+            {{ request.statusAr || request.status }}
+        </span>
+    </div>
+
+    <p>{{ request.bookingNumber }} · {{ request.customerName }}</p>
+    <small>{{ request.location }}</small>
+</button>
+            </div>
+        </div>
+
+        <div class="card request-details-card">
+            <div class="empty-state" *ngIf="!selectedRequest">
+                <div class="empty-icon">📋</div>
+                <h3>اختر طلب حجز</h3>
+                <p>اضغط على أي طلب من القائمة لعرض التفاصيل واتخاذ قرار.</p>
+            </div>
+
+            <div *ngIf="selectedRequest">
+                <div class="details-header">
+                    <div>
+                        <h2>{{ selectedRequest.jobTitle || selectedRequest.serviceTitle }}</h2>
+                        <p>{{ selectedRequest.bookingNumber }}</p>
+                    </div>
+
+                    <span class="status-badge">
+                        {{ selectedRequest.statusAr || selectedRequest.status }}
+                    </span>
+                </div>
+
+                <div class="details-grid">
+                    <div>
+                        <span>العميل</span>
+                        <strong>{{ selectedRequest.customerName }}</strong>
+                    </div>
+
+                    <div>
+                        <span>الخدمة</span>
+                        <strong>{{ selectedRequest.serviceTitle }}</strong>
+                    </div>
+
+                    <div>
+                        <span>الموقع</span>
+                        <strong>{{ selectedRequest.location }}</strong>
+                    </div>
+
+                    <div>
+                        <span>تاريخ البداية</span>
+                        <strong>{{ selectedRequest.requestedStartDate }}</strong>
+                    </div>
+
+                    <div>
+                        <span>وقت البداية</span>
+                        <strong>{{ selectedRequest.requestedStartTime }}</strong>
+                    </div>
+
+                    <div>
+                        <span>المدة</span>
+                        <strong>{{ selectedRequest.estimatedDurationHours }} ساعة</strong>
+                    </div>
+
+                    <div>
+                        <span>القيمة التقديرية</span>
+                        <strong>{{ selectedRequest.estimatedTotal }} جنيه</strong>
+                    </div>
+                </div>
+
+                <div class="action-panel" *ngIf="selectedRequest.canAccept">
+                    <h3>قبول الحجز</h3>
+
+                    <div class="form-group">
+                        <label class="form-label">اختر المشغل</label>
+                        <select class="form-input" [(ngModel)]="selectedOperatorId">
+                            <option value="">اختر المشغل</option>
+                            <option *ngFor="let operator of operators" [ngValue]="operator.id">
+                                {{ operator.fullName }}
+                            </option>
+                        </select>
+
+                        <p class="field-hint" *ngIf="isOperatorsLoading">
+                            جاري تحميل المشغلين...
+                        </p>
+                    </div>
+
+                    <button class="btn btn-primary"
+                        type="button"
+                        [disabled]="isActionLoading"
+                        (click)="acceptSelectedRequest()">
+                        {{ isActionLoading ? 'جاري القبول...' : 'قبول الحجز' }}
+                    </button>
+                </div>
+
+                <div class="action-panel" *ngIf="selectedRequest.canReject">
+                    <h3>رفض الحجز</h3>
+
+                    <div class="form-group">
+                        <label class="form-label">سبب الرفض</label>
+                        <textarea class="form-input textarea"
+                            rows="4"
+                            [(ngModel)]="rejectReason"
+                            placeholder="اكتب سبب الرفض بوضوح"></textarea>
+                    </div>
+
+                    <button class="btn btn-danger"
+                        type="button"
+                        [disabled]="isActionLoading"
+                        (click)="rejectSelectedRequest()">
+                        {{ isActionLoading ? 'جاري الرفض...' : 'رفض الحجز' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

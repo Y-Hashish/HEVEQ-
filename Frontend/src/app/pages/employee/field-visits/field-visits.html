@@ -1,0 +1,147 @@
+<section class="field-visits-page" dir="rtl">
+  <div class="page-header">
+    <div>
+      <span class="eyebrow">HEVEQ Field Operations</span>
+      <h1>مهامي الميدانية</h1>
+      <p>تابع الزيارات المسندة إليك، حدث حالة الوصول، وارفع تقرير الإثباتات للأدمن.</p>
+    </div>
+    <button class="btn btn-secondary" type="button" (click)="loadVisits()">تحديث القائمة</button>
+  </div>
+
+  <div class="toolbar-card">
+    <label>فلترة الحالة</label>
+    <select [(ngModel)]="statusFilter">
+      <option value="">كل الحالات</option>
+      <option value="Dispatched">تم الإرسال</option>
+      <option value="OnSite">في الموقع</option>
+      <option value="Completed">تم الانتهاء</option>
+      <option value="FailedAccess">فشل الدخول</option>
+    </select>
+  </div>
+
+  <app-loading *ngIf="isLoading"></app-loading>
+
+  <div class="workspace-grid" *ngIf="!isLoading">
+    <div class="visits-list-card">
+      <div class="card-title-row">
+        <h2>الزيارات المسندة</h2>
+        <span>{{ filteredVisits.length }} زيارة</span>
+      </div>
+
+      <app-empty-state
+        *ngIf="filteredVisits.length === 0"
+        title="لا توجد زيارات ميدانية"
+        description="عند تعيين زيارة لك ستظهر هنا مباشرة.">
+      </app-empty-state>
+
+      <button
+        type="button"
+        class="visit-card"
+        *ngFor="let visit of filteredVisits"
+        [class.active]="selectedVisit?.id === visit.id"
+        (click)="openVisit(visit)">
+        <div class="visit-main-line">
+          <strong>زيارة رقم {{ visit.id | slice:0:8 }}</strong>
+          <span class="status-badge" [attr.data-status]="visit.visitStatus">
+            {{ visit.visitStatusAr || getStatusLabel(visit.visitStatus) }}
+          </span>
+        </div>
+        <p>{{ visit.dispatchInstructions || 'لا توجد تعليمات إضافية.' }}</p>
+        <small>تاريخ الإرسال: {{ visit.dispatchedAt | date:'medium' }}</small>
+      </button>
+    </div>
+
+    <div class="details-card" *ngIf="selectedVisit; else selectVisitHint">
+      <app-loading *ngIf="isDetailsLoading"></app-loading>
+
+      <ng-container *ngIf="!isDetailsLoading && selectedVisit">
+        <div class="details-header">
+          <div>
+            <span class="eyebrow">Field Visit Details</span>
+            <h2>تفاصيل الزيارة</h2>
+          </div>
+          <button type="button" class="ghost-btn" (click)="closeDetails()">إغلاق</button>
+        </div>
+
+        <div class="info-grid">
+          <div>
+            <span>الحالة الحالية</span>
+            <strong>{{ selectedVisit.visitStatusAr || getStatusLabel(selectedVisit.visitStatus) }}</strong>
+          </div>
+          <div>
+            <span>المفتش</span>
+            <strong>{{ selectedVisit.dispatchedEmployeeName }}</strong>
+          </div>
+          <div>
+            <span>تاريخ الإرسال</span>
+            <strong>{{ selectedVisit.dispatchedAt | date:'short' }}</strong>
+          </div>
+          <div>
+            <span>تاريخ الزيارة</span>
+            <strong>{{ selectedVisit.visitedAt ? (selectedVisit.visitedAt | date:'short') : 'لم يسجل' }}</strong>
+          </div>
+        </div>
+
+        <div class="instructions-box">
+          <strong>تعليمات الأدمن</strong>
+          <p>{{ selectedVisit.dispatchInstructions || 'لا توجد تعليمات.' }}</p>
+        </div>
+
+        <div class="form-section">
+          <h3>تحديث حالة الزيارة</h3>
+          <div class="form-row">
+            <select [(ngModel)]="nextStatus">
+              <option value="Dispatched">تم الإرسال</option>
+              <option value="OnSite">في الموقع</option>
+              <option value="Completed">تم الانتهاء</option>
+              <option value="FailedAccess">فشل الدخول</option>
+            </select>
+            <button class="btn btn-primary" type="button" [disabled]="isSavingStatus" (click)="updateStatus()">
+              {{ isSavingStatus ? 'جاري الحفظ...' : 'حفظ الحالة' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3>رفع تقرير الإثباتات</h3>
+          <label>نتيجة الزيارة</label>
+          <select [(ngModel)]="outcome">
+            <option value="JobConfirmed">تم تأكيد إتمام العمل</option>
+            <option value="JobNotConfirmed">لم يتم تأكيد إتمام العمل</option>
+            <option value="PartiallyConfirmed">تم التأكيد جزئيا</option>
+            <option value="Inconclusive">غير حاسم</option>
+          </select>
+
+          <label>ملاحظات الموظف الميداني</label>
+          <textarea rows="5" [(ngModel)]="employeeNotes" placeholder="اكتب وصف المعاينة وما تم التحقق منه..."></textarea>
+
+          <label>روابط الصور، كل رابط في سطر</label>
+          <textarea rows="4" [(ngModel)]="photoUrlsText" placeholder="https://..."></textarea>
+
+          <button class="btn btn-success" type="button" [disabled]="isSubmittingEvidence" (click)="submitEvidence()">
+            {{ isSubmittingEvidence ? 'جاري الرفع...' : 'رفع التقرير والإثباتات' }}
+          </button>
+        </div>
+
+        <div class="current-report" *ngIf="selectedVisit.employeeNotes || selectedVisit.photos.length">
+          <h3>التقرير الحالي</h3>
+          <p *ngIf="selectedVisit.employeeNotes">{{ selectedVisit.employeeNotes }}</p>
+          <span class="outcome-chip">{{ getOutcomeLabel(selectedVisit.fieldVerificationOutcome) }}</span>
+          <div class="photos-grid" *ngIf="selectedVisit.photos.length">
+            <a *ngFor="let photo of selectedVisit.photos" [href]="photo.photoUrl" target="_blank">
+              <img [src]="photo.photoUrl" [alt]="photo.caption || 'صورة زيارة ميدانية'" />
+            </a>
+          </div>
+        </div>
+      </ng-container>
+    </div>
+
+    <ng-template #selectVisitHint>
+      <div class="details-card empty-details">
+        <div class="empty-icon">📍</div>
+        <h2>اختر زيارة من القائمة</h2>
+        <p>ستظهر هنا تفاصيل الزيارة وتعليمات الأدمن ونموذج رفع الإثباتات.</p>
+      </div>
+    </ng-template>
+  </div>
+</section>

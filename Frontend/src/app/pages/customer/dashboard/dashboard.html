@@ -1,0 +1,23 @@
+<section class="dashboard-page">
+  <div class="page-header">
+    <div>
+      <h1>لوحة العميل</h1>
+      <p>ملخص سريع للحجوزات وطلبات السوق والتنبيهات.</p>
+    </div>
+    <button class="btn btn-secondary" type="button" (click)="load()" [disabled]="isLoading">تحديث</button>
+  </div>
+
+  <div class="alert error" *ngIf="errorMessage">{{ errorMessage }}</div>
+  <div class="card" *ngIf="isLoading">جاري التحميل...</div>
+
+  <div class="dashboard-grid" *ngIf="summary && !isLoading">
+    <a class="card widget-card" routerLink="/bookings"><p>حجوزات نشطة</p><h3>{{ summary.activeBookings }}</h3></a>
+    <a class="card widget-card" routerLink="/bookings"><p>بانتظار إجراء</p><h3>{{ summary.pendingBookings }}</h3></a>
+    <a class="card widget-card" routerLink="/bookings"><p>حجوزات مكتملة</p><h3>{{ summary.completedBookings }}</h3></a>
+    <a class="card widget-card" routerLink="/bookings"><p>نزاعات مفتوحة</p><h3>{{ summary.openDisputes }}</h3></a>
+    <a class="card widget-card" routerLink="/marketplace-orders"><p>طلبات السوق</p><h3>{{ summary.marketplacePurchases }}</h3></a>
+    <a class="card widget-card" routerLink="/notifications"><p>تنبيهات غير مقروءة</p><h3>{{ summary.unreadNotifications }}</h3></a>
+    <a class="card widget-card" routerLink="/profile"><p>نقاط الثقة</p><h3>{{ summary.trustScore | number:'1.0-0' }}</h3></a>
+    <a class="card widget-card" routerLink="/account-verification"><p>توثيق إضافي</p><h3>{{ summary.requiresAdditionalVerification ? 'مطلوب' : 'مكتمل' }}</h3></a>
+  </div>
+</section>

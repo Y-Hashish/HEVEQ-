@@ -1,0 +1,179 @@
+<div class="container product-details-page">
+
+  <!-- Loading state -->
+  <div class="pd-loading" *ngIf="isLoading">
+    <div class="pd-gallery-skeleton">
+      <div class="card skeleton" style="height: 420px;"></div>
+      <div class="pd-thumbs-skeleton">
+        <div class="card skeleton" *ngFor="let s of [1,2,3,4]" style="height: 80px;"></div>
+      </div>
+    </div>
+    <div class="card skeleton" style="height: 420px;"></div>
+  </div>
+
+  <!-- Not found -->
+  <div class="empty-state" *ngIf="!isLoading && notFound">
+    <p class="text-muted">هذه السلعة غير موجودة أو غير متاحة حاليًا</p>
+    <a class="btn btn-outline" routerLink="/marketplace">الرجوع لسوق المعدات</a>
+  </div>
+
+  <!-- Error -->
+  <div class="empty-state" *ngIf="!isLoading && !notFound && errorMessage">
+    <p class="text-muted">{{ errorMessage }}</p>
+    <button type="button" class="btn btn-outline" (click)="loadListing()">إعادة المحاولة</button>
+  </div>
+
+  <!-- Content -->
+  <div class="pd-layout" *ngIf="!isLoading && !notFound && !errorMessage && listing">
+
+    <!-- Gallery + description column -->
+    <div class="pd-main">
+      <div class="pd-gallery card">
+        <div class="pd-main-photo">
+          <img *ngIf="activePhotoUrl; else pdNoImage" [src]="activePhotoUrl" [alt]="listing.title" />
+          <ng-template #pdNoImage>
+            <div class="no-image">📦</div>
+          </ng-template>
+        </div>
+
+        <div class="pd-thumbs" *ngIf="sortedPhotos.length > 1">
+          <button
+            type="button"
+            class="pd-thumb"
+            *ngFor="let photo of sortedPhotos; let i = index"
+            [class.active]="i === activePhotoIndex"
+            (click)="selectPhoto(i)"
+          >
+            <img [src]="photo.photoUrl" [alt]="listing.title" />
+          </button>
+        </div>
+      </div>
+
+      <div class="card pd-section">
+        <h2>الوصف</h2>
+        <p class="pd-description">{{ listing.description }}</p>
+      </div>
+
+      <div class="card pd-section" *ngIf="listing.specifications">
+        <h2>المواصفات</h2>
+        <p class="pd-description">{{ listing.specifications }}</p>
+      </div>
+
+      <!-- Owner / admin only -->
+      <div class="card pd-section pd-management" *ngIf="listing.managementInfo as mi">
+        <h2>معلومات المراجعة (للمالك/الإدارة فقط)</h2>
+
+        <div class="pd-management-row" *ngIf="mi.aiRiskLevel">
+          <span>تقييم الذكاء الاصطناعي للمخاطر:</span>
+          <span class="badge" [ngClass]="riskLevelBadgeClass">{{ mi.aiRiskLevel }}</span>
+          <span *ngIf="mi.aiRiskScore != null" class="text-muted">({{ mi.aiRiskScore }})</span>
+        </div>
+
+        <div class="pd-management-row" *ngIf="mi.aiRiskFlags">
+          <span>ملاحظات النظام:</span>
+          <span class="text-muted">{{ mi.aiRiskFlags }}</span>
+        </div>
+
+        <div class="pd-management-row" *ngIf="mi.adminRejectionNote">
+          <span>سبب الرفض من الإدارة:</span>
+          <span class="text-muted">{{ mi.adminRejectionNote }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar: price / buy box / seller -->
+    <div class="pd-sidebar">
+      <div class="card pd-buy-box">
+        <div class="pd-price">{{ listing.price | number }} ج.م</div>
+        <h1 class="pd-title">{{ listing.title }}</h1>
+        <div class="pd-condition">الحالة: <strong>{{ listing.conditionAr || listing.condition }}</strong></div>
+
+        <!-- Already own listing -->
+        <p class="pd-note" *ngIf="isOwnListing">هذا إعلانك الخاص، لا يمكنك شراؤه.</p>
+
+        <!-- Not available -->
+        <p class="pd-note" *ngIf="!isOwnListing && !listing.canBuyNow && !orderResult">
+          هذه السلعة غير متاحة للشراء حاليًا.
+        </p>
+
+        <!-- Order success -->
+        <div class="pd-order-success" *ngIf="orderResult">
+          <p>✅ {{ orderResult.message }}</p>
+          <p>رقم الطلب: <strong>{{ orderResult.orderNumber }}</strong></p>
+          <p>الحالة: <strong>{{ orderResult.statusAr }}</strong></p>
+          <p class="text-muted">سيتم تحويلك إلى صفحة دفع طلب السوق.</p>
+        </div>
+
+        <!-- Buy now CTA -->
+        <button
+          type="button"
+          class="btn btn-primary w-full"
+          *ngIf="!isOwnListing && listing.canBuyNow && !showBuyForm && !orderResult"
+          (click)="startBuyNow()"
+        >
+          اشترِ الآن
+        </button>
+
+        <button
+          type="button"
+          class="btn btn-outline w-full"
+          style="margin-top: var(--s3);"
+          *ngIf="!isOwnListing"
+          [disabled]="isStartingConversation"
+          (click)="startSellerChat()"
+        >
+          {{ isStartingConversation ? 'جاري فتح المحادثة...' : 'تواصل مع البائع' }}
+        </button>
+        <p class="pd-order-error" *ngIf="chatError">{{ chatError }}</p>
+
+        <!-- Buy form -->
+        <form class="pd-buy-form" *ngIf="showBuyForm" (ngSubmit)="confirmPurchase()">
+          <div class="filter-field">
+            <label for="pd-delivery-pref">طريقة الاستلام</label>
+            <select id="pd-delivery-pref" name="deliveryPreference" [(ngModel)]="deliveryPreference">
+              <option value="Pickup">استلام من موقع البائع</option>
+              <option value="Delivery">توصيل</option>
+              <option value="Either">أي طريقة تناسب البائع</option>
+            </select>
+          </div>
+
+          <div class="filter-field">
+            <label for="pd-delivery-address">عنوان التوصيل (اختياري)</label>
+            <input
+              id="pd-delivery-address"
+              type="text"
+              name="deliveryAddress"
+              maxlength="500"
+              placeholder="اكتب عنوانك بالتفصيل"
+              [(ngModel)]="deliveryAddress"
+            />
+          </div>
+
+          <p class="pd-order-error" *ngIf="orderError">{{ orderError }}</p>
+
+          <div class="pd-buy-form-actions">
+            <button type="submit" class="btn btn-primary" [disabled]="isPlacingOrder">
+              {{ isPlacingOrder ? 'جاري تنفيذ الطلب...' : 'تأكيد الشراء' }}
+            </button>
+            <button type="button" class="btn btn-outline" (click)="cancelBuyNow()" [disabled]="isPlacingOrder">
+              إلغاء
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card pd-seller-card">
+        <h2>البائع</h2>
+        <div class="pd-seller-name">{{ listing.seller.displayName }}</div>
+
+        <div class="pd-seller-rating" *ngIf="listing.seller.averageRating">
+          <span class="stars">
+            <span *ngFor="let filled of ratingStars(listing.seller.averageRating)" [class.filled]="filled">★</span>
+          </span>
+          <span class="rating-value">{{ listing.seller.averageRating | number: '1.1-1' }}</span>
+          <span class="rating-count">({{ listing.seller.totalReviewsCount ?? 0 }} تقييم)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

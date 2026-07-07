@@ -1,0 +1,9 @@
+.dashboard-page { padding: var(--s5); }
+.page-header { display: flex; justify-content: space-between; align-items: center; gap: var(--s4); margin-bottom: var(--s5); }
+.page-header h1 { margin: 0; }
+.page-header p { margin: var(--s1) 0 0; color: var(--text-muted); }
+.dashboard-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--s4); }
+.widget-card { text-decoration: none; color: inherit; transition: transform .2s ease, box-shadow .2s ease; }
+.widget-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.widget-card p { color: var(--text-muted); margin: 0 0 var(--s2); }
+.widget-card h3 { margin: 0; font-size: 2rem; }

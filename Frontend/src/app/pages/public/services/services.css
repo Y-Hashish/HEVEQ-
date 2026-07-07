@@ -1,0 +1,138 @@
+.services-hero {
+  background: var(--dark);
+  color: white;
+  padding: var(--s8) 0;
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--s10);
+  text-align: center;
+}
+
+.services-hero h1 {
+  font-size: 2.5rem;
+  margin-bottom: var(--s4);
+}
+
+.services-hero p {
+  opacity: 0.8;
+  margin-bottom: var(--s6);
+}
+
+.services-search {
+  max-width: 600px;
+  margin: 0 auto;
+  display: block;
+  position: relative;
+}
+
+.services-search input {
+  width: 100%;
+  padding: 15px 45px;
+  border-radius: 99px;
+  background: var(--bg-main);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+}
+
+.services-search .search-icon {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.services-section {
+  margin-bottom: 80px;
+}
+
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--s6);
+}
+
+.services-card {
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+}
+
+.services-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+}
+
+.services-img {
+  width: 100%;
+  height: 200px;
+  position: relative;
+}
+
+.services-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.service-badge {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  font-weight: 700;
+}
+
+.services-info {
+  padding: var(--s5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  flex-grow: 1;
+}
+
+.services-rate {
+  font-size: var(--text-lg);
+  font-weight: 900;
+  color: var(--primary);
+}
+
+.services-rate span {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  font-weight: normal;
+}
+
+.services-info h3 {
+  font-size: var(--text-lg);
+  font-weight: 800;
+  margin: 5px 0;
+}
+
+.services-meta {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 10px;
+}
+
+.services-info .btn {
+  margin-top: auto;
+}
+
+@media (max-width: 1024px) {
+  .services-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .services-grid {
+    grid-template-columns: 1fr;
+  }
+}

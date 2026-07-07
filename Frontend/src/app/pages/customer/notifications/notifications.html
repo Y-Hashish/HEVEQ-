@@ -1,0 +1,71 @@
+<section class="notifications-page" dir="rtl">
+  <div class="page-header">
+    <div>
+      <h1>الإشعارات</h1>
+      <p>تابع آخر التحديثات والرسائل الواردة بخصوص حسابك وحجوزاتك.</p>
+    </div>
+    <div class="header-actions" *ngIf="unreadCount > 0">
+      <span class="unread-badge-total">
+        لديك {{ unreadCount }} إشعار غير مقروء
+      </span>
+    </div>
+  </div>
+
+  <div class="alert error" *ngIf="errorMessage">
+    {{ errorMessage }}
+    <button class="btn btn-secondary btn-sm" (click)="loadNotifications()">إعادة المحاولة</button>
+  </div>
+
+  <div class="notifications-container">
+    <div class="card notifications-card">
+      <div class="state-message" *ngIf="isLoading && notifications.length === 0">
+        <div class="spinner"></div>
+        جاري تحميل الإشعارات...
+      </div>
+
+      <div class="empty-state" *ngIf="!isLoading && notifications.length === 0">
+        <div class="empty-icon">🔔</div>
+        <h3>لا توجد إشعارات حالياً</h3>
+        <p>عندما تتلقى إشعارات جديدة، ستظهر هنا تلقائياً في الوقت الفعلي.</p>
+      </div>
+
+      <div class="notifications-list" *ngIf="notifications.length > 0">
+        <div 
+          class="notification-item" 
+          *ngFor="let notification of notifications" 
+          [class.unread]="!isNotificationRead(notification)"
+          (click)="markAsRead(notification)"
+        >
+          <div class="notification-icon">
+            {{ getNotificationIcon(notification.eventType) }}
+          </div>
+          
+          <div class="notification-content">
+            <div class="notification-title-row">
+              <h3>{{ notification.title }}</h3>
+              <span class="unread-dot" *ngIf="!isNotificationRead(notification)"></span>
+            </div>
+            
+            <p class="notification-body">
+              {{ getNotificationMessage(notification) }}
+            </p>
+            
+            <div class="notification-meta">
+              <span class="notification-date">
+                {{ getNotificationDate(notification) | date:'medium' }}
+              </span>
+              
+              <button 
+                *ngIf="getNavigationLink(notification)" 
+                class="btn-link" 
+                (click)="navigateToLink(notification); $event.stopPropagation();"
+              >
+                عرض التفاصيل &larr;
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

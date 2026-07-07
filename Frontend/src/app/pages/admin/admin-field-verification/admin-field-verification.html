@@ -1,0 +1,184 @@
+<div class="admin-page">
+  <div class="admin-header">
+    <h1 class="page-title">المعاينات الميدانية</h1>
+    <p class="page-subtitle">توجيه الموظفين ومراجعة تقارير الفحص الميداني للمعدات</p>
+  </div>
+
+  <div class="filters-panel">
+    <div class="filter-group">
+      <label class="filter-label">حالة المعاينة</label>
+      <select class="form-control" [(ngModel)]="filterStatus" (change)="onFilterChange()">
+        <option value="">الكل</option>
+        <option value="Pending">بانتظار التوجيه</option>
+        <option value="Dispatched">تم التوجيه</option>
+        <option value="InProgress">جاري الفحص</option>
+        <option value="Completed">مكتمل (بانتظار القرار)</option>
+        <option value="Verified">مقبول</option>
+        <option value="Failed">مرفوض</option>
+      </select>
+    </div>
+  </div>
+
+  <app-loading *ngIf="isLoading" [fullScreen]="false"></app-loading>
+
+  <div class="split-layout" *ngIf="!isLoading">
+    <!-- List Column -->
+    <div class="list-column" [class.hidden-mobile]="selectedItem">
+      <app-empty-state *ngIf="verifications.length === 0" 
+        title="لا توجد معاينات" 
+        message="لم يتم العثور على طلبات معاينة بهذه الحالة. قم بتغيير الفلتر أعلاه لعرض الحالات الأخرى.">
+      </app-empty-state>
+
+      <div class="verification-cards" *ngIf="verifications.length > 0">
+        <div class="verification-card" 
+             *ngFor="let item of verifications" 
+             [class.active]="selectedItem?.id === item.id"
+             (click)="viewDetails(item.id)">
+          <div class="card-header">
+            <h3 class="item-title">{{ item.providerName }}</h3>
+            <span class="status-badge" [ngClass]="item.status ? item.status.toLowerCase() : ''">{{ item.status }}</span>
+          </div>
+          <div class="parties">
+            <p *ngIf="item.employeeName"><strong>الموظف المكلف:</strong> {{ item.employeeName }}</p>
+            <p *ngIf="!item.employeeName" class="text-danger"><strong>غير مكلف بعد</strong></p>
+            <p *ngIf="item.scheduledDate"><strong>تاريخ الفحص:</strong> {{ item.scheduledDate | date:'shortDate' }}</p>
+          </div>
+          <div class="item-meta">
+            <span>الطلب: {{ item.createdAt | date:'shortDate' }}</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="pagination-simple" *ngIf="totalCount > pageSize">
+        <app-pagination 
+          [page]="page" 
+          [pageSize]="pageSize" 
+          [totalCount]="totalCount" 
+          (pageChange)="onPageChange($event)">
+        </app-pagination>
+      </div>
+    </div>
+
+    <!-- Details Column -->
+    <div class="details-column" *ngIf="selectedItem || isDetailsLoading" [class.visible-mobile]="selectedItem || isDetailsLoading">
+      <div class="mobile-back">
+        <button class="btn btn-secondary btn-sm" (click)="closeDetails()">&rarr; عودة للقائمة</button>
+      </div>
+
+      <app-loading *ngIf="isDetailsLoading" [fullScreen]="false"></app-loading>
+
+      <div class="details-content" *ngIf="selectedItem && !isDetailsLoading">
+        <div class="details-header">
+          <div class="header-titles">
+            <h2>تقرير المعاينة: {{ selectedItem.listingTitle }}</h2>
+            <p class="subtitle">المزود: {{ selectedItem.providerName }} | الموقع: {{ selectedItem.locationDetails }}</p>
+          </div>
+          <div class="status-box">
+            <span class="status-badge" [ngClass]="selectedItem.status ? selectedItem.status.toLowerCase() : ''">{{ selectedItem.status }}</span>
+          </div>
+        </div>
+
+        <div class="content-grid">
+          <div class="main-info">
+            
+            <!-- Employee Report Section -->
+            <div class="info-section" *ngIf="selectedItem.employeeReport">
+              <h3>تقرير الموظف الميداني</h3>
+              <p class="description-text">{{ selectedItem.employeeReport }}</p>
+            </div>
+
+            <div class="info-section" *ngIf="selectedItem.evidenceUrls?.length">
+              <h3>صور وفيديوهات المعاينة</h3>
+              <div class="evidence-gallery">
+                <a *ngFor="let url of selectedItem.evidenceUrls" [href]="url" target="_blank" class="evidence-link">
+                  <img *ngIf="url.match('\.(jpeg|jpg|gif|png)$')" [src]="url" alt="Evidence" class="gallery-img">
+                  <div class="doc-placeholder" *ngIf="!url.match('\.(jpeg|jpg|gif|png)$')">
+                    <span>عرض الملف</span>
+                  </div>
+                </a>
+              </div>
+            </div>
+
+            <div class="info-section" *ngIf="selectedItem.status === 'Pending'">
+              <h3>بانتظار توجيه موظف ميداني...</h3>
+              <p class="text-muted">قم باختيار موظف من القائمة الجانبية لتكليفه بهذه المهمة.</p>
+            </div>
+            
+            <div class="info-section" *ngIf="selectedItem.status === 'Dispatched' || selectedItem.status === 'InProgress'">
+              <h3>المعاينة قيد التنفيذ</h3>
+              <p class="text-muted">الموظف المكلف: <strong>{{ selectedItem.employeeName }}</strong></p>
+              <p class="text-muted">التاريخ المجدول: <strong>{{ selectedItem.scheduledDate | date:'medium' }}</strong></p>
+            </div>
+
+          </div>
+
+          <div class="side-info">
+            
+            <!-- Dispatch Action Panel -->
+            <div class="info-card dispatch-card" *ngIf="selectedItem.status === 'Pending'">
+              <h3>توجيه موظف ميداني</h3>
+              
+              <div class="form-group">
+                <label>اختيار الموظف المتاح</label>
+                <select class="form-control full-width" [(ngModel)]="selectedEmployeeId">
+                  <option value="">-- اختر الموظف --</option>
+                  <option *ngFor="let emp of availableEmployees" [value]="emp.id">
+                    {{ emp.firstName }} {{ emp.lastName }} (المهام الحالية: غير متوفر)
+                  </option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>تاريخ ووقت المعاينة المجدول</label>
+                <input type="datetime-local" class="form-control full-width" [(ngModel)]="scheduledDate">
+              </div>
+
+              <button class="btn btn-primary full-width" 
+                      [disabled]="!selectedEmployeeId || !scheduledDate || isDispatching" 
+                      (click)="dispatchEmployee()">
+                {{ isDispatching ? 'جاري التوجيه...' : 'تأكيد التوجيه' }}
+              </button>
+            </div>
+
+            <!-- Decision Action Panel -->
+            <div class="info-card decision-card" *ngIf="selectedItem.status === 'Completed'">
+              <h3>تسجيل قرار الاعتماد النهائي</h3>
+              <p class="hint-text mb-2">قم بمراجعة تقرير الموظف واتخذ قرارك بشأن المعدة.</p>
+
+              <div class="form-group">
+                <label>القرار الإداري</label>
+                <select class="form-control full-width" [(ngModel)]="decisionType">
+                  <option value="">-- اختر القرار --</option>
+                  <option value="Approve">اعتماد المعدة (مطابقة للمواصفات)</option>
+                  <option value="Reject">رفض المعدة (غير مطابقة)</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>ملاحظات الاعتماد (تظهر للمزود)</label>
+                <textarea class="form-control full-width" rows="3" [(ngModel)]="adminNote" placeholder="ملاحظات توضيحية للقرار..."></textarea>
+              </div>
+
+              <button class="btn btn-success full-width" 
+                      [disabled]="!decisionType || !adminNote || isRecording" 
+                      (click)="recordDecision()">
+                {{ isRecording ? 'جاري الحفظ...' : 'حفظ القرار النهائي' }}
+              </button>
+            </div>
+
+            <!-- Final Status Panel -->
+            <div class="info-card resolved-card" *ngIf="selectedItem.status === 'Verified' || selectedItem.status === 'Failed'">
+              <h3>المعاينة منتهية</h3>
+              <p>حالة المعدة النهائية: 
+                <strong [class.text-success]="selectedItem.status === 'Verified'" [class.text-danger]="selectedItem.status === 'Failed'">
+                  {{ selectedItem.status === 'Verified' ? 'معتمدة ومقبولة' : 'مرفوضة' }}
+                </strong>
+              </p>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

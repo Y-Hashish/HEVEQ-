@@ -1,0 +1,9 @@
+<div class="toast-stack">
+    <div
+      class="toast show"
+      [ngClass]="'toast-' + message.type"
+      *ngFor="let message of (toast.messages$ | async); trackBy: trackById">
+      <span>{{ message.text }}</span>
+      <button type="button" class="toast-close" (click)="toast.dismiss(message.id)" aria-label="إغلاق">✕</button>
+    </div>
+  </div>

@@ -1,0 +1,11 @@
+@import './assets/css/variables.css';
+@import './assets/css/base.css';
+@import './assets/css/components.css';
+@import './assets/css/layouts.css';
+
+html,
+body {
+  direction: rtl;
+  text-align: right;
+  font-family: 'Cairo', sans-serif;
+}

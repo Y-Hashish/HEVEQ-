@@ -1,0 +1,160 @@
+<div class="admin-page">
+  <div class="admin-header">
+    <h1 class="page-title">مراجعة المستندات</h1>
+    <p class="page-subtitle">طابور مراجعة الوثائق والمستندات الثبوتية</p>
+  </div>
+
+  <div class="filters-panel">
+    <div class="filter-group">
+      <label class="filter-label">الحالة</label>
+      <select class="form-control" [(ngModel)]="filterStatus" (change)="onFilterChange()">
+        <option value="">الكل</option>
+        <option value="Pending">قيد المراجعة</option>
+        <option value="Approved">معتمد</option>
+        <option value="Rejected">مرفوض</option>
+      </select>
+    </div>
+    
+    <div class="filter-group">
+      <label class="filter-label">الدور</label>
+      <select class="form-control" [(ngModel)]="filterRole" (change)="onFilterChange()">
+        <option value="">الكل</option>
+        <option value="Provider">مزود</option>
+        <option value="Customer">عميل</option>
+        <option value="Operator">سائق/مشغل</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label class="filter-label">نوع المستند</label>
+      <select class="form-control" [(ngModel)]="filterType" (change)="onFilterChange()">
+        <option value="">الكل</option>
+        <option value="NationalId">هوية وطنية</option>
+        <option value="CommercialRegistration">سجل تجاري</option>
+        <option value="TaxCard">بطاقة ضريبية</option>
+        <option value="OperatorLicense">رخصة مشغل/سائق</option>
+        <option value="EquipmentLicense">رخصة معدة</option>
+        <option value="Insurance">تأمين</option>
+        <option value="Other">أخرى</option>
+      </select>
+    </div>
+  </div>
+
+  <app-loading *ngIf="isLoading" [fullScreen]="false"></app-loading>
+
+  <div class="split-layout" *ngIf="!isLoading">
+    <!-- List Column -->
+    <div class="list-column" [class.hidden-mobile]="selectedDoc">
+      <app-empty-state *ngIf="documents.length === 0" 
+        title="لا توجد مستندات" 
+        message="لا يوجد مستندات مطابقة لمعايير البحث في طابور المراجعة.">
+      </app-empty-state>
+
+      <div class="doc-cards" *ngIf="documents.length > 0">
+        <div class="doc-card" 
+             *ngFor="let doc of documents" 
+             [class.active]="selectedDoc?.id === doc.id"
+             (click)="selectDocument(doc)">
+          <div class="card-header">
+            <h3 class="item-title">{{ doc.userName }}</h3>
+            <span class="status-badge" [ngClass]="doc.status ? doc.status.toLowerCase() : ''">{{ doc.statusAr }}</span>
+          </div>
+          <p class="item-type">{{ doc.documentType }}</p>
+          <div class="item-meta">
+            <span class="badge">{{ doc.role }}</span>
+            <span>{{ doc.uploadedAt | date:'shortDate' }}</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="pagination-simple" *ngIf="totalCount > pageSize">
+        <app-pagination 
+          [page]="page" 
+          [pageSize]="pageSize" 
+          [totalCount]="totalCount" 
+          (pageChange)="onPageChange($event)">
+        </app-pagination>
+      </div>
+    </div>
+
+    <!-- Details/View Column -->
+    <div class="details-column" *ngIf="selectedDoc" [class.visible-mobile]="selectedDoc">
+      <div class="mobile-back">
+        <button class="btn btn-secondary btn-sm" (click)="closeDocument()">&rarr; عودة للقائمة</button>
+      </div>
+
+      <div class="details-content">
+        <div class="details-header">
+          <div class="header-titles">
+            <h2>{{ selectedDoc.documentType }}</h2>
+            <p class="subtitle">مقدم بواسطة: {{ selectedDoc.userName }} ({{ selectedDoc.role }})</p>
+          </div>
+          <div class="header-actions" *ngIf="selectedDoc.status === 'Pending'">
+            <button class="btn btn-danger" (click)="openRejectModal()">رفض المستند</button>
+            <button class="btn btn-success" (click)="openApproveModal()">اعتماد المستند</button>
+          </div>
+        </div>
+
+        <div class="content-grid">
+          <div class="main-info">
+            <div class="doc-viewer-container">
+              <iframe *ngIf="selectedDoc.fileUrl && selectedDoc.fileUrl.endsWith('.pdf')" [src]="selectedDoc.fileUrl" width="100%" height="600px" frameborder="0"></iframe>
+              <img *ngIf="selectedDoc.fileUrl && !selectedDoc.fileUrl.endsWith('.pdf')" [src]="selectedDoc.fileUrl" alt="Document view" class="doc-img">
+              
+              <div class="doc-fallback">
+                <a *ngIf="selectedDoc.fileUrl" [href]="selectedDoc.fileUrl" target="_blank" class="btn btn-primary">فتح المستند في نافذة جديدة</a>
+                <span *ngIf="!selectedDoc.fileUrl" class="text-muted">رابط الملف غير متاح.</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="side-info">
+            <div class="info-card status-card">
+              <h3>حالة المستند</h3>
+              <p>
+                <span class="status-badge" [ngClass]="selectedDoc.status ? selectedDoc.status.toLowerCase() : ''">{{ selectedDoc.statusAr }}</span>
+              </p>
+              <p class="text-muted" *ngIf="selectedDoc.statusText">{{ selectedDoc.statusText }}</p>
+            </div>
+
+            <!-- AI / OCR Panel (Read-Only) -->
+            <div class="info-card ai-panel">
+              <div class="ai-header">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                <h3>التعرف الضوئي (OCR)</h3>
+              </div>
+              <div class="ai-body">
+                <div class="ai-stat">
+                  <span>نسبة الثقة:</span>
+                  <strong>{{ selectedDoc.confidenceScore ? selectedDoc.confidenceScore + '%' : 'غير متوفر' }}</strong>
+                </div>
+                <div class="ai-stat">
+                  <span>الحقول المطلوبة:</span>
+                  <strong [class.text-success]="selectedDoc.keyFieldsPresent" [class.text-danger]="selectedDoc.keyFieldsPresent === false">
+                    {{ selectedDoc.keyFieldsPresent === true ? 'موجودة' : (selectedDoc.keyFieldsPresent === false ? 'ناقصة' : 'غير معروف') }}
+                  </strong>
+                </div>
+                <div class="extracted-text" *ngIf="selectedDoc.extractedText">
+                  <h4>النص المستخرج:</h4>
+                  <pre>{{ selectedDoc.extractedText }}</pre>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<app-action-modal 
+  [isOpen]="isModalOpen"
+  [title]="modalTitle"
+  [description]="modalDesc"
+  [confirmText]="modalConfirmText"
+  [confirmColor]="modalConfirmColor"
+  [requireNote]="requireNote"
+  noteLabel="سبب الرفض"
+  (confirm)="handleModalConfirm($event)"
+  (close)="isModalOpen = false">
+</app-action-modal>

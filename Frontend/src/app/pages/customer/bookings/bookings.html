@@ -1,0 +1,382 @@
+<section class="bookings-page">
+    <div class="page-header">
+        <div>
+            <h1>حجوزاتي</h1>
+            <p>تابع حالة الحجوزات، الدفع، تأكيد الاكتمال، الشكاوى، والتقييم.</p>
+        </div>
+
+        <button class="btn btn-secondary" type="button" [disabled]="isLoading" (click)="loadBookings()">
+            تحديث
+        </button>
+    </div>
+
+    <div class="alert error" *ngIf="errorMessage">
+        {{ errorMessage }}
+    </div>
+
+    <div class="alert success" *ngIf="successMessage">
+        {{ successMessage }}
+    </div>
+
+    <div class="alert" *ngIf="reviewMessage" [class.success]="reviewMessageType === 'success'"
+        [class.warning]="reviewMessageType === 'warning'">
+        {{ reviewMessage }}
+    </div>
+
+    <div class="bookings-grid">
+        <div class="card bookings-list-card">
+            <h2>قائمة الحجوزات</h2>
+
+            <div class="state-message" *ngIf="isLoading">
+                جاري تحميل الحجوزات...
+            </div>
+
+            <div class="empty-state" *ngIf="!isLoading && bookings.length === 0">
+                <div class="empty-icon">📅</div>
+                <h3>لا توجد حجوزات حتى الآن</h3>
+                <p>الحجوزات التي تنشئها من صفحة الخدمات ستظهر هنا.</p>
+            </div>
+
+            <div class="bookings-list" *ngIf="!isLoading && bookings.length > 0">
+                <button type="button" class="booking-item" *ngFor="let booking of bookings; trackBy: trackById"
+                    [class.active]="selectedBooking?.id === booking.id" (click)="openBooking(booking.id)">
+
+                    <div class="booking-title-row">
+                        <h3>{{ booking.jobTitle || booking.serviceTitle || 'حجز خدمة' }}</h3>
+
+                        <span class="status-badge" [class]="getStatusClass(booking.status)">
+                            {{ getStatusText(booking.status, booking.statusAr) }}
+                        </span>
+                    </div>
+
+                    <p>{{ booking.bookingNumber }}</p>
+
+                    <small>
+                        {{ booking.governorate || 'غير محدد' }}
+                        <span *ngIf="booking.district">، {{ booking.district }}</span>
+                    </small>
+                </button>
+            </div>
+        </div>
+
+        <div class="card booking-details-card">
+            <div *ngIf="!selectedBooking && !isDetailsLoading" class="empty-state details-empty">
+                <div class="empty-icon">📋</div>
+                <h3>اختر حجز</h3>
+                <p>اضغط على أي حجز من القائمة لعرض التفاصيل والإجراءات المتاحة.</p>
+            </div>
+
+            <div class="state-message" *ngIf="isDetailsLoading">
+                جاري تحميل تفاصيل الحجز...
+            </div>
+
+            <div *ngIf="selectedBooking && !isDetailsLoading">
+                <div class="details-header">
+                    <div>
+                        <h2>{{ selectedBooking.jobTitle || selectedBooking.serviceTitle || 'حجز خدمة' }}</h2>
+                        <p>{{ selectedBooking.bookingNumber }}</p>
+                    </div>
+
+                    <span class="status-badge" [class]="getStatusClass(selectedBooking.status)">
+                        {{ getStatusText(selectedBooking.status, selectedBooking.statusAr) }}
+                    </span>
+                </div>
+
+                <div class="details-grid">
+                    <div>
+                        <span>المزود</span>
+                        <strong>{{ selectedBooking.providerName || 'غير محدد' }}</strong>
+                    </div>
+
+                    <div>
+                        <span>الموقع</span>
+                        <strong>
+                            {{ selectedBooking.governorate || 'غير محدد' }}
+                            <span *ngIf="selectedBooking.district">، {{ selectedBooking.district }}</span>
+                        </strong>
+                    </div>
+
+                    <div>
+                        <span>تاريخ البداية</span>
+                        <strong>{{ selectedBooking.requestedStartDate || 'غير محدد' }}</strong>
+                    </div>
+
+                    <div>
+                        <span>وقت البداية</span>
+                        <strong>{{ selectedBooking.requestedStartTime || 'غير محدد' }}</strong>
+                    </div>
+
+                    <div>
+                        <span>المدة</span>
+                        <strong>{{ selectedBooking.estimatedDurationHours || 0 }} ساعة</strong>
+                    </div>
+
+                    <div>
+                        <span>القيمة</span>
+                        <strong>{{ selectedBooking.finalPrice || selectedBooking.totalPrice || 0 }} جنيه</strong>
+                    </div>
+                </div>
+
+                <div class="tracker-section" *ngIf="tracker">
+                    <div class="tracker-header-row">
+                        <div>
+                            <h3>حالة التنفيذ</h3>
+                            <p class="tracker-subtitle">
+                                {{ tracker.currentStatusAr || tracker.currentStatus }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="timeline-ui" *ngIf="visibleTimeline.length > 0">
+                        <div class="timeline-step" *ngFor="let item of visibleTimeline; let i = index"
+                            [ngClass]="getTimelineItemState(item, i)">
+
+                            <div class="timeline-marker">
+                                <span class="timeline-dot"></span>
+                                <span class="timeline-line" *ngIf="i < visibleTimeline.length - 1"></span>
+                            </div>
+
+                            <div class="timeline-card">
+                                <div class="timeline-card-top">
+                                    <div class="timeline-texts">
+                                        <strong>{{ getTimelineLabel(item) }}</strong>
+
+                                        <span *ngIf="item.date">
+                                            {{ item.date | date:'d MMMM yyyy - h:mm a' }}
+                                        </span>
+
+                                        <span *ngIf="!item.date">
+                                            {{ getTimelineHint(item, i) }}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <small class="timeline-note" *ngIf="!item.date && getTimelineHint(item, i)">
+                                    {{ getTimelineHint(item, i) }}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="state-message" *ngIf="isTrackerLoading">
+                        جاري تحميل مسار الحجز...
+                    </div>
+                </div>
+
+                <div class="escrow-section" *ngIf="escrow">
+                    <h3>حالة الدفع والضمان</h3>
+
+                    <div class="escrow-grid">
+                        <div>
+                            <span>الحالة</span>
+                            <strong>{{ escrow.statusAr || escrow.status }}</strong>
+                        </div>
+
+                        <div>
+                            <span>إجمالي المبلغ</span>
+                            <strong>{{ formatMoney(escrow.grossAmount) }}</strong>
+                        </div>
+
+                        <div>
+                            <span>عمولة المنصة</span>
+                            <strong>{{ formatMoney(escrow.platformCommission) }}</strong>
+                        </div>
+
+                        <div>
+                            <span>ضريبة القيمة المضافة</span>
+                            <strong>{{ formatMoney(escrow.vatAmount) }}</strong>
+                        </div>
+
+                        <div>
+                            <span>صافي مستحق المزود</span>
+                            <strong>{{ formatMoney(escrow.providerPayout) }}</strong>
+                        </div>
+
+                        <div>
+                            <span>تاريخ التحصيل</span>
+                            <strong>{{ escrow.capturedAt ? (escrow.capturedAt | date:'short') : 'لم يتم التحصيل'
+                                }}</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="time-adjustments-section" *ngIf="selectedBooking">
+    <div class="section-title-row">
+        <h3>طلبات زيادة الوقت</h3>
+
+        <span class="mini-loader" *ngIf="isTimeAdjustmentsLoading">
+            جاري تحميل الطلبات...
+        </span>
+    </div>
+
+    <div class="empty-state small-empty" *ngIf="!isTimeAdjustmentsLoading && timeAdjustments.length === 0">
+        <p>لا توجد طلبات زيادة وقت لهذا الحجز.</p>
+    </div>
+
+    <div class="time-adjustments-list" *ngIf="!isTimeAdjustmentsLoading && timeAdjustments.length > 0">
+        <div class="time-adjustment-card" *ngFor="let adjustment of timeAdjustments">
+            <div class="time-adjustment-header">
+                <div>
+                    <strong>
+                        {{ adjustment.requestedAdditionalHrs }} ساعة إضافية
+                    </strong>
+
+                    <span>
+                        {{ adjustment.createdAt | date:'short' }}
+                    </span>
+                </div>
+
+                <span class="adjustment-status">
+                    {{ adjustment.statusAr || adjustment.status }}
+                </span>
+            </div>
+
+            <div class="time-adjustment-grid">
+                <div>
+                    <span>قيمة الزيادة</span>
+                    <strong>{{ formatMoney(adjustment.additionalCostAmount) }}</strong>
+                </div>
+
+                <div>
+                    <span>سبب المزود</span>
+                    <strong>{{ adjustment.providerNote || 'لا يوجد سبب مكتوب' }}</strong>
+                </div>
+            </div>
+
+            <div class="time-adjustment-actions" *ngIf="adjustment.canApprove || adjustment.canReject || adjustment.canPay">
+                <button class="btn btn-primary"
+                    type="button"
+                    *ngIf="adjustment.canApprove"
+                    [disabled]="activeTimeAdjustmentId === adjustment.id"
+                    (click)="approveTimeAdjustment(adjustment)">
+                    {{ activeTimeAdjustmentId === adjustment.id ? 'جاري الموافقة...' : 'الموافقة' }}
+                </button>
+
+                <button class="btn btn-danger"
+                    type="button"
+                    *ngIf="adjustment.canReject"
+                    [disabled]="activeTimeAdjustmentId === adjustment.id"
+                    (click)="rejectTimeAdjustment(adjustment)">
+                    {{ activeTimeAdjustmentId === adjustment.id ? 'جاري الرفض...' : 'رفض الطلب' }}
+                </button>
+
+                <button class="btn btn-primary"
+                    type="button"
+                    *ngIf="adjustment.canPay"
+                    [disabled]="activeTimeAdjustmentId === adjustment.id"
+                    (click)="payTimeAdjustment(adjustment)">
+                    {{ activeTimeAdjustmentId === adjustment.id ? 'جاري إنشاء رابط الدفع...' : 'دفع قيمة الزيادة' }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+                <div class="description-box" *ngIf="selectedBooking.jobDescription">
+                    <h3>وصف العمل</h3>
+                    <p>{{ selectedBooking.jobDescription }}</p>
+                </div>
+
+                <div class="actions-section">
+                    <h3>الإجراءات المتاحة</h3>
+
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" type="button" *ngIf="canPay(selectedBooking)"
+                            [disabled]="isActionLoading" (click)="confirmPayment()">
+                            {{ isActionLoading ? 'جاري التأكيد...' : 'تأكيد الدفع التجريبي' }}
+                        </button>
+
+                        <button class="btn btn-primary" type="button" *ngIf="canConfirmCompletion(selectedBooking)"
+                            [disabled]="isActionLoading" (click)="confirmCompletion()">
+                            {{ isActionLoading ? 'جاري التأكيد...' : 'تأكيد اكتمال الخدمة' }}
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-panel cancel-panel" *ngIf="canCancel(selectedBooking)">
+                    <h3>إلغاء الحجز</h3>
+
+                    <p class="panel-hint">
+                        يمكنك إلغاء الحجز قبل بدء التنفيذ. إذا كان الدفع تم بالفعل، سيتم تطبيق سياسة الاسترداد حسب حالة
+                        الحجز.
+                    </p>
+
+                    <div class="form-group">
+                        <label class="form-label">سبب الإلغاء</label>
+                        <textarea class="form-input textarea" rows="4" [(ngModel)]="cancelReason"
+                            placeholder="اكتب سبب إلغاء الحجز بوضوح"></textarea>
+                    </div>
+
+                    <button class="btn btn-danger" type="button" [disabled]="isCancelLoading"
+                        (click)="cancelSelectedBooking()">
+                        {{ isCancelLoading ? 'جاري الإلغاء...' : 'إلغاء الحجز' }}
+                    </button>
+                </div>
+
+                <div class="form-panel" *ngIf="canDispute(selectedBooking)">
+                    <h3>فتح شكوى على الحجز</h3>
+
+                    <div class="form-group">
+                        <label class="form-label">سبب الشكوى</label>
+                        <textarea class="form-input textarea" rows="4" [(ngModel)]="disputeReason"
+                            placeholder="اكتب سبب الشكوى بوضوح"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">صور الإثبات اختيارية</label>
+
+                        <label class="file-box">
+                            <input type="file" multiple accept="image/jpeg,image/jpg,image/png,image/webp"
+                                (change)="onDisputeFilesSelected($event)">
+
+                            <span class="file-icon">📷</span>
+
+                            <strong>
+                                {{ selectedDisputeFiles.length > 0 ? selectedDisputeFiles.length + ' صورة مختارة' :
+                                'اختر صور الإثبات' }}
+                            </strong>
+
+                            <small>JPG, PNG, WEBP بحد أقصى 10MB لكل صورة</small>
+                        </label>
+                    </div>
+
+                    <button class="btn btn-danger" type="button" [disabled]="isActionLoading" (click)="submitDispute()">
+                        {{ isActionLoading ? 'جاري الإرسال...' : 'فتح شكوى' }}
+                    </button>
+                </div>
+
+                <div class="form-panel review-panel" *ngIf="canReview(selectedBooking)">
+                    <h3>إضافة تقييم للحجز</h3>
+
+                    <div class="form-group">
+                        <label class="form-label">التقييم</label>
+                        <select class="form-input" [(ngModel)]="reviewForm.rating">
+                            <option *ngFor="let option of ratingOptions" [ngValue]="option">
+                                {{ option }} / 5
+                            </option>
+                        </select>
+
+                        <div class="stars-preview">
+                            {{ getStars(reviewForm.rating) }}
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">تعليق اختياري</label>
+                        <textarea class="form-input textarea" rows="4" [(ngModel)]="reviewForm.comment"
+                            placeholder="اكتب رأيك في الخدمة"></textarea>
+                    </div>
+
+                    <button class="btn btn-primary" type="button" [disabled]="isReviewSubmitting"
+                        (click)="submitReview()">
+                        {{ isReviewSubmitting ? 'جاري إرسال التقييم...' : 'إرسال التقييم' }}
+                    </button>
+                </div>
+
+                <div class="readonly-note" *ngIf="selectedBooking.hasReview">
+                    تم تسجيل تقييم لهذا الحجز من قبل. إذا كان التقييم مخالفًا لسياسة المنصة فقد لا يتم نشره للعامة.
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
