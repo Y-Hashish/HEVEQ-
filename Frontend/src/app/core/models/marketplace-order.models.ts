@@ -19,6 +19,7 @@ export interface CreateMarketplaceOrderResponse {
 
 export interface MarketplaceOrderListItem {
   id: string
+  orderNumber: string
   listingId: string
   listingTitle: string
   buyerId?: string

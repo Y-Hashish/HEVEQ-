@@ -8,12 +8,15 @@
   </div>
 
   <div class="tabs-row">
-    <button class="tab-btn" [class.active]="activeTab === 'services'" type="button" (click)="setTab('services')">خدمات الإيجار</button>
-    <button class="tab-btn" [class.active]="activeTab === 'marketplace'" type="button" (click)="setTab('marketplace')">إعلانات البيع</button>
+    <button class="tab-btn" [class.active]="activeTab === 'services'" type="button" (click)="setTab('services')">خدمات
+      الإيجار</button>
+    <button class="tab-btn" [class.active]="activeTab === 'marketplace'" type="button"
+      (click)="setTab('marketplace')">إعلانات البيع</button>
   </div>
 
   <div class="filter-row" *ngIf="activeTab === 'services'">
-    <button type="button" class="filter-chip" *ngFor="let filter of statusFilters" [class.active]="activeFilter === filter.value" (click)="setFilter(filter.value)">
+    <button type="button" class="filter-chip" *ngFor="let filter of statusFilters"
+      [class.active]="activeFilter === filter.value" (click)="setFilter(filter.value)">
       {{ filter.label }}
     </button>
   </div>
@@ -36,7 +39,9 @@
       <p><strong>{{ listing.hourlyRate | number }} ج.م/ساعة</strong></p>
       <div class="actions-row">
         <button class="btn btn-outline" type="button" (click)="goToEdit(listing.id)">إدارة</button>
-        <button class="btn btn-primary" type="button" *ngIf="listing.status === 'Draft' || listing.status === 'Rejected'" (click)="submitForReview(listing)">إرسال للمراجعة</button>
+        <button class="btn btn-primary" type="button"
+          *ngIf="listing.status === 'Draft' || listing.status === 'Rejected'" (click)="submitForReview(listing)">إرسال
+          للمراجعة</button>
         <button class="btn btn-danger" type="button" (click)="deleteListing(listing)">حذف</button>
       </div>
     </div>
@@ -60,6 +65,7 @@
       <div class="actions-row">
         <button class="btn btn-outline" type="button" (click)="goToMarketplaceDetails(listing.id)">عرض التفاصيل</button>
         <button class="btn btn-primary" type="button" (click)="goToEditMarketplace(listing.id)">تعديل</button>
+        <button class="btn btn-danger" type="button" (click)="deleteMarketplaceListing(listing)">حذف</button>
       </div>
     </div>
   </div>

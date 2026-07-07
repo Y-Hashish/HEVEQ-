@@ -68,4 +68,8 @@ export class MarketplaceService {
     const params = new HttpParams().set('page', page).set('pageSize', pageSize)
     return this.http.get<PagedResult<MarketplaceListing>>(`${API_BASE_URL}/provider/marketplace-listings`, { params })
   }
+
+  deleteListing(id: string) {
+    return this.http.delete<void>(`${API_BASE_URL}/marketplace-listings/${id}`)
+  }
 }
