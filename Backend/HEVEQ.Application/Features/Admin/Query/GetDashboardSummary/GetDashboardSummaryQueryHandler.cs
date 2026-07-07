@@ -74,6 +74,17 @@ namespace HEVEQ.Application.Features.Admin.Query.GetDashboardSummary
                                  f.VisitStatus == VisitStatus.OnSite ||
                                  (f.VisitStatus == VisitStatus.Completed && f.AdminDecision == FieldVerificationAdminDecision.Pending), cancellationToken);
 
+            response.NetPlatformEarnings = await context.EscrowRecords
+                .Where(e => e.Status == EscrowStatus.Released || e.Status == EscrowStatus.PartialSettled)
+                .SumAsync(e => (decimal?)e.PlatformCommission, cancellationToken) ?? 0;
+
+            response.NetEscrowAmount = await context.EscrowRecords
+                .Where(e => e.Status == EscrowStatus.Held ||
+                            e.Status == EscrowStatus.Frozen ||
+                            e.Status == EscrowStatus.Captured ||
+                            e.Status == EscrowStatus.PendingCapture)
+                .SumAsync(e => (decimal?)e.GrossAmount, cancellationToken) ?? 0;
+
             return response;
         }
     }

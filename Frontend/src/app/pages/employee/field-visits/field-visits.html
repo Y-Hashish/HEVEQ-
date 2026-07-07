@@ -87,13 +87,12 @@
           <p>{{ selectedVisit.dispatchInstructions || 'لا توجد تعليمات.' }}</p>
         </div>
 
-        <div class="form-section">
+        <div class="form-section" *ngIf="selectedVisit.visitStatus !== 'Completed'">
           <h3>تحديث حالة الزيارة</h3>
           <div class="form-row">
-            <select [(ngModel)]="nextStatus">
+            <select [(ngModel)]="nextStatus" [disabled]="isSavingStatus">
               <option value="Dispatched">تم الإرسال</option>
               <option value="OnSite">في الموقع</option>
-              <option value="Completed">تم الانتهاء</option>
               <option value="FailedAccess">فشل الدخول</option>
             </select>
             <button class="btn btn-primary" type="button" [disabled]="isSavingStatus" (click)="updateStatus()">
@@ -102,10 +101,18 @@
           </div>
         </div>
 
-        <div class="form-section">
+        <div class="form-section" *ngIf="selectedVisit.visitStatus === 'Completed'">
+          <h3>حالة الزيارة</h3>
+          <div style="background-color: rgba(16, 185, 129, 0.1); color: var(--success); padding: 12px; border-radius: 6px; font-weight: bold; display: flex; align-items: center; gap: 8px;">
+            <span>✓</span>
+            <span>تم الانتهاء من الزيارة ورفع التقرير بنجاح. لا يمكن تعديل الحالة بعد اكتمالها.</span>
+          </div>
+        </div>
+
+        <div class="form-section" *ngIf="selectedVisit.visitStatus !== 'Completed'">
           <h3>رفع تقرير الإثباتات</h3>
           <label>نتيجة الزيارة</label>
-          <select [(ngModel)]="outcome">
+          <select [(ngModel)]="outcome" [disabled]="isSubmittingEvidence">
             <option value="JobConfirmed">تم تأكيد إتمام العمل</option>
             <option value="JobNotConfirmed">لم يتم تأكيد إتمام العمل</option>
             <option value="PartiallyConfirmed">تم التأكيد جزئيا</option>
@@ -113,7 +120,7 @@
           </select>
 
           <label>ملاحظات الموظف الميداني</label>
-          <textarea rows="5" [(ngModel)]="employeeNotes" placeholder="اكتب وصف المعاينة وما تم التحقق منه..."></textarea>
+          <textarea rows="5" [(ngModel)]="employeeNotes" placeholder="اكتب وصف المعاينة وما تم التحقق منه..." [disabled]="isSubmittingEvidence"></textarea>
 
           <label>صور الإثباتات</label>
           <div class="upload-box">

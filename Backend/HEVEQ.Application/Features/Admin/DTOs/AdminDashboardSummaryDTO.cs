@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -19,5 +19,7 @@ namespace HEVEQ.Application.Features.Admin.DTOs
         public int FrozenEscrowRecords { get; set; }
         public int EscrowFrozenCount { get; set; }
         public int PendingFieldVerifications { get; set; }
+        public decimal NetPlatformEarnings { get; set; }
+        public decimal NetEscrowAmount { get; set; }
     }
 }

@@ -37,6 +37,11 @@ namespace HEVEQ.Application.Features.EmployeeProfiles.Commands.UpdateFieldVisitS
                 return new UpdateFieldVisitStatusResponse { IsSuccess = false, StatusCode = 403, Message = "You are not authorized to update this field visit status." };
             }
 
+            if (visit.VisitStatus == VisitStatus.Completed)
+            {
+                return new UpdateFieldVisitStatusResponse { IsSuccess = false, StatusCode = 400, Message = "لا يمكن تغيير حالة الزيارة بعد اكتمالها وتقديم الإثباتات." };
+            }
+
             if (Enum.TryParse<VisitStatus>(request.Status, true, out var parsedStatus))
             {
                 visit.VisitStatus = parsedStatus;

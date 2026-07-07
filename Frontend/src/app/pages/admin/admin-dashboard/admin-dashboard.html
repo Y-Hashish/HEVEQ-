@@ -61,17 +61,7 @@
         <div class="card-arrow"><span>حل النزاعات</span></div>
       </a>
 
-      <a [routerLink]="['/admin/field-verifications']" class="stat-card warning link-card">
-        <div class="stat-icon-wrapper field">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-        </div>
-        <div class="stat-info">
-          <h3 class="stat-value">{{ pendingFieldVisitsCount }}</h3>
-          <p class="stat-label">الزيارات الميدانية المعلقة</p>
-        </div>
-        <div class="stat-meta"><span>بانتظار التكليف أو التقرير أو قرار الإدارة</span></div>
-        <div class="card-arrow"><span>جدولة الزيارات</span></div>
-      </a>
+
 
       <a [routerLink]="['/admin/tickets']" class="stat-card link-card">
         <div class="stat-icon-wrapper tickets">
@@ -83,6 +73,37 @@
         </div>
         <div class="stat-meta"><span>تحتاج إلى استجابة أو متابعة</span></div>
         <div class="card-arrow"><span>مركز الدعم الفني</span></div>
+      </a>
+
+      <!-- صافي المبالغ المكتسبة من المنصة -->
+      <div class="stat-card success">
+        <div class="stat-icon-wrapper earnings">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <line x1="12" y1="1" x2="12" y2="23"></line>
+            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+          </svg>
+        </div>
+        <div class="stat-info">
+          <h3 class="stat-value">{{ (summary.netPlatformEarnings || 0) | currency:'EGP ':'code':'1.2-2' }}</h3>
+          <p class="stat-label">صافي المبالغ المكتسبة للمنصة</p>
+        </div>
+        <div class="stat-meta"><span>إجمالي عمولات الموقع المحصلة من المعاملات المكتملة</span></div>
+      </div>
+
+      <!-- صافي المبالغ المحتجزة في الضمان -->
+      <a [routerLink]="['/admin/disputes']" class="stat-card info link-card">
+        <div class="stat-icon-wrapper escrow">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+        </div>
+        <div class="stat-info">
+          <h3 class="stat-value">{{ (summary.netEscrowAmount || 0) | currency:'EGP ':'code':'1.2-2' }}</h3>
+          <p class="stat-label">صافي المبالغ المحتجزة في الضمان</p>
+        </div>
+        <div class="stat-meta"><span>الأموال قيد الحفظ المؤقت لحين اكتمال الخدمات</span></div>
+        <div class="card-arrow"><span>إدارة الضمان المالي</span></div>
       </a>
     </div>
 
