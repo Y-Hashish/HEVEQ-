@@ -77,10 +77,12 @@ public static class SearchAndReengagementServiceExtensions
         // All three search-pipeline adapters are Scoped (share the request's DI scope)
         services.AddScoped<ISearchIntentExtractor, SemanticKernelSearchIntentExtractor>();
         services.AddScoped<IServiceVectorSearchService, QdrantServiceVectorSearchService>();
+        services.AddScoped<IMarketplaceVectorSearchService, QdrantMarketplaceVectorSearchService>();
         services.AddScoped<IClarificationService, SemanticKernelClarificationService>();
 
         // Repository — Scoped (shares EF Core DbContext with the rest of the request)
         services.AddScoped<IServiceListingReadRepository, ServiceListingReadRepository>();
+        services.AddScoped<IMarketplaceListingReadRepository, MarketplaceListingReadRepository>();
 
         // Analytics log writer — Scoped; failures are swallowed inside the impl
         services.AddScoped<ISearchQueryLogWriter, SearchQueryLogWriter>();

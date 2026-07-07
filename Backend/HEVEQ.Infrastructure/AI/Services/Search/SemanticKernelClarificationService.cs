@@ -35,6 +35,7 @@ public sealed class SemanticKernelClarificationService : IClarificationService
 
         var dto = await _plugin.GenerateClarificationAsync(
             partialIntent: new SearchIntentResponseDto(
+                  partialIntent.Target.ToString(),
                 partialIntent.EquipmentType,
                 partialIntent.Location,
                 partialIntent.TaskDescription,

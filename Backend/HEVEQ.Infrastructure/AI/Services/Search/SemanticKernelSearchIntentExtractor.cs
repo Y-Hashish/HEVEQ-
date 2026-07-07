@@ -29,7 +29,12 @@ public sealed class SemanticKernelSearchIntentExtractor : ISearchIntentExtractor
             ? ConversationLanguage.EgyptianArabic
             : ConversationLanguage.English;
 
+        var target = Enum.TryParse<SearchTarget>(dto.SearchTarget, true, out var parsedTarget)
+            ? parsedTarget
+            : SearchTarget.Ambiguous;
+
         return new SearchIntent(
+            target,
             dto.EquipmentType,
             dto.Location,
             dto.TaskDescription ?? rawQuery,
