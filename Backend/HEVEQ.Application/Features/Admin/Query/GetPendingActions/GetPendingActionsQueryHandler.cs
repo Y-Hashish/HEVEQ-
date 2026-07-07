@@ -58,7 +58,7 @@ namespace HEVEQ.Application.Features.Admin.Query.GetPendingActions
                     ReferenceId = s.Id,
                     Priority = s.AiRiskScore >= 70 ? "High" : "Normal",
                     CreatedAt = s.CreatedAt,
-                    ActionUrl = $"/admin/service-listings/{s.Id}/review"
+                    ActionUrl = $"/admin/listing-review?type=service&id={s.Id}"
                 })
                 .ToListAsync(cancellationToken);
         }
@@ -74,7 +74,7 @@ namespace HEVEQ.Application.Features.Admin.Query.GetPendingActions
                     ReferenceId = m.Id,
                     Priority = m.AiRiskScore >= 70 ? "High" : "Normal",
                     CreatedAt = m.CreatedAt,
-                    ActionUrl = $"/admin/marketplace-listings/{m.Id}/review"
+                    ActionUrl = $"/admin/listing-review?type=marketplace&id={m.Id}"
                 })
                 .ToListAsync(cancellationToken);
         }
@@ -90,7 +90,7 @@ namespace HEVEQ.Application.Features.Admin.Query.GetPendingActions
                     ReferenceId = d.Id,
                     Priority = "Normal",
                     CreatedAt = d.UploadedAt,
-                    ActionUrl = "/admin/account-verifications"
+                    ActionUrl = $"/admin/tickets?ticketId={d.Id}"
                 })
                 .ToListAsync(cancellationToken);
         }
@@ -108,7 +108,7 @@ namespace HEVEQ.Application.Features.Admin.Query.GetPendingActions
                     ReferenceId = d.Id,
                     Priority = d.Priority >= 70 ? "High" : "Normal",
                     CreatedAt = d.CreatedAt,
-                    ActionUrl = "/admin/account-verifications"
+                    ActionUrl = $"/admin/tickets?ticketId={d.Id}"
                 })
                 .ToListAsync(cancellationToken);
         }

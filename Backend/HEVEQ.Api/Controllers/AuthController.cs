@@ -100,7 +100,9 @@ namespace HEVEQ.Api.Controllers
                 isActive = result.IsActive,
                 profileCompleted = result.ProfileCompleted,
                 trustScore = result.TrustScore,
-                dashboardUrl = result.DashboardUrl
+                dashboardUrl = result.DashboardUrl,
+                employeeDepartment = result.EmployeeDepartment,
+                isAvailableForDispatch = result.IsAvailableForDispatch
             });
         }
 

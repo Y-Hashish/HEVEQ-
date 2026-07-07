@@ -79,28 +79,49 @@
                     placeholder="اكتب تفاصيل العمل المطلوب"></textarea>
             </div>
 
+            <div class="form-group">
+                <label class="form-label">تاريخ البداية</label>
+                <input class="form-input native-date-input"
+                    type="date"
+                    [(ngModel)]="form.requestedStartDate"
+                    [min]="minBookingDate"
+                    [max]="maxBookingDate"
+                    (ngModelChange)="onDateChanged()">
+                <div class="calendar-help">
+                    الأيام المتاحة: {{ getAvailableDaysText() }}
+                </div>
+                <div class="selected-availability">{{ getSelectedDayAvailabilityText() }}</div>
+            </div>
+
             <div class="form-grid">
                 <div class="form-group">
-                    <label class="form-label">تاريخ البداية</label>
+                    <label class="form-label">المدة المتوقعة بالساعات</label>
                     <input class="form-input"
-                        type="date"
-                        [(ngModel)]="form.requestedStartDate">
+                        type="number"
+                        min="1"
+                        [(ngModel)]="form.estimatedDurationHours"
+                        (ngModelChange)="onDurationChanged()">
                 </div>
 
                 <div class="form-group">
                     <label class="form-label">وقت البداية</label>
-                    <input class="form-input"
-                        type="time"
-                        [(ngModel)]="form.requestedStartTime">
+                    <select class="form-input"
+                        [(ngModel)]="form.requestedStartTime"
+                        (ngModelChange)="onTimeChanged()"
+                        [disabled]="!form.requestedStartDate || !availableTimeSlots.length">
+                        <option value="">اختر وقتاً متاحاً</option>
+                        <option *ngFor="let slot of availableTimeSlots" [value]="slot">
+                            {{ slot }}
+                        </option>
+                    </select>
+                    <small class="field-hint" *ngIf="form.requestedStartDate && !availableTimeSlots.length">
+                        لا توجد أوقات تناسب مدة الحجز المختارة داخل مواعيد العمل.
+                    </small>
                 </div>
             </div>
 
-            <div class="form-group">
-                <label class="form-label">المدة المتوقعة بالساعات</label>
-                <input class="form-input"
-                    type="number"
-                    min="1"
-                    [(ngModel)]="form.estimatedDurationHours">
+            <div class="alert warning" *ngIf="scheduleWarning">
+                {{ scheduleWarning }}
             </div>
 
             <label class="checkbox-row" *ngIf="context.defaultAddress">

@@ -98,6 +98,10 @@
               الاستحواذ
             </button>
 
+            <button class="btn btn-secondary" *ngIf="hasAiSummary()" (click)="openAiSummaryModal()">
+              🤖 ملخص الذكاء الاصطناعي
+            </button>
+
             <button class="btn btn-secondary" *ngIf="selectedTicket.customerAttachments?.length || selectedTicket.providerCompletionEvidence || selectedTicket.fieldVisits?.length" (click)="openDocsModal()">
               📁 ملفات ومستندات التذكرة
             </button>
@@ -239,6 +243,30 @@
       <button class="btn btn-primary" [disabled]="!isDecisionValid()" (click)="submitDisputeDecision()">
         تأكيد وتطبيق القرار
       </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- AI Summary Modal Popup Overlay -->
+<div class="dispute-modal-overlay" *ngIf="isAiSummaryModalOpen" (click)="closeAiSummaryModal()">
+  <div class="dispute-modal-card ai-summary-modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>🤖 ملخص الذكاء الاصطناعي للتذكرة رقم {{ selectedTicket?.ticketNumber }}</h3>
+      <button class="close-btn" (click)="closeAiSummaryModal()">&times;</button>
+    </div>
+
+    <div class="modal-body" *ngIf="selectedTicket">
+      <div class="ai-summary-panel ai-summary-panel-modal">
+        <p *ngIf="selectedTicket.aiSummary"><strong>الملخص:</strong> {{ selectedTicket.aiSummary }}</p>
+        <p *ngIf="selectedTicket.aiIdentifiedIssue"><strong>المشكلة المحددة:</strong> {{ selectedTicket.aiIdentifiedIssue }}</p>
+        <p *ngIf="selectedTicket.aiClaimedImpact"><strong>الأثر المذكور:</strong> {{ selectedTicket.aiClaimedImpact }}</p>
+        <p *ngIf="selectedTicket.aiEscalationPriority !== null && selectedTicket.aiEscalationPriority !== undefined"><strong>أولوية التصعيد:</strong> {{ selectedTicket.aiEscalationPriority }}/5</p>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="closeAiSummaryModal()">إغلاق</button>
     </div>
   </div>
 </div>

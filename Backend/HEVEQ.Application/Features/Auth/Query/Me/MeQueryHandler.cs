@@ -72,6 +72,20 @@ namespace HEVEQ.Application.Features.Auth.Query.Me
                 response.ProfileCompleted = hasAddress || hasDocs;
             }
 
+            else if (primaryRole == "Employee")
+            {
+                var employee = await context.EmployeeProfiles
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(x => x.UserId == user.Id, cancellationToken);
+
+                if (employee != null)
+                {
+                    response.EmployeeDepartment = employee.Department;
+                    response.IsAvailableForDispatch = employee.IsAvailableForDispatch;
+                    response.ProfileCompleted = true;
+                }
+            }
+
             return response;
         }
     }

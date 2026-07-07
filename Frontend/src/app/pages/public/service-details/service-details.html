@@ -91,6 +91,38 @@
             </div>
         </div>
 
+        <div class="card service-reviews-card" style="margin-bottom: var(--s5);">
+            <div class="reviews-header">
+                <div>
+                    <h3>تقييمات الحجوزات على هذه الخدمة</h3>
+                    <p class="text-muted">تظهر هنا تقييمات العملاء بعد إكمال حجوزات هذه الخدمة فقط.</p>
+                </div>
+                <div class="reviews-score" *ngIf="reviewsTotal > 0">
+                    <span class="score">{{ reviewsAverage | number:'1.1-1' }}</span>
+                    <span class="stars">
+                        <span *ngFor="let filled of ratingStars(reviewsAverage)" [class.filled]="filled">★</span>
+                    </span>
+                    <small>{{ reviewsTotal }} تقييم</small>
+                </div>
+            </div>
+            <p class="text-muted" *ngIf="reviewsLoading">جاري تحميل التقييمات...</p>
+            <div class="empty-reviews" *ngIf="!reviewsLoading && reviews.length === 0">
+                لا توجد تقييمات منشورة لهذه الخدمة حتى الآن.
+            </div>
+            <div class="reviews-list" *ngIf="!reviewsLoading && reviews.length > 0">
+                <div class="review-item" *ngFor="let review of reviews">
+                    <div class="review-top">
+                        <strong>{{ review.reviewerName || 'عميل' }}</strong>
+                        <span class="stars">
+                            <span *ngFor="let filled of ratingStars(review.rating)" [class.filled]="filled">★</span>
+                        </span>
+                    </div>
+                    <p *ngIf="review.comment">{{ review.comment }}</p>
+                    <small class="text-muted">{{ review.createdAt | date:'shortDate' }}</small>
+                </div>
+            </div>
+        </div>
+
         <div class="card widget-card">
             <div class="widget-info">
                 <p class="text-muted">مزود الخدمة</p>

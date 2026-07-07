@@ -35,3 +35,25 @@
         }
         .form-input:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 4px rgba(244, 163, 0, 0.1); }
         .auth-footer { text-align: center; margin-top: 25px; font-size: 0.9rem; color: var(--text-muted); }
+.password-field {
+  position: relative;
+}
+
+.password-field .form-input {
+  padding-left: 54px;
+}
+
+.password-toggle {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 38px;
+  height: 38px;
+  border: 0;
+  border-radius: 10px;
+  background: rgba(244, 163, 0, 0.08);
+  color: var(--primary);
+  cursor: pointer;
+  font-size: 1rem;
+}

@@ -1,5 +1,10 @@
-<div class="pagination-simple" *ngIf="totalCount > pageSize">
-  <button class="btn btn-sm btn-secondary" [disabled]="page === 1" (click)="prevPage()">السابق</button>
-  <span class="page-info">{{ page }} / {{ totalPages }}</span>
-  <button class="btn btn-sm btn-secondary" [disabled]="page === totalPages" (click)="nextPage()">التالي</button>
+<div class="pagination-simple" *ngIf="totalCount > pageSize" dir="rtl">
+  <div class="page-summary">
+    عرض {{ ((page - 1) * pageSize) + 1 }} - {{ page * pageSize > totalCount ? totalCount : page * pageSize }} من {{ totalCount }}
+  </div>
+  <div class="page-buttons">
+    <button class="page-btn" [disabled]="page === 1" (click)="prevPage()">السابق</button>
+    <button class="page-number" *ngFor="let p of pages" [class.active]="p === page" (click)="goToPage(p)">{{ p }}</button>
+    <button class="page-btn" [disabled]="page === totalPages" (click)="nextPage()">التالي</button>
+  </div>
 </div>

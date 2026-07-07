@@ -247,3 +247,16 @@
   text-align: center;
   font-weight: 700;
 }
+
+
+.guest-register-link {
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  background: var(--bg-card);
+}
+
+.guest-register-link:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: rgba(244, 163, 0, 0.05);
+}

@@ -134,6 +134,14 @@
                     {{ selectedDoc.keyFieldsPresent === true ? 'موجودة' : (selectedDoc.keyFieldsPresent === false ? 'ناقصة' : 'غير معروف') }}
                   </strong>
                 </div>
+                <div class="ai-note" *ngIf="selectedDoc.adminNote">
+                  <h4>ملاحظات الذكاء الاصطناعي:</h4>
+                  <p>{{ selectedDoc.adminNote }}</p>
+                </div>
+                <div class="ai-note warning" *ngIf="selectedDoc.failureReason && !selectedDoc.adminNote">
+                  <h4>سبب فشل التحليل:</h4>
+                  <p>{{ selectedDoc.failureReason }}</p>
+                </div>
                 <div class="extracted-text" *ngIf="selectedDoc.extractedText">
                   <h4>النص المستخرج:</h4>
                   <pre>{{ selectedDoc.extractedText }}</pre>

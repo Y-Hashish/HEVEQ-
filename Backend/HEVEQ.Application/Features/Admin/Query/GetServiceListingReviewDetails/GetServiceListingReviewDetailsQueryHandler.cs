@@ -25,7 +25,12 @@ namespace HEVEQ.Application.Features.Admin.Query.GetServiceListingReviewDetails
                     s.Id,
                     s.Title,
                     s.Description,
-                    s.ProviderProfileId, 
+                    ProviderUserId = s.ProviderProfile.UserId,
+                    ProviderCompanyName = s.ProviderProfile.CompanyName,
+                    ProviderFirstName = s.ProviderProfile.User.FirstName,
+                    ProviderLastName = s.ProviderProfile.User.LastName,
+                    ProviderEmail = s.ProviderProfile.User.Email,
+                    ProviderPhoneNumber = s.ProviderProfile.User.PhoneNumber,
                     CategoryName = s.Category != null ? s.Category.Name : "Uncategorized",
 
                    
@@ -53,13 +58,15 @@ namespace HEVEQ.Application.Features.Admin.Query.GetServiceListingReviewDetails
                 return null; 
             }
 
-            var providerUser = await userManager.FindByIdAsync(listingData.ProviderProfileId.ToString());
+            var providerDisplayName = !string.IsNullOrWhiteSpace(listingData.ProviderCompanyName)
+                ? listingData.ProviderCompanyName
+                : $"{listingData.ProviderFirstName} {listingData.ProviderLastName}".Trim();
 
             var providerInfo = new ReviewProviderDto
             {
-                CompanyName = providerUser != null ? $"{providerUser.FirstName} {providerUser.LastName}".Trim() : "Unknown Provider",
-                Email = providerUser?.Email ?? "N/A",
-                PhoneNumber = providerUser?.PhoneNumber ?? "N/A"
+                CompanyName = !string.IsNullOrWhiteSpace(providerDisplayName) ? providerDisplayName : "مزود غير محدد",
+                Email = listingData.ProviderEmail ?? "غير متوفر",
+                PhoneNumber = listingData.ProviderPhoneNumber ?? "غير متوفر"
             };
 
             return new ServiceListingReviewDetailsDto

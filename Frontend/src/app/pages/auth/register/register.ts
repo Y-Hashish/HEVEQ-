@@ -24,6 +24,7 @@ export class Register {
   errorMessage = ''
   successMessage = ''
   isLoading = false
+  showPassword = false
 
   constructor(
     private authService: Auth,

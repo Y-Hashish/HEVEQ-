@@ -15,6 +15,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using DotNetEnv;
 using HEVEQ.Api.Realtime.Hubs;
+using HEVEQ.Api.Filters;
 using HEVEQ.Api.Realtime.Services;
 using HEVEQ.Application.Common.Interfaces;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -43,7 +44,11 @@ namespace HEVEQ.Api
 
             // Infrastructure Layer Dependencies
             builder.Services.AddInfrastructure(builder.Configuration);
-            builder.Services.AddControllers().AddJsonOptions(options =>
+            builder.Services.AddControllers(options =>
+            {
+                options.Filters.Add<ArabicErrorResponseFilter>();
+            })
+            .AddJsonOptions(options =>
             {
                 options.JsonSerializerOptions.Converters.Add(
                     new JsonStringEnumConverter(allowIntegerValues: true));

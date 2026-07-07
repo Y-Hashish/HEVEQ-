@@ -23,6 +23,8 @@ export interface CurrentUserResponse {
   profileCompleted: boolean
   trustScore?: number | null
   dashboardUrl?: string | null
+  employeeDepartment?: string | null
+  isAvailableForDispatch?: boolean | null
 }
 
 export interface AuthResponse {

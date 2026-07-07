@@ -774,3 +774,30 @@
 }
 
 
+
+.ai-summary-panel {
+  margin: var(--s4) 0;
+  padding: var(--s4);
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.10), rgba(245, 158, 11, 0.03));
+  border: 1px solid rgba(245, 158, 11, 0.22);
+}
+
+.ai-summary-header {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  margin-bottom: var(--s2);
+}
+
+.ai-summary-header h3 {
+  margin: 0;
+  font-size: var(--text-base);
+  color: var(--text-main);
+}
+
+.ai-summary-panel p {
+  margin: var(--s1) 0;
+  color: var(--text-main);
+  line-height: 1.8;
+}

@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectionStrategy, DestroyRef, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, DestroyRef, inject, ChangeDetectorRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { AdminListingReviewService } from '../../../core/services/adminListingReviewService';
@@ -7,6 +7,8 @@ import { Loading } from '../../../shared/components/loading/loading';
 import { EmptyState } from '../../../shared/components/empty-state/empty-state';
 import { ActionModal } from '../../../shared/components/action-modal/action-modal';
 import { ToastService } from '../../../shared/components/toast/toast.service';
+import { ActivatedRoute } from '@angular/router';
+import { extractErrorMessage } from '../../../core/models/api-error.models';
 
 @Component({
   selector: 'app-admin-listing-review',
@@ -38,11 +40,21 @@ export class AdminListingReview implements OnInit {
   constructor(
     private listingService: AdminListingReviewService,
     private toastService: ToastService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit() {
-    this.loadListings();
+    const type = this.route.snapshot.queryParamMap.get('type');
+    const id = this.route.snapshot.queryParamMap.get('id');
+
+    if (type === 'marketplace') {
+      this.activeTab = 'marketplace';
+    } else {
+      this.activeTab = 'services';
+    }
+
+    this.loadListings(id || undefined);
   }
 
   switchTab(tab: 'services' | 'marketplace') {
@@ -52,7 +64,7 @@ export class AdminListingReview implements OnInit {
     this.loadListings();
   }
 
-  loadListings() {
+  loadListings(openId?: string) {
     this.isLoading = true;
     this.pendingListings = [];
     
@@ -64,6 +76,9 @@ export class AdminListingReview implements OnInit {
       next: (res) => {
         this.pendingListings = res.items || [];
         this.isLoading = false;
+        if (openId) {
+          this.viewDetails(openId);
+        }
         this.cdr.detectChanges();
       },
       error: () => {
@@ -145,7 +160,7 @@ export class AdminListingReview implements OnInit {
       },
       error: (err) => {
         console.error('Action failed', err);
-        this.toastService.error('حدث خطأ أثناء تنفيذ الإجراء');
+        this.toastService.error(extractErrorMessage(err) || 'حدث خطأ أثناء تنفيذ الإجراء');
         this.cdr.detectChanges();
       }
     });

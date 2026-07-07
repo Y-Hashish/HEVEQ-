@@ -1,5 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { map } from 'rxjs';
 import { API_BASE_URL } from '../constants/api.constants';
 import { ListingReviewDetails, PaginatedResponse, PendingListing } from '../models/admin.models';
 
@@ -29,7 +30,8 @@ export class AdminListingReviewService {
   }
 
   getServiceListingDetails(id: string) {
-    return this.http.get<ListingReviewDetails>(`${API_BASE_URL}/admin/service-listings/${id}/review-details`);
+    return this.http.get<ListingReviewDetails>(`${API_BASE_URL}/admin/service-listings/${id}/review-details`)
+      .pipe(map(details => this.normalizeDetails(details)));
   }
 
   approveServiceListing(id: string) {
@@ -46,7 +48,8 @@ export class AdminListingReviewService {
   }
 
   getMarketplaceListingDetails(id: string) {
-    return this.http.get<ListingReviewDetails>(`${API_BASE_URL}/admin/marketplace-listings/${id}/review-details`);
+    return this.http.get<any>(`${API_BASE_URL}/admin/marketplace-listings/${id}/review-details`)
+      .pipe(map(details => this.normalizeDetails(details)));
   }
 
   approveMarketplaceListing(id: string) {
@@ -55,5 +58,26 @@ export class AdminListingReviewService {
 
   rejectMarketplaceListing(id: string, reason: string) {
     return this.http.post<ListingReviewResult>(`${API_BASE_URL}/admin/marketplace-listings/${id}/reject`, { adminRejectionNote: reason });
+  }
+
+  private normalizeDetails(details: any): ListingReviewDetails {
+    const sellerOrProvider = details.provider || details.seller || {};
+    const companyName = sellerOrProvider.companyName
+      || sellerOrProvider.displayName
+      || sellerOrProvider.name
+      || details.providerName
+      || details.sellerName
+      || 'مزود غير محدد';
+
+    return {
+      ...details,
+      provider: {
+        companyName,
+        email: sellerOrProvider.email || details.providerEmail || details.sellerEmail || 'غير متوفر',
+        phoneNumber: sellerOrProvider.phoneNumber || details.providerPhoneNumber || details.sellerPhoneNumber || 'غير متوفر'
+      },
+      aiRecommendation: details.aiRecommendation || details.aiRecommendationAr || 'لا توجد توصية متاحة',
+      aiRiskFlags: details.aiRiskFlags || ''
+    } as ListingReviewDetails;
   }
 }

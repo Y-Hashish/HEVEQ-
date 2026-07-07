@@ -25,4 +25,16 @@ export class ReviewsService {
       `${API_BASE_URL}/reviews/for-user/${userId}`
     )
   }
+
+  getReviewsForServiceListing(serviceListingId: string) {
+    return this.http.get<UserReviewsResponse>(
+      `${API_BASE_URL}/reviews/service-listing/${serviceListingId}`
+    )
+  }
+
+  getMarketplaceSellerReviews(sellerId: string) {
+    return this.http.get<UserReviewsResponse>(
+      `${API_BASE_URL}/reviews/marketplace-seller/${sellerId}`
+    )
+  }
 }

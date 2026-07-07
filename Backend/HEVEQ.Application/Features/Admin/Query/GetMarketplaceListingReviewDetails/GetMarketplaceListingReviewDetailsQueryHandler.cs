@@ -54,8 +54,9 @@ namespace HEVEQ.Application.Features.Admin.Query.GetMarketplaceListingReviewDeta
             var sellerInfo = new ReviewSellerDto
             {
                 Id = listingData.SellerId,
-                DisplayName = sellerUser != null ? $"{sellerUser.FirstName} {sellerUser.LastName}".Trim() : "Unknown Seller",
-                Email = sellerUser?.Email ?? "N/A"
+                DisplayName = sellerUser != null ? $"{sellerUser.FirstName} {sellerUser.LastName}".Trim() : "بائع غير محدد",
+                Email = sellerUser?.Email ?? "غير متوفر",
+                PhoneNumber = sellerUser?.PhoneNumber ?? "غير متوفر"
             };
 
             string conditionAr = listingData.Condition switch

@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common'
 import { Component, OnInit } from '@angular/core'
+import { ActivatedRoute } from '@angular/router'
 import { FormsModule } from '@angular/forms'
 import { catchError, finalize, forkJoin, of, switchMap } from 'rxjs'
 import { getErrorMessage } from '../../../core/helpers/errorMessageHelper'
@@ -37,7 +38,8 @@ export class MarketplaceOrders implements OnInit {
 
   constructor(
     private ordersService: MarketplaceOrdersService,
-    private mediaUploadService: MediaUploadService
+    private mediaUploadService: MediaUploadService,
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
@@ -55,7 +57,9 @@ export class MarketplaceOrders implements OnInit {
         next: orders => {
           this.orders = orders ?? []
           if (!this.selectedOrder && this.orders.length) {
-            this.openOrder(this.orders[0].id)
+            const targetId = this.route.snapshot.queryParamMap.get('orderId')
+            const target = targetId && this.orders.some(o => o.id === targetId) ? targetId : this.orders[0].id
+            this.openOrder(target)
           }
         },
         error: error => {

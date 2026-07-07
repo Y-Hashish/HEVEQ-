@@ -1,0 +1,43 @@
+<section class="admin-reviews-page" dir="rtl">
+  <div class="admin-header header-with-actions">
+    <div>
+      <h1 class="page-title">مراجعة التقييمات</h1>
+      <p class="page-subtitle">التقييمات التي أوقفها الذكاء الاصطناعي بسبب محتوى مخالف أو طلب تواصل خارج المنصة.</p>
+    </div>
+    <button type="button" class="btn btn-secondary" (click)="loadReviews()">تحديث</button>
+  </div>
+
+  <app-loading *ngIf="isLoading" [fullScreen]="false"></app-loading>
+
+  <app-empty-state *ngIf="!isLoading && reviews.length === 0" title="لا توجد تقييمات معلقة" message="كل التقييمات الحالية منشورة أو تمت مراجعتها."></app-empty-state>
+
+  <div class="reviews-grid" *ngIf="!isLoading && reviews.length">
+    <article class="review-card" *ngFor="let review of reviews">
+      <div class="review-topline">
+        <span class="source-chip">{{ getSourceLabel(review.sourceType) }}</span>
+        <span class="date-text">{{ review.createdAt | date:'short' }}</span>
+      </div>
+
+      <h2>{{ review.sourceTitle }}</h2>
+      <div class="review-meta">
+        <span>من: <strong>{{ review.reviewerName }}</strong></span>
+        <span>إلى: <strong>{{ review.reviewedUserName }}</strong></span>
+      </div>
+
+      <div class="stars" aria-label="تقييم">{{ getStars(review.rating) }}</div>
+
+      <p class="comment">{{ review.comment || 'لا يوجد تعليق نصي.' }}</p>
+
+      <div class="review-actions">
+        <button type="button" class="btn btn-success" [disabled]="actionId === review.id" (click)="approve(review)">
+          {{ actionId === review.id ? 'جاري التنفيذ...' : 'قبول ونشر' }}
+        </button>
+        <button type="button" class="btn btn-danger" [disabled]="actionId === review.id" (click)="reject(review)">
+          رفض
+        </button>
+      </div>
+    </article>
+  </div>
+
+  <app-pagination *ngIf="!isLoading && totalCount > pageSize" [page]="page" [pageSize]="pageSize" [totalCount]="totalCount" (pageChange)="onPageChange($event)"></app-pagination>
+</section>

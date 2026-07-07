@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms'
 import { Router, RouterLink } from '@angular/router'
 import { Auth } from '../../../core/services/auth'
 import { TokenStorage } from '../../../core/services/token-storage'
+import { finalize } from 'rxjs'
+import { getErrorMessage } from '../../../core/helpers/errorMessageHelper'
 
 @Component({
   selector: 'app-login',
@@ -17,6 +19,7 @@ export class Login {
   password = ''
   errorMessage = ''
   isLoading = false
+  showPassword = false
 
   constructor(
     private authService: Auth,
@@ -33,31 +36,16 @@ export class Login {
       password: this.password
     }).subscribe({
       next: response => {
-        this.isLoading = false
-
         if (!response.isAuthenticated) {
+          this.isLoading = false
           this.errorMessage = response.message || 'بيانات الدخول غير صحيحة'
           return
         }
 
-        const role = this.tokenStorage.getRole()
-
-        if (role === 'customer') {
-          this.router.navigate(['/'])
-          return
-        }
-
-        if (role === 'provider') {
-          this.router.navigate(['/provider-dashboard'])
-          return
-        }
-
-        if (role === 'admin' || role === 'employee') {
-          this.router.navigate(['/admin'])
-          return
-        }
-
-        this.router.navigate(['/'])
+        this.authService.getMe().pipe(finalize(() => (this.isLoading = false))).subscribe({
+          next: () => this.navigateAfterLogin(),
+          error: () => this.navigateAfterLogin()
+        })
       },
       error: error => {
         this.isLoading = false
@@ -67,12 +55,29 @@ export class Login {
           return
         }
 
-        this.errorMessage =
-          error.error?.message ||
-          error.error?.title ||
-          (typeof error.error === 'string' ? error.error : null) ||
-          'حدث خطأ أثناء تسجيل الدخول'
+        this.errorMessage = getErrorMessage(error, 'حدث خطأ أثناء تسجيل الدخول')
       }
     })
+  }
+
+  private navigateAfterLogin(): void {
+    const role = this.tokenStorage.getRole()
+
+    if (role === 'customer') {
+      this.router.navigate(['/'])
+      return
+    }
+
+    if (role === 'provider') {
+      this.router.navigate(['/provider-dashboard'])
+      return
+    }
+
+    if (role === 'admin' || role === 'employee') {
+      this.router.navigate(['/admin'])
+      return
+    }
+
+    this.router.navigate(['/'])
   }
 }

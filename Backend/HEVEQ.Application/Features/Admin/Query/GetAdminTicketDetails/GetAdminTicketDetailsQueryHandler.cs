@@ -37,6 +37,10 @@ namespace HEVEQ.Application.Features.Admin.Query.GetAdminTicketDetails
                     t.SubmittedById, 
                     t.AssignedToUserId,
                     t.CreatedAt,
+                    t.AiSummary,
+                    t.AiIdentifiedIssue,
+                    t.AiClaimedImpact,
+                    t.AiEscalationPriority,
 
                     Messages = t.Messages.OrderBy(m => m.CreatedAt).Select(m => new
                     {
@@ -115,6 +119,10 @@ namespace HEVEQ.Application.Features.Admin.Query.GetAdminTicketDetails
                 SubmittedByName = usersDict.GetValueOrDefault(ticketData.SubmittedById, "Unknown User"),
                 UserName = usersDict.GetValueOrDefault(ticketData.SubmittedById, "Unknown User"), // Frontend compatibility
                 CreatedAt = ticketData.CreatedAt,
+                AiSummary = ticketData.AiSummary,
+                AiIdentifiedIssue = ticketData.AiIdentifiedIssue,
+                AiClaimedImpact = ticketData.AiClaimedImpact,
+                AiEscalationPriority = ticketData.AiEscalationPriority,
                 AssignedToUserId = ticketData.AssignedToUserId,
                 AssignedToUserName = ticketData.AssignedToUserId.HasValue ? usersDict.GetValueOrDefault(ticketData.AssignedToUserId.Value, "Unknown") : null,
 

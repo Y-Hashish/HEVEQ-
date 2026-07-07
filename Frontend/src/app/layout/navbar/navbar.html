@@ -47,16 +47,8 @@
                             {{ dashboardLabel }}
                         </a>
 
-                        <a routerLink="/account-verification" class="dropdown-item" (click)="isDropdownOpen = false">
+                        <a *ngIf="showAccountVerificationLink" routerLink="/account-verification" class="dropdown-item" (click)="isDropdownOpen = false">
                             توثيق الحساب
-                        </a>
-
-                        <a routerLink="/support-tickets" class="dropdown-item" (click)="isDropdownOpen = false">
-                            الدعم الفني
-                        </a>
-
-                        <a routerLink="/reviews" class="dropdown-item" (click)="isDropdownOpen = false">
-                            التقييمات
                         </a>
 
                         <button type="button" class="dropdown-item logout-btn-item" (click)="logout()">
@@ -72,6 +64,9 @@
             </ng-container>
 
             <ng-template #guestActions>
+                <a routerLink="/register" class="btn btn-outline btn-sm guest-register-link">
+                    إنشاء حساب جديد
+                </a>
                 <a routerLink="/login" class="btn btn-primary btn-sm">
                     تسجيل الدخول
                 </a>

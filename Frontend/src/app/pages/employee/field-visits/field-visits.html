@@ -115,11 +115,21 @@
           <label>ملاحظات الموظف الميداني</label>
           <textarea rows="5" [(ngModel)]="employeeNotes" placeholder="اكتب وصف المعاينة وما تم التحقق منه..."></textarea>
 
-          <label>روابط الصور، كل رابط في سطر</label>
-          <textarea rows="4" [(ngModel)]="photoUrlsText" placeholder="https://..."></textarea>
+          <label>صور الإثباتات</label>
+          <div class="upload-box">
+            <input type="file" accept="image/*" multiple (change)="onPhotoFilesChange($event)" [disabled]="isUploadingPhotos || isSubmittingEvidence">
+            <span>{{ isUploadingPhotos ? 'جاري رفع الصور...' : 'اختر صور من جهازك وسيتم رفعها تلقائيا' }}</span>
+          </div>
 
-          <button class="btn btn-success" type="button" [disabled]="isSubmittingEvidence" (click)="submitEvidence()">
-            {{ isSubmittingEvidence ? 'جاري الرفع...' : 'رفع التقرير والإثباتات' }}
+          <div class="uploaded-preview" *ngIf="selectedPhotoUrls.length">
+            <div class="preview-tile" *ngFor="let url of selectedPhotoUrls; let i = index">
+              <img [src]="url" alt="صورة إثبات ميداني">
+              <button type="button" (click)="removePhotoUrl(i)" [disabled]="isSubmittingEvidence">حذف</button>
+            </div>
+          </div>
+
+          <button class="btn btn-success" type="button" [disabled]="isSubmittingEvidence || isUploadingPhotos" (click)="submitEvidence()">
+            {{ isSubmittingEvidence ? 'جاري الحفظ...' : 'رفع التقرير والإثباتات' }}
           </button>
         </div>
 

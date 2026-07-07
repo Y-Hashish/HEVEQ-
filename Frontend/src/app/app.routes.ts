@@ -29,6 +29,7 @@ import { AdminDocuments } from './pages/admin/admin-documents/admin-documents'
 import { AdminTickets } from './pages/admin/admin-tickets/admin-tickets'
 import { AdminDisputes } from './pages/admin/admin-disputes/admin-disputes'
 import { AdminFieldVerificationComponent } from './pages/admin/admin-field-verification/admin-field-verification'
+import { AdminReviews } from './pages/admin/admin-reviews/admin-reviews'
 import { authGuard } from './core/guards/auth-guard'
 import { roleGuard } from './core/guards/role-guard'
 import { Home } from './pages/public/home/home'
@@ -164,7 +165,7 @@ export const routes: Routes = [
   {
     path: 'admin/users',
     component: AdminUsers,
-    canActivate: [authGuard, roleGuard(['admin', 'employee'])]
+    canActivate: [authGuard, roleGuard(['admin'])]
   },
   {
     path: 'admin/listing-review',
@@ -195,6 +196,11 @@ export const routes: Routes = [
     path: 'admin/field-verifications',
     component: AdminFieldVerificationComponent,
     canActivate: [authGuard, roleGuard(['admin', 'employee'])]
+  },
+  {
+    path: 'admin/reviews',
+    component: AdminReviews,
+    canActivate: [authGuard, roleGuard(['admin'])]
   },
 
   {
