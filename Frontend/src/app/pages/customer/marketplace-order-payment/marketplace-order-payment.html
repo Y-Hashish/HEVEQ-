@@ -16,7 +16,7 @@
     <div class="card">
       <h2>{{ order.listingTitle }}</h2>
       <div class="summary-grid">
-        <div><span>رقم الطلب</span><strong>{{ order.id }}</strong></div>
+        <div><span>رقم الطلب</span><strong>{{ order.orderNumber }}</strong></div>
         <div><span>الحالة</span><strong>{{ order.statusAr || order.status }}</strong></div>
         <div><span>البائع</span><strong>{{ order.sellerName }}</strong></div>
         <div><span>طريقة الاستلام</span><strong>{{ order.deliveryPreference || 'غير محدد' }}</strong></div>
@@ -30,9 +30,6 @@
 
       <button class="btn btn-primary w-full" type="button" [disabled]="isPaying" (click)="payNow()">
         {{ isPaying ? 'جاري إنشاء رابط الدفع...' : 'الدفع الآن' }}
-      </button>
-      <button class="btn btn-outline w-full" type="button" [disabled]="isMockConfirming" (click)="confirmMockPayment()">
-        {{ isMockConfirming ? 'جاري التأكيد...' : 'تأكيد دفع تجريبي للديمو' }}
       </button>
     </div>
   </div>

@@ -1,4 +1,4 @@
-﻿using HEVEQ.Domain.Enums;
+using HEVEQ.Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -8,6 +8,7 @@ namespace HEVEQ.Application.Features.MarketPlaceOrders.DTOs
     public class MarketplaceOrderDto
     {
         public Guid Id { get; set; }
+        public string OrderNumber { get; set; } = string.Empty;
         public Guid BuyerId { get; set; }
         public string BuyerName { get; set; } = string.Empty;
         public Guid SellerId { get; set; }

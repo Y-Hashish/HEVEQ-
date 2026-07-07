@@ -147,4 +147,19 @@ export class Equipment implements OnInit {
       }
     })
   }
+
+  deleteMarketplaceListing(listing: MarketplaceListing): void {
+    const confirmed = window.confirm(`هل تريد حذف "${listing.title}"؟`)
+    if (!confirmed) return
+
+    this.marketplaceService.deleteListing(listing.id).subscribe({
+      next: () => {
+        this.toast.success('تم حذف الإعلان بنجاح')
+        this.load()
+      },
+      error: (err: HttpErrorResponse) => {
+        this.toast.error(extractErrorMessage(err))
+      }
+    })
+  }
 }
