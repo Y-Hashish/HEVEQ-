@@ -14,7 +14,9 @@ namespace HEVEQ.Application.Features.ServiceListings.Commands.UpdateServiceListi
 
 public class UpdateServiceListingCommandHandler(
     IApplicationDbContext context,
-    ICurrentUserService currentUserService, IBackgroundJobService backgroundJobService, NotificationHelper notificationHelper)
+    ICurrentUserService currentUserService,
+    IBackgroundJobService backgroundJobService,
+    NotificationHelper notificationHelper)
     : IRequestHandler<UpdateServiceListingCommand>
 {
     public async Task Handle(UpdateServiceListingCommand request, CancellationToken cancellationToken)
@@ -40,28 +42,18 @@ public class UpdateServiceListingCommandHandler(
         if (listing.ProviderProfileId != providerProfileId)
             throw new ForbiddenAccessException("This listing does not belong to the current provider.");
 
-        var shouldReModerate =
-     listing.Title != request.Title ||
-     listing.Description != request.Description ||
-     listing.Tags != request.Tags ||
-     listing.HourlyRate != request.HourlyRate ||
-     listing.DailyRate != request.DailyRate;
-
-        var shouldNotifyAdmins = false;
-        switch (listing.Status)
+        // Any provider edit must go through a new review cycle.
+        // The edit is saved first as Draft, then the provider explicitly clicks
+        // "إرسال للمراجعة" from the wizard. This mirrors marketplace UX while
+        // keeping the AI/admin review as a separate final action.
+        if (listing.Status is ServiceListingStatus.Active or ServiceListingStatus.PendingReview or ServiceListingStatus.Rejected)
         {
-            case ServiceListingStatus.Active:
-                listing.Status = ServiceListingStatus.PendingReview;
-                listing.EmbeddingStatus = EmbeddingStatus.Pending;
-                shouldNotifyAdmins = true;
-
-                break;
-            case ServiceListingStatus.Rejected:
-                listing.Status = ServiceListingStatus.PendingReview;
-                listing.SubmissionCount += 1;
-                listing.AdminRejectionNote = null;
-                shouldNotifyAdmins = true;
-                break;
+            listing.Status = ServiceListingStatus.Draft;
+            listing.AdminRejectionNote = null;
+            listing.AiRecommendation = null;
+            listing.AiRiskFlags = null;
+            listing.AiRiskLevel = null;
+            listing.AiRiskScore = null;
         }
 
         listing.CategoryId = request.CategoryId;
@@ -78,13 +70,6 @@ public class UpdateServiceListingCommandHandler(
         listing.MinimumBookingHours = request.MinimumBookingHours;
         listing.UpdatedAt = DateTime.UtcNow;
 
-        if (shouldNotifyAdmins)
-            await notificationHelper.ServiceListingSubmittedForAdminsAsync(listing.Id, listing.Title);
-
         await context.SaveChangesAsync(cancellationToken);
-        if (shouldReModerate)
-        {
-            backgroundJobService.EnqueueServiceModeration(listing.Id);
-        }
     }
 }

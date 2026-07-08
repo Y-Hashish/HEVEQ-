@@ -1,15 +1,18 @@
 import { CommonModule } from '@angular/common'
 import { Component, HostListener, OnDestroy, OnInit } from '@angular/core'
+import { FormsModule } from '@angular/forms'
 import { NavigationEnd, Router, RouterLink } from '@angular/router'
 import { filter, Subscription } from 'rxjs'
 import { TokenStorage } from '../../core/services/token-storage'
 import { Auth } from '../../core/services/auth'
 import { NotificationsService } from '../../core/services/notificationsService'
+import { AiConversationTurn, AiSearchResponse, AiSearchService } from '../../core/services/aiSearchService'
+import { getErrorMessage } from '../../core/helpers/errorMessageHelper'
 
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './navbar.html',
   styleUrl: './navbar.css'
 })
@@ -22,6 +25,14 @@ export class Navbar implements OnInit, OnDestroy {
   themeIcon = '🌙'
   unreadNotifications = 0
 
+  aiQuery = ''
+  aiChatInput = ''
+  aiChatOpen = false
+  aiLoading = false
+  aiError = ''
+  aiSessionId = this.createSessionId()
+  aiConversation: AiConversationTurn[] = []
+
   private authSub?: Subscription
   private routerSub?: Subscription
   private unreadSub?: Subscription
@@ -30,7 +41,8 @@ export class Navbar implements OnInit, OnDestroy {
     private tokenStorage: TokenStorage,
     private authService: Auth,
     private router: Router,
-    private notificationsService: NotificationsService
+    private notificationsService: NotificationsService,
+    private aiSearchService: AiSearchService
   ) {}
 
   ngOnInit(): void {
@@ -121,6 +133,12 @@ export class Navbar implements OnInit, OnDestroy {
     return true
   }
 
+  get showAiSearch(): boolean {
+    return !this.currentUrl.startsWith('/login') &&
+      !this.currentUrl.startsWith('/register') &&
+      !this.currentUrl.startsWith('/auth/confirm-email')
+  }
+
   get showMobileButton(): boolean {
     return this.isLoggedIn && this.isInternalDashboardPage
   }
@@ -193,6 +211,111 @@ export class Navbar implements OnInit, OnDestroy {
 
   toggleMobileMenu(): void {
     document.body.classList.toggle('sidebar-open')
+  }
+
+  submitAiSearch(): void {
+    const query = this.aiQuery.trim()
+    if (!query || this.aiLoading) return
+
+    this.aiSessionId = this.createSessionId()
+    this.aiConversation = []
+    this.aiError = ''
+    this.aiLoading = true
+
+    this.aiSearchService.search({
+      rawQuery: query,
+      conversationHistory: [],
+      sessionId: this.aiSessionId
+    }).subscribe({
+      next: response => {
+        this.aiLoading = false
+        this.handleAiResponse(response, query)
+      },
+      error: error => {
+        this.aiLoading = false
+        this.aiError = getErrorMessage(error, 'تعذر تنفيذ البحث الذكي، حاول مرة أخرى')
+        this.aiChatOpen = true
+      }
+    })
+  }
+
+  sendAiChatMessage(): void {
+    const message = this.aiChatInput.trim()
+    if (!message || this.aiLoading) return
+
+    const history = [...this.aiConversation]
+    this.aiChatInput = ''
+    this.aiError = ''
+    this.aiLoading = true
+
+    this.aiSearchService.search({
+      rawQuery: message,
+      conversationHistory: history,
+      sessionId: this.aiSessionId
+    }).subscribe({
+      next: response => {
+        this.aiLoading = false
+        this.handleAiResponse(response, message)
+      },
+      error: error => {
+        this.aiLoading = false
+        this.aiError = getErrorMessage(error, 'تعذر متابعة المحادثة، حاول مرة أخرى')
+      }
+    })
+  }
+
+  closeAiChat(): void {
+    this.aiChatOpen = false
+    this.aiError = ''
+  }
+
+  private handleAiResponse(response: AiSearchResponse, userMessage: string): void {
+    this.aiConversation = [
+      ...this.aiConversation,
+      { role: 'user', content: userMessage }
+    ]
+
+    if (this.aiSearchService.needsClarification(response)) {
+      const message = response.clarification?.message || 'ممكن توضح طلبك أكثر؟'
+      this.aiConversation = [
+        ...this.aiConversation,
+        { role: 'assistant', content: message }
+      ]
+      this.aiChatOpen = true
+      return
+    }
+
+    if (this.aiSearchService.isResultsReady(response)) {
+      this.aiSearchService.saveResults(response)
+      const hasResults = (response.results?.length ?? 0) > 0
+      this.aiConversation = [
+        ...this.aiConversation,
+        {
+          role: 'assistant',
+          content: hasResults
+            ? 'تم العثور على نتائج مناسبة، جاري فتح صفحة النتائج.'
+            : 'لم أجد نتائج مطابقة بدقة، يمكنك تجربة وصف مختلف.'
+        }
+      ]
+
+      const isMarketplace = this.aiSearchService.isMarketplaceTarget(response.intent?.target)
+      this.aiChatOpen = false
+      this.router.navigate([isMarketplace ? '/marketplace' : '/services'], {
+        queryParams: { ai: '1', sessionId: this.aiSessionId }
+      })
+      return
+    }
+
+    this.aiError = 'تعذر فهم رد البحث الذكي، حاول مرة أخرى.'
+    this.aiChatOpen = true
+  }
+
+  private createSessionId(): string {
+    if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+      return crypto.randomUUID()
+    }
+
+    return `ai-${Date.now()}-${Math.random().toString(16).slice(2)}`
   }
 
   logout(): void {

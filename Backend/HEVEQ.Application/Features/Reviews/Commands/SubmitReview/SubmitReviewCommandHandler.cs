@@ -59,7 +59,8 @@ public class SubmitReviewCommandHandler
 
             var alreadyReviewed = await _context.Reviews
                 .AnyAsync(r => r.ReviewerId == reviewerId
-                               && r.BookingId == request.BookingId.Value,
+                               && r.BookingId == request.BookingId.Value
+                               && r.ModerationStatus != ModerationStatus.Rejected,
                           cancellationToken);
 
             if (alreadyReviewed)
@@ -92,7 +93,8 @@ public class SubmitReviewCommandHandler
 
             var alreadyReviewed = await _context.Reviews
                 .AnyAsync(r => r.ReviewerId == reviewerId
-                               && r.MarketplaceOrderId == request.MarketplaceOrderId!.Value,
+                               && r.MarketplaceOrderId == request.MarketplaceOrderId!.Value
+                               && r.ModerationStatus != ModerationStatus.Rejected,
                           cancellationToken);
 
             if (alreadyReviewed)
@@ -181,8 +183,8 @@ public class SubmitReviewCommandHandler
             Rating = review.Rating,
             IsPublished = review.IsPublished,
             Message = review.IsPublished
-                ? "Review submitted successfully"
-                : "تقييمك قد يكون يخالف سياستنا, تم استلامه و هو قيد المراجعة." // رسالة ذكية للعميل
+                ? "تم نشر التقييم بنجاح"
+                : "تم استلام تقييمك وإرساله للمراجعة قبل النشر."
         };
     }
 }

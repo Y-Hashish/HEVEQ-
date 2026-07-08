@@ -176,6 +176,35 @@ public class NotificationHelper
             documentId,
             "Document");
 
+
+
+    public void DocumentLowConfidence(Guid userId, Guid documentId, string documentType)
+        => Add(
+            userId,
+            "DocumentLowConfidence",
+            "مطلوب إعادة رفع المستند",
+            $"جودة صورة المستند من نوع {documentType} منخفضة. يُرجى إعادة رفع صورة أوضح.",
+            documentId,
+            "Document");
+
+    public void DocumentExpired(Guid userId, Guid documentId, string documentType)
+        => Add(
+            userId,
+            "DocumentExpired",
+            "انتهت صلاحية المستند",
+            $"انتهت صلاحية المستند من نوع {documentType}. يُرجى رفع مستند ساري الصلاحية.",
+            documentId,
+            "Document");
+
+    public void DocumentExpiringSoon(Guid userId, Guid documentId, string documentType, DateOnly expiryDate)
+        => Add(
+            userId,
+            "DocumentExpiringSoon",
+            "المستند على وشك الانتهاء",
+            $"تنتهي صلاحية المستند من نوع {documentType} بتاريخ {expiryDate:yyyy-MM-dd}. يُرجى تجديده قبل انتهاء الصلاحية.",
+            documentId,
+            "Document");
+
     public async Task ServiceListingSubmittedForAdminsAsync(Guid listingId, string listingTitle)
         => await NotifyAdminsAsync(
             "ServiceListingSubmittedForReview",

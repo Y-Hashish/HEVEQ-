@@ -1,6 +1,7 @@
 ﻿using HEVEQ.Application.Common.Interfaces;
 using HEVEQ.Application.Features.Bookings.Queries.GetProviderActiveJobs;
 using HEVEQ.Application.Features.Bookings.Queries.GetProviderBookingRequests;
+using HEVEQ.Application.Features.Bookings.Queries.GetProviderBookings;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -25,6 +26,14 @@ namespace HEVEQ.Api.Controllers
             if (!_currentUser.IsAuthenticated || _currentUser.UserId is null)
                 throw new UnauthorizedAccessException("User is not authenticated.");
             return _currentUser.UserId.Value;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAllBookings(CancellationToken cancellationToken)
+        {
+            var providerUserId = GetCurrentUserId();
+            var response = await _mediator.Send(new GetProviderBookingsQuery(providerUserId), cancellationToken);
+            return Ok(new { items = response, totalCount = response.Count });
         }
 
         [HttpGet("requests")]

@@ -13,5 +13,8 @@
         public string StatusAr { get; set; } = string.Empty;
         public bool CanStart { get; set; }
         public bool CanComplete { get; set; }
+        public bool CanRequestTimeAdjustment { get; set; }
+        public bool HasBlockingTimeAdjustment { get; set; }
+        public string? TimeAdjustmentBlockReasonAr { get; set; }
     }
 }

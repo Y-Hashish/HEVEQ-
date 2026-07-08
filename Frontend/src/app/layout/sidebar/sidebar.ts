@@ -83,7 +83,7 @@ export class Sidebar implements OnInit, OnDestroy {
     }
 
     if (this.role === 'provider') {
-      return ['/provider-dashboard', '/booking-requests', '/active-jobs', '/equipment', '/marketplace-sales', '/earnings', '/operators', '/create-listing', '/messages'].some(x => url.startsWith(x))
+      return ['/provider-dashboard', '/provider-bookings', '/booking-requests', '/active-jobs', '/equipment', '/marketplace-sales', '/earnings', '/operators', '/create-listing', '/messages', '/profile'].some(x => url.startsWith(x))
     }
 
     if (this.role === 'admin' || this.role === 'employee') {

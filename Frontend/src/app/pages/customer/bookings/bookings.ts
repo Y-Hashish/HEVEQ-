@@ -570,11 +570,67 @@ export class Bookings implements OnInit {
 }
 
 formatMoney(value: number | null | undefined): string {
-  if (value === null || value === undefined) {
-    return '0 جنيه'
+  if (value === null || value === undefined || Number.isNaN(Number(value))) {
+    return '0.00 جنيه'
   }
 
   return `${Number(value).toFixed(2)} جنيه`
+}
+
+getBookingTotal(booking: BookingDetails | BookingListItem | null): number {
+  if (!booking) {
+    return 0
+  }
+
+  return Number(booking.finalPrice ?? booking.totalPrice ?? booking.estimatedTotal ?? 0)
+}
+
+getAdditionalCharges(booking: BookingDetails | BookingListItem | null): number {
+  if (!booking) {
+    return 0
+  }
+
+  const surcharge = Number(
+    booking.outOfZoneSurchargeAmount ??
+    booking.surchargeAmount ??
+    0
+  )
+
+  return Number.isFinite(surcharge) && surcharge > 0 ? surcharge : 0
+}
+
+getBaseServiceAmount(booking: BookingDetails | BookingListItem | null): number {
+  if (!booking) {
+    return 0
+  }
+
+  const total = this.getBookingTotal(booking)
+  const extra = this.getAdditionalCharges(booking)
+  const baseFromTotal = total - extra
+
+  if (baseFromTotal > 0) {
+    return baseFromTotal
+  }
+
+  const hours = Number(booking.estimatedDurationHours ?? 0)
+  const rate = Number(booking.hourlyRateSnapshot ?? 0)
+
+  return Math.max(hours * rate, 0)
+}
+
+getAdditionalChargesLabel(booking: BookingDetails | BookingListItem | null): string {
+  if (!booking || this.getAdditionalCharges(booking) <= 0) {
+    return 'مبالغ إضافية'
+  }
+
+  if (booking.isOutOfZoneBooking || Number(booking.outOfZoneSurchargeAmount ?? 0) > 0) {
+    const distance = Number(booking.outOfZoneDistanceKm ?? 0)
+    return distance > 0
+      ? `رسوم خارج نطاق الخدمة (${distance.toFixed(1)} كم)`
+      : 'رسوم خارج نطاق الخدمة'
+  }
+
+  return 'مبالغ إضافية'
 }
 
 getTimelineDate(itemDate: string | null): string {

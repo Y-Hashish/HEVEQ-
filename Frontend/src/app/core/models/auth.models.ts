@@ -20,6 +20,7 @@ export interface CurrentUserResponse {
   phoneNumber: string
   role: string
   isActive: boolean
+  isIdentityVerified?: boolean | null
   profileCompleted: boolean
   trustScore?: number | null
   dashboardUrl?: string | null

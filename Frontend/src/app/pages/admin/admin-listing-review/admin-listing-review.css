@@ -363,3 +363,20 @@
     display: block;
   }
 }
+
+.ai-text-list {
+  margin: 0;
+  padding: 0 18px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--text-main);
+  line-height: 1.8;
+}
+
+.ai-text-list li {
+  background: rgba(244, 163, 0, 0.08);
+  border: 1px solid rgba(244, 163, 0, 0.18);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+}

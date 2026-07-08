@@ -16,7 +16,7 @@ export enum DocumentVerificationStatus {
 }
 
 export interface UploadDocumentRequest {
-  documentType: DocumentType
+  documentType: DocumentType | string | number
   fileUrl: string
   expiryDate: string | null
   serviceListingId: string | null
@@ -39,7 +39,7 @@ export interface DocumentItem {
   serviceListingId: string | null
   marketplaceListingId: string | null
   operatorId: string | null
-  documentType: DocumentType
+  documentType: DocumentType | string | number
   fileUrl: string
   status: DocumentVerificationStatus
   statusAr: string

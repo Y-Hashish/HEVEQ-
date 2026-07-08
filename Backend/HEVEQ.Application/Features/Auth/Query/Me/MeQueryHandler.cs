@@ -1,6 +1,7 @@
 ﻿using HEVEQ.Application.Common.Interfaces;
 using HEVEQ.Application.Features.Auth.DTOs;
 using HEVEQ.Domain.Identity;
+using HEVEQ.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -38,6 +39,13 @@ namespace HEVEQ.Application.Features.Auth.Query.Me
             var primaryRole = roles.FirstOrDefault() ?? "User";
 
             // بناء الاستجابة الأساسية (بدون بيانات حساسة)
+            var isIdentityVerified = await context.Documents
+                .AsNoTracking()
+                .AnyAsync(d => d.UserId == user.Id
+                               && d.DocumentType == DocumentType.NationalId
+                               && d.Status == DocumentVerificationStatus.Approved,
+                    cancellationToken);
+
             var response = new GetMeResponse
             {
                 IsSuccess = true,
@@ -47,6 +55,7 @@ namespace HEVEQ.Application.Features.Auth.Query.Me
                 DisplayName = $"{user.FirstName} {user.LastName}".Trim(),
                 Role = primaryRole,
                 IsActive = user.IsActive,
+                IsIdentityVerified = isIdentityVerified,
                 ProfileCompleted = false,
                 DashboardUrl = ""
             };

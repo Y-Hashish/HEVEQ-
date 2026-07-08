@@ -1,3 +1,24 @@
+
+export interface ProviderBookingsResponse {
+  items: ProviderBookingListItem[]
+  totalCount: number
+}
+
+export interface ProviderBookingListItem {
+  bookingId: string
+  bookingNumber: string
+  customerName: string
+  serviceListingTitle: string
+  requestedStartDate: string
+  requestedStartTime: string
+  estimatedDurationHours: number
+  estimatedTotal: number
+  status: string
+  statusAr: string
+  canAccept: boolean
+  canReject: boolean
+}
+
 export interface ProviderBookingRequestsResponse {
   items: ProviderBookingRequestItem[]
   totalCount: number
@@ -38,6 +59,9 @@ export interface ProviderActiveJobItem {
   statusAr: string
   canStart: boolean
   canComplete: boolean
+  canRequestTimeAdjustment?: boolean
+  hasBlockingTimeAdjustment?: boolean
+  timeAdjustmentBlockReasonAr?: string | null
   location?: string | null
 }
 

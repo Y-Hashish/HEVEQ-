@@ -84,6 +84,12 @@ public class GetCustomerDashboardSummaryQueryHandler
         var unreadNotifications = await _context.Notifications
             .CountAsync(n => n.UserId == userId && !n.IsRead, cancellationToken);
 
+        var hasApprovedNationalId = await _context.Documents
+            .AnyAsync(d => d.UserId == userId
+                           && d.DocumentType == DocumentType.NationalId
+                           && d.Status == DocumentVerificationStatus.Approved,
+                cancellationToken);
+
         // ── Step 6: assemble and return ───────────────────────────────────
         return new CustomerDashboardSummaryDto
         {
@@ -94,7 +100,7 @@ public class GetCustomerDashboardSummaryQueryHandler
             MarketplacePurchases = marketplacePurchases,
             UnreadNotifications = unreadNotifications,
             TrustScore = profile.TrustScore,
-            RequiresAdditionalVerification = profile.RequiresAdditionalVerification
+            RequiresAdditionalVerification = profile.RequiresAdditionalVerification || !hasApprovedNationalId
         };
     }
 }

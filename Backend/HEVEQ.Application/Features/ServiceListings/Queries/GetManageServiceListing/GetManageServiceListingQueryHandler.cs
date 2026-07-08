@@ -122,10 +122,10 @@ namespace HEVEQ.Application.Features.ServiceListings.Queries.GetManageServiceLis
             {
                 var activeOperatorsCount = listing.ServiceListingOperators.Count(slo => slo.Operator != null && slo.Operator.IsActive);
 
-                if (photosDto.Count < 3) missingRequirements.Add("At least 3 photos");
-                if (activeOperatorsCount < 1) missingRequirements.Add("At least 1 operator");
-                if (availabilityDto.Count < 1) missingRequirements.Add("At least 1 availability schedule");
-                if (!providerProfileComplete) missingRequirements.Add("Complete provider profile fields");
+                if (photosDto.Count < 3) missingRequirements.Add("رفع 3 صور على الأقل");
+                if (activeOperatorsCount < 1) missingRequirements.Add("ربط مشغل نشط واحد على الأقل");
+                if (availabilityDto.Count < 1) missingRequirements.Add("إضافة موعد توفر واحد على الأقل");
+                if (!providerProfileComplete) missingRequirements.Add("استكمال بيانات ملف المزود");
 
                 canSubmitForReview = missingRequirements.Count == 0;
             }

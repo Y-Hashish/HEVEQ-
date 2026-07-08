@@ -7,6 +7,7 @@ import {
   CompleteBookingByProviderRequest,
   CreateTimeAdjustmentRequest,
   ProviderActiveJobsResponse,
+  ProviderBookingsResponse,
   ProviderBookingRequestsResponse,
   ProviderOperatorItem,
   RejectBookingRequest
@@ -22,6 +23,12 @@ import {
 })
 export class ProviderBookingsService {
   constructor(private http: HttpClient) {}
+
+  getAllBookings() {
+    return this.http.get<ProviderBookingsResponse>(
+      `${API_BASE_URL}/provider/bookings`
+    )
+  }
 
   getBookingRequests() {
     return this.http.get<ProviderBookingRequestsResponse>(

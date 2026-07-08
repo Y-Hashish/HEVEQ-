@@ -32,6 +32,7 @@ namespace HEVEQ.Application.Features.Auth.Commad.Regiser
                 FirstName = request.FirstName,
                 LastName = request.LastName,
                 PhoneNumber = request.PhoneNumber,
+                PhoneNumberConfirmed = true, // Temporary until OTP verification is implemented
                 EmailConfirmed = false,
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow,

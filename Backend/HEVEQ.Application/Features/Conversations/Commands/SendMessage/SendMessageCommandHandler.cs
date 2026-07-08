@@ -6,6 +6,8 @@ using HEVEQ.Application.Features.Conversations.DTOs;
 using HEVEQ.Domain.Entities;
 using HEVEQ.Application.Common.Services;
 using HEVEQ.Application.Common.Realtime;
+using HEVEQ.Domain.Identity;
+using Microsoft.AspNetCore.Identity;
 
 namespace HEVEQ.Application.Features.Conversations.Commands.SendMessage;
 
@@ -16,17 +18,20 @@ public class SendMessageCommandHandler
     private readonly ICurrentUserService _currentUser;
     private readonly NotificationHelper _notificationHelper;
     private readonly IRealtimeEventPublisher _realtimeEventPublisher;
+    private readonly UserManager<ApplicationUser> _userManager;
 
     public SendMessageCommandHandler(
         IApplicationDbContext context,
         ICurrentUserService currentUser,
         NotificationHelper notificationHelper,
-        IRealtimeEventPublisher realtimeEventPublisher)
+        IRealtimeEventPublisher realtimeEventPublisher,
+        UserManager<ApplicationUser> userManager)
     {
         _context = context;
         _currentUser = currentUser;
         _notificationHelper = notificationHelper;
         _realtimeEventPublisher = realtimeEventPublisher;
+        _userManager = userManager;
     }
 
     public async Task<SendMessageResult> Handle(
@@ -63,7 +68,10 @@ public class SendMessageCommandHandler
         _context.Messages.Add(message);
         var receiverId = conversation.InitiatedById == userId ? conversation.ParticipantId : conversation.InitiatedById;
 
-        _notificationHelper.NewMessageReceived(receiverId, message.Id, "مستخدم");
+        var sender = await _userManager.FindByIdAsync(userId.ToString());
+        var senderName = BuildSenderName(sender);
+
+        _notificationHelper.NewMessageReceived(receiverId, message.Id, senderName);
         await _context.SaveChangesAsync(cancellationToken);
 
         var realtimeMessage = new RealtimeMessageDto
@@ -71,7 +79,7 @@ public class SendMessageCommandHandler
             Id = message.Id,
             ConversationId = conversation.Id,
             SenderId = userId,
-            SenderName = "مستخدم",
+            SenderName = senderName,
             Body = message.Content,
             MessageType = message.MessageType.ToString(),
             SentAt = message.SentAt
@@ -82,4 +90,18 @@ public class SendMessageCommandHandler
 
         return new SendMessageResult(message.Id, "Message sent successfully");
     }
+
+    private static string BuildSenderName(ApplicationUser? user)
+    {
+        if (user is null)
+            return "مستخدم";
+
+        var fullName = $"{user.FirstName} {user.LastName}".Trim();
+
+        if (!string.IsNullOrWhiteSpace(fullName))
+            return fullName;
+
+        return user.UserName ?? user.Email ?? "مستخدم";
+    }
+
 }

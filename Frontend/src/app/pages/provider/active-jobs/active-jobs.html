@@ -110,7 +110,11 @@
                     </button>
                 </div>
 
-                <div class="action-panel" *ngIf="selectedJob.canComplete">
+                <div class="alert warning" *ngIf="selectedJob.hasBlockingTimeAdjustment">
+                    {{ selectedJob.timeAdjustmentBlockReasonAr || 'يوجد طلب زيادة وقت يجب التعامل معه قبل إنهاء الخدمة.' }}
+                </div>
+
+                <div class="action-panel" *ngIf="selectedJob.canComplete && !selectedJob.hasBlockingTimeAdjustment">
                     <h3>إثبات اكتمال الخدمة</h3>
 
                     <div class="form-group">
@@ -172,7 +176,7 @@
                     </button>
                 </div>
 
-                <div class="action-panel">
+                <div class="action-panel" *ngIf="selectedJob.canRequestTimeAdjustment">
                     <h3>طلب زيادة وقت</h3>
 
                     <div class="form-grid">

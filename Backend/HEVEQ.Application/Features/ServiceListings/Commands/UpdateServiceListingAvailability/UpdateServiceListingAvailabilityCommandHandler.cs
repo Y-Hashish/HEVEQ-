@@ -1,6 +1,7 @@
 ﻿using HEVEQ.Application.Common.Exceptions;
 using HEVEQ.Application.Common.Interfaces;
 using HEVEQ.Domain.Entities;
+using HEVEQ.Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -57,6 +58,16 @@ public class UpdateServiceListingAvailabilityCommandHandler(
         availability.CloseTime = request.CloseTime;
 
       
+        if (listing.Status is ServiceListingStatus.Active or ServiceListingStatus.PendingReview or ServiceListingStatus.Rejected)
+        {
+            listing.Status = ServiceListingStatus.Draft;
+            listing.AdminRejectionNote = null;
+            listing.AiRecommendation = null;
+            listing.AiRiskFlags = null;
+            listing.AiRiskLevel = null;
+            listing.AiRiskScore = null;
+        }
+
         listing.UpdatedAt = DateTime.UtcNow;
 
         await context.SaveChangesAsync(cancellationToken);

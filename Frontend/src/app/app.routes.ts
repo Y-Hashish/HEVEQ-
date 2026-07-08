@@ -16,6 +16,7 @@ import { Profile } from './pages/customer/profile/profile'
 import { ProviderDashboard } from './pages/provider/provider-dashboard/provider-dashboard'
 import { BookingRequests } from './pages/provider/booking-requests/booking-requests'
 import { ActiveJobs } from './pages/provider/active-jobs/active-jobs'
+import { ProviderBookings } from './pages/provider/provider-bookings/provider-bookings'
 import { Equipment } from './pages/provider/equipment/equipment'
 import { Earnings } from './pages/provider/earnings/earnings'
 import { CreateListing } from './pages/provider/create-listing/create-listing'
@@ -114,6 +115,11 @@ export const routes: Routes = [
   {
     path: 'provider-dashboard',
     component: ProviderDashboard,
+    canActivate: [authGuard, roleGuard(['provider'])]
+  },
+  {
+    path: 'provider-bookings',
+    component: ProviderBookings,
     canActivate: [authGuard, roleGuard(['provider'])]
   },
   {

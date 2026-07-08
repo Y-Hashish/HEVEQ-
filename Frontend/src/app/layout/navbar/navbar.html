@@ -4,6 +4,19 @@
             <span>هيڤ</span>يك
         </a>
 
+        <form class="navbar-ai-search" *ngIf="showAiSearch" (submit)="$event.preventDefault(); submitAiSearch()">
+            <input
+                type="search"
+                name="aiQuery"
+                [(ngModel)]="aiQuery"
+                [disabled]="aiLoading"
+                placeholder="اسأل الذكاء الاصطناعي عن خدمة أو معدة أو قطعة..."
+            >
+            <button type="submit" [disabled]="aiLoading || !aiQuery.trim()" title="بحث ذكي">
+                {{ aiLoading ? '...' : '🔍' }}
+            </button>
+        </form>
+
         <div class="navbar-links" *ngIf="showNavLinks">
             <a routerLink="/marketplace" class="navbar-link" [class.active]="isMarketplaceActive">
                 السوق
@@ -74,3 +87,41 @@
         </div>
     </div>
 </nav>
+
+<div class="ai-chat-backdrop" *ngIf="aiChatOpen" (click)="closeAiChat()"></div>
+<div class="ai-chat-modal" *ngIf="aiChatOpen" (click)="$event.stopPropagation()" dir="rtl">
+    <div class="ai-chat-header">
+        <div>
+            <h3>مساعد البحث الذكي</h3>
+            <p>جاوب على السؤال عشان نرشح لك النتائج المناسبة.</p>
+        </div>
+        <button type="button" class="ai-chat-close" (click)="closeAiChat()">×</button>
+    </div>
+
+    <div class="ai-chat-body">
+        <div class="ai-chat-message" *ngFor="let turn of aiConversation" [class.user]="turn.role === 'user'" [class.assistant]="turn.role === 'assistant'">
+            <span class="ai-chat-role">{{ turn.role === 'user' ? 'أنت' : 'هيڤيك AI' }}</span>
+            <p>{{ turn.content }}</p>
+        </div>
+
+        <div class="ai-chat-message assistant" *ngIf="aiLoading">
+            <span class="ai-chat-role">هيڤيك AI</span>
+            <p>جاري التفكير في أفضل ترشيحات...</p>
+        </div>
+    </div>
+
+    <div class="alert error" *ngIf="aiError">{{ aiError }}</div>
+
+    <form class="ai-chat-form" (submit)="$event.preventDefault(); sendAiChatMessage()">
+        <input
+            type="text"
+            name="aiChatInput"
+            [(ngModel)]="aiChatInput"
+            [disabled]="aiLoading"
+            placeholder="اكتب ردك هنا..."
+        >
+        <button type="submit" class="btn btn-primary" [disabled]="aiLoading || !aiChatInput.trim()">
+            إرسال
+        </button>
+    </form>
+</div>

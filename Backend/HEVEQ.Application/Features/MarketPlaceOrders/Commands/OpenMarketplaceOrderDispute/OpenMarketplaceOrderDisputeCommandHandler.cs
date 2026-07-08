@@ -1,4 +1,5 @@
-﻿using HEVEQ.Application.Common.Enums;
+using HEVEQ.Application.Common.AI.Interfaces;
+using HEVEQ.Application.Common.Enums;
 using HEVEQ.Application.Common.Exceptions;
 using HEVEQ.Application.Common.Helpers;
 using HEVEQ.Application.Common.Interfaces;
@@ -17,7 +18,11 @@ using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace HEVEQ.Application.Features.MarketPlaceOrders.Commands.OpenMarketplaceOrderDispute
 {
-    public class OpenMarketplaceOrderDisputeCommandHandler(IApplicationDbContext context, ICurrentUserService currentUser, NotificationHelper notificationHelper) : IRequestHandler<OpenMarketplaceOrderDisputeCommand, OpenDisputeResponse>
+    public class OpenMarketplaceOrderDisputeCommandHandler(
+        IApplicationDbContext context,
+        ICurrentUserService currentUser,
+        NotificationHelper notificationHelper,
+        IComplaintAnalysisService aiAnalysisService) : IRequestHandler<OpenMarketplaceOrderDisputeCommand, OpenDisputeResponse>
     {
         // PaymentCaptured → "I paid but nothing was ever confirmed/sent"
         // Delivered → "Something arrived but was wrong/damaged"
@@ -71,14 +76,20 @@ namespace HEVEQ.Application.Features.MarketPlaceOrders.Commands.OpenMarketplaceO
 
             //TicketService
             // Create the support ticket so Admin team can review.
+            var aiResult = await AnalyzeMarketplaceDisputeSafelyAsync(order, request.Reason, cancellationToken);
+
             var ticket = new Ticket
             {
                 TicketNumber = ReferenceNumberGenerator.Generate(ReferenceNumberType.Ticket, Guid.NewGuid()),
                 SubmittedById = buyerId,
                 MarketplaceOrderId = order.Id,
-                Subject = $"Marketplace Dispute — Order {order.OrderNumber}",
+                Subject = $"نزاع على طلب السوق رقم {order.OrderNumber}",
                 Category = TicketCategory.MarketplaceIssue,
-                Priority = 1, // default, admin team can escalate
+                Priority = MapAiPriority(aiResult.Priority),
+                AiSummary = aiResult.Summary,
+                AiIdentifiedIssue = "نزاع على طلب سوق",
+                AiClaimedImpact = request.Reason,
+                AiEscalationPriority = MapAiPriority(aiResult.Priority),
                 Status = TicketStatus.Open,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
@@ -128,8 +139,43 @@ namespace HEVEQ.Application.Features.MarketPlaceOrders.Commands.OpenMarketplaceO
                     order.Status.ToArabic(),
                     ticket.Id,
                     escrow?.Status.ToString() ?? "None",
-                    "Dispute opened successfully");
+                    "تم فتح النزاع بنجاح");
             }
+
+        private static int MapAiPriority(string? priority) => priority?.Trim().ToUpperInvariant() switch
+        {
+            "URGENT" => 3,
+            "HIGH" => 2,
+            _ => 1
+        };
+
+        private async Task<HEVEQ.Application.Common.AI.Models.ComplaintAnalysisResult> AnalyzeMarketplaceDisputeSafelyAsync(
+            MarketplaceOrder order,
+            string reason,
+            CancellationToken cancellationToken)
+        {
+            var complaintText = $"""
+                نوع التذكرة: نزاع على طلب سوق.
+                رقم الطلب: {order.OrderNumber}.
+                المنتج: {order.Listing?.Title}.
+                قيمة الطلب: {order.Amount}.
+                حالة الطلب عند فتح النزاع: {order.Status}.
+                سبب النزاع من العميل: {reason}
+                """;
+
+            try
+            {
+                return await aiAnalysisService.AnalyzeComplaintAsync(complaintText, cancellationToken);
+            }
+            catch
+            {
+                return new HEVEQ.Application.Common.AI.Models.ComplaintAnalysisResult
+                {
+                    Priority = "HIGH",
+                    Summary = "تعذّر تحليل نزاع طلب السوق آليًا. يُرجى مراجعة سبب النزاع ورسائل العميل والمرفقات يدويًا."
+                };
+            }
+        }
         }
     }
 

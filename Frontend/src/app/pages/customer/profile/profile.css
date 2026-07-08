@@ -149,3 +149,13 @@
     grid-template-columns: 1fr;
   }
 }
+.wide-field {
+  grid-column: 1 / -1;
+}
+
+.field-hint {
+  display: block;
+  margin-top: 0.35rem;
+  color: var(--text-muted, #64748b);
+  font-size: 0.85rem;
+}

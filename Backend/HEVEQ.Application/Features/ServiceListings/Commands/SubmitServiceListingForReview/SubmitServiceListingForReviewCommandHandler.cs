@@ -69,16 +69,21 @@ namespace HEVEQ.Application.Features.ServiceListings.Commands.SubmitServiceListi
             var availabilityCount = listing.Availability.Count;
 
             var missing = new List<string>();
-            if (photosCount < 3) missing.Add("At least 3 photos");
-            if (activeOperatorsCount < 1) missing.Add("At least 1 operator");
-            if (availabilityCount < 1) missing.Add("At least 1 availability schedule");
-            if (!providerProfileComplete) missing.Add("Complete provider profile fields");
+            if (photosCount < 3) missing.Add("رفع 3 صور على الأقل");
+            if (activeOperatorsCount < 1) missing.Add("ربط مشغل نشط واحد على الأقل");
+            if (availabilityCount < 1) missing.Add("إضافة موعد توفر واحد على الأقل");
+            if (!providerProfileComplete) missing.Add("استكمال بيانات ملف المزود");
 
             if (missing.Count > 0)
-                throw new BadRequestException($"Listing is not ready for review: {string.Join(", ", missing)}");
+                throw new BadRequestException($"القائمة غير جاهزة للمراجعة: {string.Join(", ", missing)}");
 
 
             listing.Status = ServiceListingStatus.PendingReview;
+            listing.EmbeddingStatus = EmbeddingStatus.Pending;
+            listing.AiRecommendation = null;
+            listing.AiRiskFlags = null;
+            listing.AiRiskLevel = null;
+            listing.AiRiskScore = null;
             listing.UpdatedAt = DateTime.UtcNow;
 
             await notificationHelper.ServiceListingSubmittedForAdminsAsync(listing.Id, listing.Title);
@@ -89,7 +94,7 @@ namespace HEVEQ.Application.Features.ServiceListings.Commands.SubmitServiceListi
                 Id: listing.Id,
                 Status: listing.Status.ToString(),
                 StatusAr: listing.Status.ToArabicText(),
-                Message: "Listing submitted for review successfully"
+                Message: "تم إرسال القائمة للمراجعة وسيتم فحصها بالذكاء الاصطناعي مرة أخرى"
             );
         }
     }

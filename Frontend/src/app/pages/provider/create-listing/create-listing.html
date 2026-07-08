@@ -383,8 +383,8 @@
             ✅ القائمة جاهزة للإرسال للمراجعة
         </p>
 
-        <button type="button" class="btn btn-primary" [disabled]="!manageData?.canSubmitForReview" (click)="submitForReview()">
-            إرسال للمراجعة
+        <button type="button" class="btn btn-primary" [disabled]="isSubmittingForReview" (click)="submitForReview()">
+            {{ isSubmittingForReview ? 'جاري الإرسال للمراجعة...' : 'إرسال للمراجعة' }}
         </button>
     </div>
 </div>
