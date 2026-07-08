@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common'
-import { Component, OnInit } from '@angular/core'
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import { finalize, Observable } from 'rxjs'
 import { getErrorMessage } from '../../../core/helpers/errorMessageHelper'
@@ -23,7 +23,10 @@ export class Operators implements OnInit {
 
   form: OperatorFormPayload & { isActive: boolean } = this.emptyForm()
 
-  constructor(private operatorsApi: OperatorsApi) {}
+  constructor(
+    private operatorsApi: OperatorsApi,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
     this.load()
@@ -32,12 +35,22 @@ export class Operators implements OnInit {
   load(): void {
     this.isLoading = true
     this.errorMessage = ''
+    this.cdr.detectChanges()
 
-    this.operatorsApi.getMine().pipe(finalize(() => (this.isLoading = false))).subscribe({
-      next: operators => (this.operators = operators ?? []),
+    this.operatorsApi.getMine().pipe(
+      finalize(() => {
+        this.isLoading = false
+        this.cdr.detectChanges()
+      })
+    ).subscribe({
+      next: operators => {
+        this.operators = operators ?? []
+        this.cdr.detectChanges()
+      },
       error: error => {
         this.operators = []
         this.errorMessage = getErrorMessage(error, 'تعذر تحميل المشغلين')
+        this.cdr.detectChanges()
       }
     })
   }
@@ -65,14 +78,21 @@ export class Operators implements OnInit {
       ? this.operatorsApi.update(this.editingId, { ...payload, isActive: this.form.isActive })
       : this.operatorsApi.create(payload)
 
-    request.pipe(finalize(() => (this.isSaving = false))).subscribe({
+    request.pipe(
+      finalize(() => {
+        this.isSaving = false
+        this.cdr.detectChanges()
+      })
+    ).subscribe({
       next: () => {
         this.successMessage = this.editingId ? 'تم تحديث المشغل' : 'تم إضافة المشغل'
         this.resetForm()
         this.load()
+        this.cdr.detectChanges()
       },
       error: (error: any) => {
         this.errorMessage = getErrorMessage(error, 'تعذر حفظ المشغل')
+        this.cdr.detectChanges()
       }
     })
   }
@@ -97,9 +117,11 @@ export class Operators implements OnInit {
       next: () => {
         this.successMessage = 'تم حذف المشغل'
         this.load()
+        this.cdr.detectChanges()
       },
       error: error => {
         this.errorMessage = getErrorMessage(error, 'تعذر حذف المشغل')
+        this.cdr.detectChanges()
       }
     })
   }

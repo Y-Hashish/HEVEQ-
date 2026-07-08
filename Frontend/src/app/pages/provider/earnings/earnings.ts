@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common'
 import { HttpClient, HttpParams } from '@angular/common/http'
-import { Component, OnInit } from '@angular/core'
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import { finalize, forkJoin } from 'rxjs'
 import { API_BASE_URL } from '../../../core/constants/api.constants'
@@ -39,7 +39,10 @@ export class Earnings implements OnInit {
   isLoading = false
   errorMessage = ''
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
     const now = new Date()
@@ -52,6 +55,7 @@ export class Earnings implements OnInit {
   load(): void {
     this.isLoading = true
     this.errorMessage = ''
+    this.cdr.detectChanges()
 
     const params = new HttpParams().set('from', this.from).set('to', this.to)
 
@@ -59,16 +63,23 @@ export class Earnings implements OnInit {
       service: this.http.get<ServiceEarningsSummary>(`${API_BASE_URL}/provider/earnings/service-summary`, { params }),
       marketplace: this.http.get<MarketplaceEarningsSummary>(`${API_BASE_URL}/provider/earnings/marketplace-summary`, { params })
     })
-      .pipe(finalize(() => (this.isLoading = false)))
+      .pipe(
+        finalize(() => {
+          this.isLoading = false
+          this.cdr.detectChanges()
+        })
+      )
       .subscribe({
         next: result => {
           this.serviceSummary = result.service
           this.marketplaceSummary = result.marketplace
+          this.cdr.detectChanges()
         },
         error: error => {
           this.serviceSummary = null
           this.marketplaceSummary = null
           this.errorMessage = getErrorMessage(error, 'تعذر تحميل ملخص الأرباح')
+          this.cdr.detectChanges()
         }
       })
   }

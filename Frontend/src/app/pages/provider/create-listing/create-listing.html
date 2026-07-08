@@ -97,7 +97,7 @@
     <div class="form-group" style="margin-bottom: 30px;">
       <label class="form-label">صور المعدة</label>
       <div style="border: 2px dashed var(--border-color); border-radius: var(--radius); padding: 30px; text-align: center; transition: 0.3s;">
-        <div style="font-size: 2rem; margin-bottom: 10px;">📸</div>
+        <div style="font-size: 2rem; margin-bottom: 10px;"><i class="fa-solid fa-camera"></i></div>
         <p style="color: var(--text-muted); margin-bottom: 15px;">ارفع 3 صور على الأقل. سيتم رفع الصور على Cloudinary وربطها بالإعلان تلقائياً.</p>
         <input class="form-input" type="file" multiple accept="image/png,image/jpeg,image/webp" (change)="onMarketplaceFilesSelected($event)">
         <small class="text-muted">JPG / PNG / WEBP فقط، الحد الأقصى 10 ميجابايت للصورة.</small>
@@ -107,7 +107,7 @@
         <div class="card" *ngFor="let photo of marketplaceExistingPhotos" style="width: 150px; padding: var(--s3);">
           <img [src]="photo.photoUrl" [alt]="form.value.title"
             style="width: 100%; height: 95px; object-fit: cover; border-radius: var(--radius-sm); margin-bottom: var(--s2);">
-          <button type="button" class="btn btn-outline btn-icon" (click)="deleteMarketplacePhoto(photo.id)">🗑️ حذف</button>
+          <button type="button" class="btn btn-outline btn-icon" (click)="deleteMarketplacePhoto(photo.id)"><i class="fa-solid fa-trash-can"></i> حذف</button>
         </div>
       </div>
 
@@ -151,7 +151,7 @@
 
     <div class="card" style="margin-bottom: var(--s5);">
         <p *ngIf="manageData?.adminRejectionNote" class="text-danger" style="margin-bottom: var(--s3);">
-            ⚠️ سبب الرفض من الإدارة: {{ manageData?.adminRejectionNote }}
+            <i class="fa-solid fa-triangle-exclamation"></i> سبب الرفض من الإدارة: {{ manageData?.adminRejectionNote }}
         </p>
 
         <div class="flex gap-2" style="flex-wrap: wrap;">
@@ -250,7 +250,7 @@
             <div class="card" *ngFor="let photo of manageData?.photos" style="width: 160px; padding: var(--s3);">
                 <img [src]="photo.photoUrl" [alt]="manageData?.title"
                     style="width: 100%; height: 100px; object-fit: cover; border-radius: var(--radius-sm); margin-bottom: var(--s2);">
-                <button type="button" class="btn btn-outline btn-icon" (click)="deletePhoto(photo.id)">🗑️ حذف</button>
+                <button type="button" class="btn btn-outline btn-icon" (click)="deletePhoto(photo.id)"><i class="fa-solid fa-trash-can"></i> حذف</button>
             </div>
         </div>
 
@@ -336,7 +336,7 @@
                         <td>{{ slot.openTime }}</td>
                         <td>{{ slot.closeTime }}</td>
                         <td>
-                            <button type="button" class="btn btn-outline btn-icon" (click)="deleteAvailability(slot.id)">🗑️</button>
+                            <button type="button" class="btn btn-outline btn-icon" (click)="deleteAvailability(slot.id)"><i class="fa-solid fa-trash-can"></i></button>
                         </td>
                     </tr>
                 </tbody>
@@ -380,7 +380,7 @@
         </div>
 
         <p *ngIf="manageData?.canSubmitForReview" class="badge badge-success" style="margin-bottom: var(--s4);">
-            ✅ القائمة جاهزة للإرسال للمراجعة
+            <i class="fa-solid fa-circle-check"></i> القائمة جاهزة للإرسال للمراجعة
         </p>
 
         <button type="button" class="btn btn-primary" [disabled]="isSubmittingForReview" (click)="submitForReview()">

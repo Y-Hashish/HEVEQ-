@@ -24,7 +24,7 @@
       </div>
 
       <div class="empty-state" *ngIf="!isLoading && notifications.length === 0">
-        <div class="empty-icon">🔔</div>
+        <div class="empty-icon"><i class="fa-solid fa-bell"></i></div>
         <h3>لا توجد إشعارات حالياً</h3>
         <p>عندما تتلقى إشعارات جديدة، ستظهر هنا تلقائياً في الوقت الفعلي.</p>
       </div>
@@ -37,7 +37,7 @@
           (click)="getNavigationLink(notification) ? navigateToLink(notification) : markAsRead(notification)"
         >
           <div class="notification-icon">
-            {{ getNotificationIcon(notification.eventType) }}
+            <i [class]="getNotificationIcon(notification.eventType)"></i>
           </div>
           
           <div class="notification-content">

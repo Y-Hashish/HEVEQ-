@@ -44,7 +44,7 @@
 
   <div class="split-layout" *ngIf="!isLoading">
     <!-- List Column -->
-    <div class="list-column" [class.hidden-mobile]="selectedDoc">
+    <div class="list-column" [class.hidden-mobile]="selectedDoc" (scroll)="onScroll($event)">
       <app-empty-state *ngIf="documents.length === 0" 
         title="لا توجد مستندات" 
         message="لا يوجد مستندات مطابقة لمعايير البحث في طابور المراجعة.">
@@ -66,14 +66,14 @@
           </div>
         </div>
       </div>
-      
-      <div class="pagination-simple" *ngIf="totalCount > pageSize">
-        <app-pagination 
-          [page]="page" 
-          [pageSize]="pageSize" 
-          [totalCount]="totalCount" 
-          (pageChange)="onPageChange($event)">
-        </app-pagination>
+
+      <!-- Scroll loader -->
+      <div class="scroll-loader" *ngIf="isLoadingMore">
+        <span class="loader-dots">
+          <span></span>
+          <span></span>
+          <span></span>
+        </span>
       </div>
     </div>
 

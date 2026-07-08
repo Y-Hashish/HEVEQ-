@@ -26,7 +26,7 @@
             (error)="onImageError(activePhotoUrl)"
           />
           <ng-template #noServiceImage>
-            <div class="no-image">🚜</div>
+            <div class="no-image"><i class="fa-solid fa-tractor"></i></div>
           </ng-template>
         </div>
 
@@ -100,7 +100,9 @@
           <div class="reviews-score" *ngIf="reviewsTotal > 0">
             <span class="score">{{ reviewsAverage | number:'1.1-1' }}</span>
             <span class="stars">
-              <span *ngFor="let filled of ratingStars(reviewsAverage)" [class.filled]="filled">★</span>
+              <span *ngFor="let filled of ratingStars(reviewsAverage)" [class.filled]="filled">
+                <i class="fa-solid fa-star"></i>
+              </span>
             </span>
             <small>{{ reviewsTotal }} تقييم</small>
           </div>
@@ -115,7 +117,9 @@
             <div class="review-top">
               <strong>{{ review.reviewerName || 'عميل' }}</strong>
               <span class="stars">
-                <span *ngFor="let filled of ratingStars(review.rating)" [class.filled]="filled">★</span>
+                <span *ngFor="let filled of ratingStars(review.rating)" [class.filled]="filled">
+                  <i class="fa-solid fa-star"></i>
+                </span>
               </span>
             </div>
             <p *ngIf="review.comment">{{ review.comment }}</p>
@@ -139,7 +143,7 @@
           *ngIf="listing.canRequestBooking"
           (click)="requestBooking()"
         >
-          طلب وحجز الخدمة 🚜
+          طلب وحجز الخدمة <i class="fa-solid fa-tractor"></i>
         </button>
 
         <button
@@ -158,7 +162,9 @@
         <p class="text-muted" *ngIf="listing.provider.governorate">المحافظة: {{ listing.provider.governorate }}</p>
         <div class="pd-seller-rating">
           <span class="stars">
-            <span *ngFor="let filled of ratingStars(listing.provider.averageRating)" [class.filled]="filled">★</span>
+            <span *ngFor="let filled of ratingStars(listing.provider.averageRating)" [class.filled]="filled">
+              <i class="fa-solid fa-star"></i>
+            </span>
           </span>
           <span class="rating-value">{{ listing.provider.averageRating | number:'1.1-1' }}</span>
           <span class="rating-count">({{ listing.provider.completedBookingsCount }} عمل مكتمل)</span>

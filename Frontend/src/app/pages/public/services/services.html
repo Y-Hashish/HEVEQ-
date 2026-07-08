@@ -72,14 +72,14 @@
                     <h3>{{ listing.title }}</h3>
 
                     <div class="services-meta">
-                        <span *ngIf="listing.location">📍 {{ listing.location }}</span>
-                        <span>🕒 {{ listing.availabilityText }}</span>
-                        <span>⭐ {{ listing.averageRating.toFixed(1) }} ({{ listing.totalReviewsCount }} تقييم)</span>
-                        <span>🏢 {{ listing.providerCompany }} — {{ listing.trustLevel }}</span>
+                        <span *ngIf="listing.location"><i class="fa-solid fa-location-dot"></i> {{ listing.location }}</span>
+                        <span><i class="fa-solid fa-clock"></i> {{ listing.availabilityText }}</span>
+                        <span><i class="fa-solid fa-star"></i> {{ listing.averageRating.toFixed(1) }} ({{ listing.totalReviewsCount }} تقييم)</span>
+                        <span><i class="fa-solid fa-building"></i> {{ listing.providerCompany }} — {{ listing.trustLevel }}</span>
                     </div>
 
                     <button type="button" class="btn btn-primary w-full" (click)="viewListing(listing.id)">
-                        عرض التفاصيل والحجز 🚜
+                        عرض التفاصيل والحجز <i class="fa-solid fa-tractor"></i>
                     </button>
                 </div>
             </div>

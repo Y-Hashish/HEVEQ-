@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common'
-import { Component, OnInit } from '@angular/core'
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core'
 import { ActivatedRoute, Router, RouterLink } from '@angular/router'
 import { HttpErrorResponse } from '@angular/common/http'
 import { ServiceListings } from '../../../core/services/service-listings'
@@ -39,7 +39,8 @@ export class ServiceDetails implements OnInit {
     private conversationsService: ConversationsService,
     private reviewsService: ReviewsService,
     private tokenStorage: TokenStorage,
-    private toast: Toast
+    private toast: Toast,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -50,6 +51,7 @@ export class ServiceDetails implements OnInit {
     }
 
     this.isLoading = true
+    this.cdr.detectChanges()
 
     this.serviceListings.getPublicById(id).subscribe({
       next: listing => {
@@ -58,6 +60,7 @@ export class ServiceDetails implements OnInit {
         this.imageLoadFailures.clear()
         this.isLoading = false
         this.loadServiceReviews(listing.id)
+        this.cdr.detectChanges()
       },
       error: (err: HttpErrorResponse) => {
         this.isLoading = false
@@ -68,6 +71,7 @@ export class ServiceDetails implements OnInit {
         if (!this.notFound) {
           this.toast.error(extractErrorMessage(err))
         }
+        this.cdr.detectChanges()
       }
     })
   }
@@ -126,14 +130,17 @@ export class ServiceDetails implements OnInit {
     }
 
     this.isStartingConversation = true
+    this.cdr.detectChanges()
     this.conversationsService.startConversation({ contextType: 'ServiceListing', referenceId: this.listing.id }).subscribe({
       next: response => {
         this.isStartingConversation = false
+        this.cdr.detectChanges()
         this.router.navigate(['/messages'], { queryParams: { conversationId: response.id } })
       },
       error: (err: HttpErrorResponse) => {
         this.isStartingConversation = false
         this.toast.error(extractErrorMessage(err))
+        this.cdr.detectChanges()
       }
     })
   }
@@ -141,18 +148,21 @@ export class ServiceDetails implements OnInit {
 
   loadServiceReviews(serviceListingId: string): void {
     this.reviewsLoading = true
+    this.cdr.detectChanges()
     this.reviewsService.getReviewsForServiceListing(serviceListingId).subscribe({
       next: res => {
         this.reviews = res.items ?? []
         this.reviewsAverage = res.averageRating ?? 0
         this.reviewsTotal = res.totalCount ?? 0
         this.reviewsLoading = false
+        this.cdr.detectChanges()
       },
       error: () => {
         this.reviews = []
         this.reviewsAverage = 0
         this.reviewsTotal = 0
         this.reviewsLoading = false
+        this.cdr.detectChanges()
       }
     })
   }

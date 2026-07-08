@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common'
 import { HttpClient } from '@angular/common/http'
-import { Component, OnInit } from '@angular/core'
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core'
 import { RouterLink } from '@angular/router'
 import { finalize } from 'rxjs'
 import { API_BASE_URL } from '../../../core/constants/api.constants'
@@ -29,7 +29,10 @@ export class Dashboard implements OnInit {
   isLoading = false
   errorMessage = ''
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
     this.load()
@@ -38,14 +41,24 @@ export class Dashboard implements OnInit {
   load(): void {
     this.isLoading = true
     this.errorMessage = ''
+    this.cdr.detectChanges()
 
     this.http.get<CustomerDashboardSummary>(`${API_BASE_URL}/customer/dashboard/summary`)
-      .pipe(finalize(() => (this.isLoading = false)))
+      .pipe(
+        finalize(() => {
+          this.isLoading = false
+          this.cdr.detectChanges()
+        })
+      )
       .subscribe({
-        next: summary => (this.summary = summary),
+        next: summary => {
+          this.summary = summary
+          this.cdr.detectChanges()
+        },
         error: error => {
           this.summary = null
           this.errorMessage = getErrorMessage(error, 'تعذر تحميل لوحة التحكم')
+          this.cdr.detectChanges()
         }
       })
   }

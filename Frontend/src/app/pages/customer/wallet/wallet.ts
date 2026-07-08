@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common'
-import { Component, OnInit } from '@angular/core'
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core'
 import { forkJoin, finalize } from 'rxjs'
 import { BookingsService } from '../../../core/services/bookingsService'
 import { MarketplaceOrdersService } from '../../../core/services/marketplace-orders'
@@ -24,7 +24,8 @@ export class Wallet implements OnInit {
 
   constructor(
     private bookingsService: BookingsService,
-    private marketplaceOrdersService: MarketplaceOrdersService
+    private marketplaceOrdersService: MarketplaceOrdersService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -34,11 +35,17 @@ export class Wallet implements OnInit {
   load(): void {
     this.isLoading = true
     this.errorMessage = ''
+    this.cdr.detectChanges()
 
     forkJoin({
       bookings: this.bookingsService.getMyBookings(),
       orders: this.marketplaceOrdersService.getMyPurchases()
-    }).pipe(finalize(() => (this.isLoading = false))).subscribe({
+    }).pipe(
+      finalize(() => {
+        this.isLoading = false
+        this.cdr.detectChanges()
+      })
+    ).subscribe({
       next: result => {
         const bookingsData: any = result.bookings
         const bookings = Array.isArray(bookingsData) ? bookingsData : bookingsData.items ?? bookingsData.bookings ?? []
@@ -48,9 +55,11 @@ export class Wallet implements OnInit {
         this.summary.marketplaceOrdersTotal = orders.reduce((sum, item) => sum + Number(item.amount ?? 0), 0)
         this.summary.pendingPayments = bookings.filter((b: any) => String(b.status).includes('ConfirmedPendingPayment') || b.status === 2).length
         this.summary.completedPayments = bookings.filter((b: any) => String(b.status).includes('Completed') || b.status === 6).length + orders.filter(o => String(o.status).includes('Completed')).length
+        this.cdr.detectChanges()
       },
       error: error => {
         this.errorMessage = getErrorMessage(error, 'تعذر تحميل بيانات المحفظة')
+        this.cdr.detectChanges()
       }
     })
   }

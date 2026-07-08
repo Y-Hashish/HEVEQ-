@@ -65,7 +65,11 @@ export class EmployeeFieldVisits implements OnInit {
           } else {
             const targetId = this.route.snapshot.queryParamMap.get('visitId')
             const target = targetId ? this.visits.find(v => v.id === targetId) : null
-            if (target) this.openVisit(target)
+            if (target) {
+              this.openVisit(target)
+            } else if (this.visits.length > 0) {
+              this.openVisit(this.visits[0])
+            }
           }
           this.cdr.detectChanges()
         },
@@ -105,6 +109,14 @@ export class EmployeeFieldVisits implements OnInit {
     this.employeeNotes = ''
     this.outcome = 'JobConfirmed'
     this.selectedPhotoUrls = []
+  }
+
+  onFilterChange(): void {
+    this.selectedVisit = null
+    const filtered = this.filteredVisits
+    if (filtered.length > 0) {
+      this.openVisit(filtered[0])
+    }
   }
 
   updateStatus(): void {

@@ -13,7 +13,7 @@
 
   <div class="split-layout" *ngIf="!isLoading">
     <!-- List Column -->
-    <div class="list-column" [class.hidden-mobile]="selectedDetails">
+    <div class="list-column" [class.hidden-mobile]="selectedDetails" (scroll)="onScroll($event)">
       <app-empty-state *ngIf="pendingListings.length === 0" 
         title="لا يوجد قوائم معلقة" 
         message="تمت مراجعة جميع القوائم في هذا القسم بنجاح.">
@@ -34,6 +34,15 @@
             <span>{{ item.submittedAt | date:'shortDate' }}</span>
           </div>
         </div>
+      </div>
+
+      <!-- Scroll loader -->
+      <div class="scroll-loader" *ngIf="isLoadingMore">
+        <span class="loader-dots">
+          <span></span>
+          <span></span>
+          <span></span>
+        </span>
       </div>
     </div>
 

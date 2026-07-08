@@ -232,13 +232,48 @@
 }
 
 .messages-area {
-  flex: 1;
-  overflow-y: auto;
   padding: var(--s5);
   display: flex;
   flex-direction: column;
   gap: var(--s4);
+}
+
+.chat-body {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
   background-color: var(--bg-card);
+  scroll-behavior: smooth;
+}
+
+/* List loader and dots loader */
+.list-loader {
+  padding: var(--s4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.dots-loader {
+  display: flex;
+  gap: 4px;
+}
+
+.dots-loader span {
+  width: 8px;
+  height: 8px;
+  background-color: var(--primary);
+  border-radius: 50%;
+  animation: bounce 1.4s infinite ease-in-out both;
+}
+
+.dots-loader span:nth-child(1) { animation-delay: -0.32s; }
+.dots-loader span:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes bounce {
+  0%, 80%, 100% { transform: scale(0); }
+  40% { transform: scale(1.0); }
 }
 
 .message-bubble {
@@ -800,4 +835,101 @@
   margin: var(--s1) 0;
   color: var(--text-main);
   line-height: 1.8;
+}
+
+/* Actions Dropdown Styles */
+.dropdown-container {
+  position: relative;
+  display: inline-block;
+}
+
+.btn-dropdown {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  font-weight: 600;
+  padding: var(--s2) var(--s4);
+  border-radius: var(--radius-sm);
+}
+
+.dropdown-chevron {
+  font-size: var(--text-xs);
+  margin-right: 6px;
+  opacity: 0.7;
+  transition: transform 0.2s ease;
+}
+
+.dropdown-container:hover .dropdown-chevron {
+  transform: translateY(1px);
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 1000;
+  display: none;
+  min-width: 220px;
+  padding: var(--s2) 0;
+  margin: var(--s1) 0 0;
+  font-size: var(--text-sm);
+  text-align: right;
+  list-style: none;
+  background-color: var(--bg-card);
+  background-clip: padding-box;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+.dropdown-menu.show {
+  display: block;
+  animation: slideDown 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dropdown-item {
+  display: block;
+  width: 100%;
+  padding: var(--s2) var(--s4);
+  clear: both;
+  font-weight: 500;
+  color: var(--text-main);
+  text-align: right;
+  white-space: nowrap;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  transition: var(--transition);
+  font-family: inherit;
+}
+
+.dropdown-item:hover {
+  background-color: var(--bg-main);
+  color: var(--primary);
+}
+
+.dropdown-divider {
+  height: 1px;
+  margin: var(--s2) 0;
+  overflow: hidden;
+  background-color: var(--border-color);
+}
+
+.text-success {
+  color: var(--success) !important;
+}
+
+.font-bold {
+  font-weight: 700 !important;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

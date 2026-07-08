@@ -26,6 +26,7 @@
   border-radius: var(--radius);
   border: 1px solid var(--border-color);
   overflow-x: auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
 }
 
 .data-table {
@@ -35,16 +36,16 @@
 }
 
 .data-table th {
-  background-color: rgba(244, 163, 0, 0.05);
+  background-color: rgba(244, 163, 0, 0.03);
   color: var(--text-main);
   font-weight: 700;
-  padding: var(--s3) var(--s4);
+  padding: var(--s4) var(--s4);
   border-bottom: 2px solid var(--border-color);
   font-size: var(--text-sm);
 }
 
 .data-table td {
-  padding: var(--s3) var(--s4);
+  padding: var(--s4) var(--s4);
   border-bottom: 1px solid var(--border-color);
   font-size: var(--text-sm);
   vertical-align: middle;
@@ -91,4 +92,30 @@
 
 .btn-primary:hover {
   background-color: var(--primary-hover);
+}
+
+/* Modern Enhancements */
+.pagination-wrapper {
+  margin-top: var(--s5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.data-table tbody tr {
+  transition: background-color 0.2s ease, transform 0.15s ease;
+}
+
+.data-table tbody tr:hover {
+  background-color: rgba(244, 163, 0, 0.03);
+}
+
+.btn-primary {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 4px rgba(244, 163, 0, 0.15);
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(244, 163, 0, 0.3);
 }

@@ -70,7 +70,7 @@
         <div class="container">
             <div class="smart-search-card">
                 <div class="search-title">
-                    <span>🔎</span>
+                    <span class="search-icon-wrapper"><i class="fa-solid fa-magnifying-glass"></i></span>
                     <div>
                         <h2>ابدأ البحث عن الخدمة المناسبة</h2>
                         <p>اختر من الخدمات أو السوق حسب احتياجك.</p>
@@ -111,7 +111,9 @@
 
         <div class="categories-grid">
             <a routerLink="/services" class="category-card" *ngFor="let category of categories">
-                <span class="category-icon">{{ category.icon }}</span>
+                <span class="category-icon-wrapper">
+                    <i class="{{ category.icon }} category-icon-fa"></i>
+                </span>
                 <h3>{{ category.name }}</h3>
                 <p>{{ category.description }}</p>
             </a>
@@ -129,7 +131,9 @@
 
             <div class="features-grid">
                 <div class="feature-card" *ngFor="let feature of features">
-                    <div class="feature-icon">{{ feature.icon }}</div>
+                    <div class="feature-icon-wrapper">
+                        <i class="{{ feature.icon }} feature-icon-fa"></i>
+                    </div>
                     <h3>{{ feature.title }}</h3>
                     <p>{{ feature.description }}</p>
                 </div>

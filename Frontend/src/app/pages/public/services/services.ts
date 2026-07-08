@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common'
-import { Component, OnInit } from '@angular/core'
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import { ActivatedRoute, Router } from '@angular/router'
 import { HttpErrorResponse } from '@angular/common/http'
@@ -72,29 +72,39 @@ export class Services implements OnInit {
     private toast: Toast,
     private router: Router,
     private route: ActivatedRoute,
-    private aiSearchService: AiSearchService
+    private aiSearchService: AiSearchService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
     this.categoriesService.getCategories('Service').subscribe({
-      next: categories => (this.categories = categories),
-      error: (err: HttpErrorResponse) => this.toast.error(extractErrorMessage(err))
+      next: categories => {
+        this.categories = categories
+        this.cdr.detectChanges()
+      },
+      error: (err: HttpErrorResponse) => {
+        this.toast.error(extractErrorMessage(err))
+        this.cdr.detectChanges()
+      }
     })
 
     this.route.queryParamMap.subscribe(params => {
       if (params.get('ai') === '1') {
         this.loadAiResults()
+        this.cdr.detectChanges()
         return
       }
 
       this.isAiResultsMode = false
       this.aiResultsMessage = ''
       this.loadListings()
+      this.cdr.detectChanges()
     })
   }
 
   loadListings(): void {
     this.isLoading = true
+    this.cdr.detectChanges()
 
     const requestFilters: PublicServiceListingFilters = {
       ...this.filters,
@@ -106,10 +116,12 @@ export class Services implements OnInit {
         this.listings = result.items
         this.totalCount = result.totalCount
         this.isLoading = false
+        this.cdr.detectChanges()
       },
       error: (err: HttpErrorResponse) => {
         this.isLoading = false
         this.toast.error(extractErrorMessage(err))
+        this.cdr.detectChanges()
       }
     })
   }

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common'
-import { Component, OnInit } from '@angular/core'
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core'
 import { Router } from '@angular/router'
 import { HttpErrorResponse } from '@angular/common/http'
 import { ServiceListings } from '../../../core/services/service-listings'
@@ -36,7 +36,8 @@ export class Equipment implements OnInit {
     private serviceListings: ServiceListings,
     private marketplaceService: MarketplaceService,
     private toast: Toast,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -45,18 +46,21 @@ export class Equipment implements OnInit {
 
   load(): void {
     this.isLoading = true
+    this.cdr.detectChanges()
 
     if (this.activeTab === 'services') {
       this.serviceListings.getMine(this.activeFilter ?? undefined).subscribe({
         next: result => {
           this.listings = this.activeFilter
-            ? result.items.filter(l => l.status === this.activeFilter)
-            : result.items
+             ? result.items.filter(l => l.status === this.activeFilter)
+             : result.items
           this.isLoading = false
+          this.cdr.detectChanges()
         },
         error: (err: HttpErrorResponse) => {
           this.isLoading = false
           this.toast.error(extractErrorMessage(err))
+          this.cdr.detectChanges()
         }
       })
       return
@@ -66,10 +70,12 @@ export class Equipment implements OnInit {
       next: result => {
         this.marketplaceListings = result.items ?? []
         this.isLoading = false
+        this.cdr.detectChanges()
       },
       error: (err: HttpErrorResponse) => {
         this.isLoading = false
         this.toast.error(extractErrorMessage(err))
+        this.cdr.detectChanges()
       }
     })
   }
@@ -119,12 +125,11 @@ export class Equipment implements OnInit {
       next: result => {
         this.toast.success(result.message)
         this.load()
+        this.cdr.detectChanges()
       },
       error: (err: HttpErrorResponse) => {
-        // Backend rejects with a ValidationException listing the exact
-        // missing requirements (e.g. "Listing is not ready for review:
-        // At least 3 photos, At least 1 operator") — surfaced verbatim.
         this.toast.error(extractErrorMessage(err))
+        this.cdr.detectChanges()
       }
     })
   }
@@ -137,13 +142,11 @@ export class Equipment implements OnInit {
       next: () => {
         this.toast.success('تم حذف المعدة بنجاح')
         this.load()
+        this.cdr.detectChanges()
       },
       error: (err: HttpErrorResponse) => {
-        // Specifically surfaces the active-booking block message from
-        // DeleteServiceListingCommandHandler ("This listing cannot be
-        // removed while it has an active booking.") rather than a generic
-        // failure message.
         this.toast.error(extractErrorMessage(err))
+        this.cdr.detectChanges()
       }
     })
   }
@@ -156,9 +159,11 @@ export class Equipment implements OnInit {
       next: () => {
         this.toast.success('تم حذف الإعلان بنجاح')
         this.load()
+        this.cdr.detectChanges()
       },
       error: (err: HttpErrorResponse) => {
         this.toast.error(extractErrorMessage(err))
+        this.cdr.detectChanges()
       }
     })
   }

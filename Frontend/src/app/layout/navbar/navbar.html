@@ -13,7 +13,8 @@
                 placeholder="اسأل الذكاء الاصطناعي عن خدمة أو معدة أو قطعة..."
             >
             <button type="submit" [disabled]="aiLoading || !aiQuery.trim()" title="بحث ذكي">
-                {{ aiLoading ? '...' : '🔍' }}
+                <i class="fa-solid fa-spinner fa-spin" *ngIf="aiLoading"></i>
+                <i class="fa-solid fa-magnifying-glass" *ngIf="!aiLoading"></i>
             </button>
         </form>
 
@@ -29,13 +30,13 @@
 
         <div class="nav-actions">
             <button type="button" class="action-btn" title="تغيير المظهر" (click)="toggleTheme()">
-                {{ themeIcon }}
+                <i [class]="themeIcon"></i>
             </button>
 
 
             <ng-container *ngIf="isAuth; else guestActions">
                 <button type="button" class="action-btn notification-action" title="الإشعارات" routerLink="/notifications">
-                    🔔
+                    <i class="fa-solid fa-bell"></i>
                     <span class="notification-badge" *ngIf="unreadNotifications > 0">{{ unreadNotifications > 99 ? '99+' : unreadNotifications }}</span>
                 </button>
 
@@ -72,7 +73,7 @@
 
                 <button *ngIf="showMobileButton" type="button" class="btn btn-primary btn-icon mobile-menu-btn"
                     (click)="toggleMobileMenu()">
-                    ☰
+                    <i class="fa-solid fa-bars"></i>
                 </button>
             </ng-container>
 

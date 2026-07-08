@@ -27,7 +27,7 @@
             </div>
 
             <div class="empty-state" *ngIf="!isLoading && jobs.length === 0">
-                <div class="empty-icon">⚙️</div>
+                <div class="empty-icon"><i class="fa-solid fa-gear"></i></div>
                 <h3>لا توجد أعمال نشطة</h3>
                 <p>الحجوزات المقبولة أو قيد التنفيذ ستظهر هنا.</p>
             </div>
@@ -52,7 +52,7 @@
 
         <div class="card job-details-card">
             <div class="empty-state" *ngIf="!selectedJob">
-                <div class="empty-icon">📋</div>
+                <div class="empty-icon"><i class="fa-solid fa-clipboard-list"></i></div>
                 <h3>اختر عمل نشط</h3>
                 <p>اضغط على أي عمل من القائمة لعرض التفاصيل والإجراءات.</p>
             </div>
@@ -130,7 +130,7 @@
                             <input type="file" multiple accept="image/jpeg,image/jpg,image/png,image/webp"
                                 (change)="onEvidenceFilesSelected($event)">
 
-                            <span class="file-icon">📷</span>
+                            <span class="file-icon"><i class="fa-solid fa-camera"></i></span>
                             <strong>
                                 {{ selectedEvidenceFiles.length > 0 ? selectedEvidenceFiles.length + ' صورة مختارة' :
                                 'اختر صور الإثبات' }}

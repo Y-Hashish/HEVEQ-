@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common'
-import { Component, OnInit } from '@angular/core'
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core'
 import { ActivatedRoute } from '@angular/router'
 import { FormsModule } from '@angular/forms'
 import { finalize, forkJoin } from 'rxjs'
@@ -33,7 +33,11 @@ export class MarketplaceSales implements OnInit {
   trackingNumber = ''
   cancelReason = ''
 
-  constructor(private ordersService: MarketplaceOrdersService, private route: ActivatedRoute) {}
+  constructor(
+    private ordersService: MarketplaceOrdersService,
+    private route: ActivatedRoute,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
     this.loadOrders()
@@ -42,8 +46,14 @@ export class MarketplaceSales implements OnInit {
   loadOrders(): void {
     this.isLoading = true
     this.errorMessage = ''
+    this.cdr.detectChanges()
 
-    this.ordersService.getMySales().pipe(finalize(() => (this.isLoading = false))).subscribe({
+    this.ordersService.getMySales().pipe(
+      finalize(() => {
+        this.isLoading = false
+        this.cdr.detectChanges()
+      })
+    ).subscribe({
       next: orders => {
         this.orders = orders ?? []
         if (!this.selectedOrder && this.orders.length) {
@@ -51,10 +61,12 @@ export class MarketplaceSales implements OnInit {
           const target = targetId && this.orders.some(o => o.id === targetId) ? targetId : this.orders[0].id
           this.openOrder(target)
         }
+        this.cdr.detectChanges()
       },
       error: error => {
         this.orders = []
         this.errorMessage = getErrorMessage(error, 'تعذر تحميل طلبات البيع')
+        this.cdr.detectChanges()
       }
     })
   }
@@ -64,23 +76,31 @@ export class MarketplaceSales implements OnInit {
     this.errorMessage = ''
     this.successMessage = ''
     this.cancelReason = ''
+    this.cdr.detectChanges()
 
     forkJoin({
       details: this.ordersService.getById(id),
       tracking: this.ordersService.getTracking(id),
       escrow: this.ordersService.getEscrow(id)
-    }).pipe(finalize(() => (this.isDetailsLoading = false))).subscribe({
+    }).pipe(
+      finalize(() => {
+        this.isDetailsLoading = false
+        this.cdr.detectChanges()
+      })
+    ).subscribe({
       next: result => {
         this.selectedOrder = result.details
         this.tracking = result.tracking
         this.escrow = result.escrow
         this.trackingNumber = result.details.trackingNumber ?? ''
+        this.cdr.detectChanges()
       },
       error: error => {
         this.selectedOrder = null
         this.tracking = null
         this.escrow = null
         this.errorMessage = getErrorMessage(error, 'تعذر تحميل تفاصيل طلب البيع')
+        this.cdr.detectChanges()
       }
     })
   }
@@ -172,15 +192,23 @@ export class MarketplaceSales implements OnInit {
     this.isActionLoading = true
     this.errorMessage = ''
     this.successMessage = ''
+    this.cdr.detectChanges()
 
-    request.pipe(finalize(() => (this.isActionLoading = false))).subscribe({
+    request.pipe(
+      finalize(() => {
+        this.isActionLoading = false
+        this.cdr.detectChanges()
+      })
+    ).subscribe({
       next: (response: any) => {
         this.successMessage = response?.message || defaultMessage
         this.openOrder(id)
         this.loadOrders()
+        this.cdr.detectChanges()
       },
       error: (error: any) => {
         this.errorMessage = getErrorMessage(error, 'تعذر تنفيذ العملية')
+        this.cdr.detectChanges()
       }
     })
   }
