@@ -81,7 +81,7 @@ export interface ServiceListingPhoto {
 
 export interface ServiceListingAvailability {
   id: string
-  listingId: string
+  listingId?: string
   dayOfWeek: number // 0 = Sunday .. 6 = Saturday
   openTime: string // "HH:mm:ss" — confirm exact TimeOnly serialization format against Swagger
   closeTime: string
@@ -93,12 +93,16 @@ export interface ProviderPanel {
   completedBookingsCount: number
   trustScore: number
   trustLevel: string
+  governorate?: string | null
 }
 
 export interface OperatorSummary {
+  id?: string
   fullName: string
-  yearsOfExperience: number
-  specialization: string | null
+  yearsOfExperience?: number
+  specialization?: string | null
+  licenseType?: string | null
+  rating?: number | null
 }
 
 export interface PublicServiceListingDetail {
@@ -113,7 +117,7 @@ export interface PublicServiceListingDetail {
   hourlyRate: number
   dailyRate: number | null
   minimumBookingHours: number
-  photos: ServiceListingPhoto[]
+  photos: Array<ServiceListingPhoto | string>
   availability: ServiceListingAvailability[]
   provider: ProviderPanel
   operators: OperatorSummary[]

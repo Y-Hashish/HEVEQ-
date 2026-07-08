@@ -46,7 +46,12 @@ namespace HEVEQ.Application.Features.Bookings.Queries.GetProviderActiveJobs
                     x.RequestedStartTime,
                     x.EstimatedDurationHours,
                     x.Status,
-                    x.AssignedOperatorId
+                    x.AssignedOperatorId,
+                    BlockingAdjustmentStatus = x.TimeAdjustmentRequests
+                        .Where(a => a.Status == BookingTimeAdjustmentStatus.Pending || a.Status == BookingTimeAdjustmentStatus.PendingPayment)
+                        .OrderByDescending(a => a.CreatedAt)
+                        .Select(a => (BookingTimeAdjustmentStatus?)a.Status)
+                        .FirstOrDefault()
                 })
                 .ToListAsync(cancellationToken);
 
@@ -54,6 +59,13 @@ namespace HEVEQ.Application.Features.Bookings.Queries.GetProviderActiveJobs
             {
                 var scheduledStart = x.RequestedStartDate.ToDateTime(x.RequestedStartTime);
                 var scheduledEnd = scheduledStart.AddHours((double)x.EstimatedDurationHours);
+                var hasBlockingAdjustment = x.BlockingAdjustmentStatus.HasValue;
+                var blockReason = x.BlockingAdjustmentStatus switch
+                {
+                    BookingTimeAdjustmentStatus.Pending => "يوجد طلب زيادة وقت بانتظار رد العميل، ولا يمكن إنهاء الخدمة قبل موافقة العميل أو رفض الطلب.",
+                    BookingTimeAdjustmentStatus.PendingPayment => "وافق العميل على طلب زيادة الوقت، لكن يجب دفع قيمة الزيادة قبل إنهاء الخدمة.",
+                    _ => null
+                };
 
                 return new ProviderActiveJobItemDto
                 {
@@ -67,7 +79,10 @@ namespace HEVEQ.Application.Features.Bookings.Queries.GetProviderActiveJobs
                     Status = x.Status.ToString(),
                     StatusAr = BookingDisplayHelper.GetStatusAr(x.Status),
                     CanStart = BookingActionsHelper.CanProviderStart(x.Status, x.AssignedOperatorId),
-                    CanComplete = BookingActionsHelper.CanProviderComplete(x.Status)
+                    CanComplete = BookingActionsHelper.CanProviderComplete(x.Status) && !hasBlockingAdjustment,
+                    CanRequestTimeAdjustment = x.Status == BookingStatus.Active || x.Status == BookingStatus.InProgress,
+                    HasBlockingTimeAdjustment = hasBlockingAdjustment,
+                    TimeAdjustmentBlockReasonAr = blockReason
                 };
             }).ToList();
 

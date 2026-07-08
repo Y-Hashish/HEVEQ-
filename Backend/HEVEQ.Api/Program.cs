@@ -201,6 +201,7 @@ namespace HEVEQ.Api
             app.UseCors("AngularClient");
             app.UseMiddleware<ExceptionHandlingMiddleware>();
             app.UseAuthentication();
+            app.UseMiddleware<InactiveAccountGuardMiddleware>();
             app.UseAuthorization();
 
             app.MapHub<RealtimeHub>("/hubs/realtime");

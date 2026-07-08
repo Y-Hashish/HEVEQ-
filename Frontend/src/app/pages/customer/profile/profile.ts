@@ -2,13 +2,15 @@ import { CommonModule } from '@angular/common'
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import { RouterLink } from '@angular/router'
-import { finalize } from 'rxjs'
+import { finalize, firstValueFrom } from 'rxjs'
 import { getErrorMessage } from '../../../core/helpers/errorMessageHelper'
+import { extractCoordinatesFromMapLink } from '../../../core/helpers/mapLinkHelper'
 import {
   CustomerProfile,
   ProviderProfile
 } from '../../../core/models/profileModels'
 import { ProfileService } from '../../../core/services/profileService'
+import { MapLinkResolverService } from '../../../core/services/mapLinkResolverService'
 import { TokenStorage } from '../../../core/services/token-storage'
 
 @Component({
@@ -37,6 +39,7 @@ export class Profile implements OnInit {
 
     companyName: '',
     businessDescription: '',
+    baseLocationUrl: '',
     baseLatitude: null as number | null,
     baseLongitude: null as number | null,
     serviceRadiusKm: 20,
@@ -50,6 +53,7 @@ export class Profile implements OnInit {
   constructor(
     private profileService: ProfileService,
     private tokenStorage: TokenStorage,
+    private mapLinkResolver: MapLinkResolverService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -150,12 +154,39 @@ export class Profile implements OnInit {
 
     this.form.companyName = profile.companyName || ''
     this.form.businessDescription = profile.businessDescription || ''
+    this.form.baseLocationUrl = profile.baseLatitude !== null && profile.baseLongitude !== null ? `${profile.baseLatitude},${profile.baseLongitude}` : ''
     this.form.baseLatitude = profile.baseLatitude
     this.form.baseLongitude = profile.baseLongitude
     this.form.serviceRadiusKm = profile.serviceRadiusKm || 20
   }
 
-  saveProfile(): void {
+  onProviderLocationChanged(): void {
+    const coordinates = extractCoordinatesFromMapLink(this.form.baseLocationUrl)
+    if (coordinates) {
+      this.form.baseLatitude = coordinates.latitude
+      this.form.baseLongitude = coordinates.longitude
+    }
+    this.cdr.detectChanges()
+  }
+
+  private async syncProviderBaseCoordinates(): Promise<boolean> {
+    if (!this.isProvider) {
+      return true
+    }
+
+    const coordinates = await this.resolveCoordinatesFromMapLink(this.form.baseLocationUrl)
+    if (!coordinates) {
+      this.errorMessage = 'من فضلك أدخل رابط موقع صحيح يحتوي على إحداثيات مقر المزود من الخريطة أو الصق الإحداثيات مباشرة.'
+      this.cdr.detectChanges()
+      return false
+    }
+
+    this.form.baseLatitude = coordinates.latitude
+    this.form.baseLongitude = coordinates.longitude
+    return true
+  }
+
+  async saveProfile(): Promise<void> {
     this.errorMessage = ''
     this.successMessage = ''
 
@@ -168,6 +199,10 @@ export class Profile implements OnInit {
     if (this.isProvider && !this.form.companyName) {
       this.errorMessage = 'من فضلك اكتب اسم الشركة'
       this.cdr.detectChanges()
+      return
+    }
+
+    if (this.isProvider && !(await this.syncProviderBaseCoordinates())) {
       return
     }
 
@@ -256,6 +291,25 @@ export class Profile implements OnInit {
           this.cdr.detectChanges()
         }
       })
+  }
+
+
+  private async resolveCoordinatesFromMapLink(value: string): Promise<{ latitude: number; longitude: number } | null> {
+    const direct = extractCoordinatesFromMapLink(value)
+    if (direct) {
+      return direct
+    }
+
+    if (!value?.trim()) {
+      return null
+    }
+
+    try {
+      const response = await firstValueFrom(this.mapLinkResolver.resolve(value.trim()))
+      return { latitude: Number(response.latitude), longitude: Number(response.longitude) }
+    } catch {
+      return null
+    }
   }
 
   formatNumber(value: number | null | undefined): string {

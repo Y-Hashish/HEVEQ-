@@ -43,5 +43,6 @@
         public DateTime? CompletedMarkedAt { get; set; }
         public DateTime? CompletionConfirmedAt { get; set; }
         public DateTime? DisputeOpenedAt { get; set; }
+        public bool HasReview { get; set; }
     }
 }

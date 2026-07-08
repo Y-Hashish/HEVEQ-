@@ -1,0 +1,103 @@
+<section class="provider-bookings-page">
+  <div class="page-header">
+    <div>
+      <h1>حجوزات الخدمات</h1>
+      <p>تابع كل طلبات الحجز، ما ينتظر الدفع، الأعمال النشطة، والحجوزات المكتملة من مكان واحد.</p>
+    </div>
+
+    <button class="btn btn-secondary" type="button" [disabled]="isLoading" (click)="loadBookings()">تحديث</button>
+  </div>
+
+  <div class="filters-card card">
+    <label class="form-label">فلترة الحالة</label>
+    <select class="form-input" [(ngModel)]="statusFilter" (ngModelChange)="onFilterChanged()">
+      <option *ngFor="let filter of filters" [value]="filter.value">{{ filter.label }}</option>
+    </select>
+  </div>
+
+  <div class="alert error" *ngIf="errorMessage">{{ errorMessage }}</div>
+  <div class="alert success" *ngIf="successMessage">{{ successMessage }}</div>
+
+  <div class="provider-bookings-grid">
+    <div class="card bookings-list-card">
+      <h2>قائمة الحجوزات</h2>
+
+      <div class="state-message" *ngIf="isLoading">جاري تحميل حجوزات المزود...</div>
+
+      <div class="empty-state" *ngIf="!isLoading && filteredBookings.length === 0">
+        <div class="empty-icon">📋</div>
+        <h3>لا توجد حجوزات في هذا الفلتر</h3>
+        <p>غيّر الفلتر أو اضغط تحديث.</p>
+      </div>
+
+      <div class="bookings-list" *ngIf="!isLoading && filteredBookings.length > 0">
+        <button type="button" class="booking-item" *ngFor="let booking of filteredBookings; trackBy: trackById"
+          [class.active]="selectedBooking?.bookingId === booking.bookingId" (click)="selectBooking(booking)">
+          <div class="booking-title-row">
+            <h3>{{ booking.serviceListingTitle }}</h3>
+            <span class="status-badge">{{ booking.statusAr || booking.status }}</span>
+          </div>
+          <p>{{ booking.bookingNumber }} · {{ booking.customerName }}</p>
+          <small>{{ booking.requestedStartDate }} · {{ booking.requestedStartTime }} · {{ booking.estimatedDurationHours }} ساعة</small>
+        </button>
+      </div>
+    </div>
+
+    <div class="card booking-details-card">
+      <div class="empty-state" *ngIf="!selectedBooking">
+        <div class="empty-icon">🧾</div>
+        <h3>اختر حجزًا</h3>
+        <p>اضغط على أي حجز لعرض التفاصيل والإجراءات المتاحة.</p>
+      </div>
+
+      <div *ngIf="selectedBooking">
+        <div class="details-header">
+          <div>
+            <h2>{{ selectedBooking.serviceListingTitle }}</h2>
+            <p>{{ selectedBooking.bookingNumber }}</p>
+          </div>
+          <span class="status-badge">{{ selectedBooking.statusAr || selectedBooking.status }}</span>
+        </div>
+
+        <div class="details-grid">
+          <div><span>العميل</span><strong>{{ selectedBooking.customerName }}</strong></div>
+          <div><span>تاريخ البداية</span><strong>{{ selectedBooking.requestedStartDate }}</strong></div>
+          <div><span>وقت البداية</span><strong>{{ selectedBooking.requestedStartTime }}</strong></div>
+          <div><span>المدة</span><strong>{{ selectedBooking.estimatedDurationHours }} ساعة</strong></div>
+          <div><span>القيمة</span><strong>{{ selectedBooking.estimatedTotal | number }} ج.م</strong></div>
+          <div><span>الحالة</span><strong>{{ selectedBooking.statusAr || selectedBooking.status }}</strong></div>
+        </div>
+
+        <div class="action-panel" *ngIf="selectedBooking.canAccept || selectedBooking.canReject">
+          <h3>إجراءات طلب الحجز</h3>
+
+          <div class="form-group" *ngIf="selectedBooking.canAccept">
+            <label class="form-label">اختيار المشغل</label>
+            <select class="form-input" [(ngModel)]="selectedOperatorId">
+              <option value="">اختر المشغل</option>
+              <option *ngFor="let operator of operators" [value]="operator.id">{{ operator.fullName }}</option>
+            </select>
+          </div>
+
+          <div class="form-group" *ngIf="selectedBooking.canReject">
+            <label class="form-label">سبب الرفض</label>
+            <textarea class="form-input textarea" rows="3" [(ngModel)]="rejectReason" placeholder="اكتب سبب الرفض عند الحاجة"></textarea>
+          </div>
+
+          <div class="actions-row">
+            <button class="btn btn-primary" type="button" *ngIf="selectedBooking.canAccept" [disabled]="isActionLoading" (click)="acceptSelected()">
+              قبول الحجز
+            </button>
+            <button class="btn btn-danger" type="button" *ngIf="selectedBooking.canReject" [disabled]="isActionLoading" (click)="rejectSelected()">
+              رفض الحجز
+            </button>
+          </div>
+        </div>
+
+        <div class="info-panel" *ngIf="selectedBooking.status === 'ConfirmedPendingPayment'">
+          هذا الحجز تم قبوله وينتظر دفع العميل. سيظهر في الأعمال النشطة بعد إتمام الدفع.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

@@ -2,13 +2,15 @@ import { CommonModule } from '@angular/common'
 import { ChangeDetectorRef, Component, NgZone, OnInit } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import { ActivatedRoute, Router, RouterLink } from '@angular/router'
-import { finalize } from 'rxjs'
+import { finalize, firstValueFrom } from 'rxjs'
 import { getErrorMessage } from '../../../core/helpers/errorMessageHelper'
+import { extractCoordinatesFromMapLink } from '../../../core/helpers/mapLinkHelper'
 import {
   BookingCreateContext,
   CreateBookingRequest
 } from '../../../core/models/bookingModels'
 import { BookingsService } from '../../../core/services/bookingsService'
+import { MapLinkResolverService } from '../../../core/services/mapLinkResolverService'
 
 @Component({
   selector: 'app-create-booking',
@@ -22,6 +24,8 @@ export class CreateBooking implements OnInit {
   context: BookingCreateContext | null = null
   availableTimeSlots: string[] = []
   scheduleWarning = ''
+  zoneWarning = ''
+  manualLocationUrl = ''
   minBookingDate = ''
   maxBookingDate = ''
 
@@ -57,6 +61,7 @@ export class CreateBooking implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private bookingsService: BookingsService,
+    private mapLinkResolver: MapLinkResolverService,
     private cdr: ChangeDetectorRef,
     private ngZone: NgZone
   ) {}
@@ -105,9 +110,11 @@ export class CreateBooking implements OnInit {
             if (response.defaultAddress) {
               this.useDefaultAddress = true
               this.form.addressId = response.defaultAddress.id
+              this.refreshZoneWarning()
             } else {
               this.useDefaultAddress = false
               this.form.addressId = null
+              this.refreshZoneWarning()
             }
 
             this.cdr.detectChanges()
@@ -123,7 +130,7 @@ export class CreateBooking implements OnInit {
       })
   }
 
-  createBooking(): void {
+  async createBooking(): Promise<void> {
     this.errorMessage = ''
     this.successMessage = ''
 
@@ -194,6 +201,10 @@ export class CreateBooking implements OnInit {
       request.latitude = null
       request.longitude = null
     } else {
+      if (!(await this.syncManualAddressCoordinates())) {
+        return
+      }
+
       request.addressId = null
       request.governorate = this.emptyToNull(this.form.governorate)
       request.district = this.emptyToNull(this.form.district)
@@ -235,6 +246,53 @@ export class CreateBooking implements OnInit {
           })
         }
       })
+  }
+
+  onAddressModeChanged(): void {
+    this.refreshZoneWarning()
+    this.updateView()
+  }
+
+  onManualLocationChanged(): void {
+    const coordinates = extractCoordinatesFromMapLink(this.manualLocationUrl)
+    if (coordinates) {
+      this.form.latitude = coordinates.latitude
+      this.form.longitude = coordinates.longitude
+      this.refreshZoneWarning()
+    }
+    this.updateView()
+  }
+
+  private async syncManualAddressCoordinates(): Promise<boolean> {
+    const coordinates = await this.resolveCoordinatesFromMapLink(this.manualLocationUrl)
+    if (!coordinates) {
+      this.errorMessage = 'من فضلك أدخل رابط موقع يحتوي على الإحداثيات أو الصق الإحداثيات مباشرة مثل 30.123,31.456.'
+      this.updateView()
+      return false
+    }
+
+    this.form.latitude = coordinates.latitude
+    this.form.longitude = coordinates.longitude
+    this.refreshZoneWarning()
+    return true
+  }
+
+  private async resolveCoordinatesFromMapLink(value: string): Promise<{ latitude: number; longitude: number } | null> {
+    const direct = extractCoordinatesFromMapLink(value)
+    if (direct) {
+      return direct
+    }
+
+    if (!value?.trim()) {
+      return null
+    }
+
+    try {
+      const response = await firstValueFrom(this.mapLinkResolver.resolve(value.trim()))
+      return { latitude: Number(response.latitude), longitude: Number(response.longitude) }
+    } catch {
+      return null
+    }
   }
 
   getEstimatedTotal(): number {
@@ -310,7 +368,89 @@ export class CreateBooking implements OnInit {
       return 'اختر يوماً متاحاً لعرض الأوقات المناسبة'
     }
 
-    return `متاح من ${this.formatTime(availability.openTime)} إلى ${this.formatTime(availability.closeTime)}`
+    const blocked = this.getReservedSlotsForDate(this.form.requestedStartDate)
+    if (!blocked.length) {
+      return `متاح من ${this.formatTime(availability.openTime)} إلى ${this.formatTime(availability.closeTime)}`
+    }
+
+    const blockedText = blocked
+      .map(slot => `${this.formatTime(slot.startTime)}-${this.formatTime(slot.endTime)}`)
+      .join('، ')
+
+    return `متاح من ${this.formatTime(availability.openTime)} إلى ${this.formatTime(availability.closeTime)} | أوقات محجوزة: ${blockedText}`
+  }
+
+  getEstimatedOutOfZoneSurcharge(): number {
+    const distance = this.getOutOfZoneDistanceKm()
+    if (distance <= 0) {
+      return 0
+    }
+
+    return Math.round(distance * Number(this.context?.outOfZoneSurchargePerKm ?? 25) * 100) / 100
+  }
+
+  getOutOfZoneDistanceKm(): number {
+    const context = this.context
+    if (!context?.providerBaseLatitude || !context.providerBaseLongitude || !context.serviceRadiusKm) {
+      return 0
+    }
+
+    const target = this.getCurrentAddressCoordinates()
+    if (!target) {
+      return 0
+    }
+
+    const distance = this.calculateDistanceKm(
+      Number(context.providerBaseLatitude),
+      Number(context.providerBaseLongitude),
+      target.latitude,
+      target.longitude
+    )
+
+    return Math.max(0, Math.round((distance - Number(context.serviceRadiusKm)) * 100) / 100)
+  }
+
+  refreshZoneWarning(): void {
+    const outOfZoneDistanceKm = this.getOutOfZoneDistanceKm()
+    if (outOfZoneDistanceKm > 0) {
+      this.zoneWarning = `العنوان خارج نطاق خدمة المزود بحوالي ${outOfZoneDistanceKm} كم. قد يتم تطبيق رسوم خارج النطاق بقيمة تقريبية ${this.getEstimatedOutOfZoneSurcharge()} جنيه.`
+      return
+    }
+
+    this.zoneWarning = ''
+  }
+
+  private getCurrentAddressCoordinates(): { latitude: number; longitude: number } | null {
+    if (this.useDefaultAddress && this.context?.defaultAddress?.latitude != null && this.context.defaultAddress.longitude != null) {
+      return {
+        latitude: Number(this.context.defaultAddress.latitude),
+        longitude: Number(this.context.defaultAddress.longitude)
+      }
+    }
+
+    if (this.form.latitude != null && this.form.longitude != null) {
+      return {
+        latitude: Number(this.form.latitude),
+        longitude: Number(this.form.longitude)
+      }
+    }
+
+    return null
+  }
+
+  private calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const earthRadiusKm = 6371
+    const dLat = this.toRadians(lat2 - lat1)
+    const dLon = this.toRadians(lon2 - lon1)
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(this.toRadians(lat1)) * Math.cos(this.toRadians(lat2)) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2)
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+    return earthRadiusKm * c
+  }
+
+  private toRadians(value: number): number {
+    return value * Math.PI / 180
   }
 
   private setNativeDateRange(): void {
@@ -326,6 +466,10 @@ export class CreateBooking implements OnInit {
   private refreshTimeSlots(): void {
     this.scheduleWarning = ''
     this.availableTimeSlots = this.getAvailableTimeSlots()
+
+    if (this.form.requestedStartDate && this.getAvailabilityForDate(this.form.requestedStartDate) && !this.availableTimeSlots.length && !this.scheduleWarning) {
+      this.scheduleWarning = 'لا توجد أوقات متاحة لهذا اليوم بعد استبعاد الحجوزات الموجودة أو بسبب مدة الحجز المختارة.'
+    }
 
     if (this.form.requestedStartTime && !this.availableTimeSlots.includes(this.normalizeTime(this.form.requestedStartTime))) {
       this.form.requestedStartTime = ''
@@ -351,10 +495,33 @@ export class CreateBooking implements OnInit {
 
     const slots: string[] = []
     for (let minutes = openMinutes; minutes <= latestStart; minutes += 30) {
-      slots.push(this.minutesToTime(minutes))
+      const endMinutes = minutes + durationMinutes
+      if (!this.doesSlotOverlapExistingBooking(this.form.requestedStartDate, minutes, endMinutes)) {
+        slots.push(this.minutesToTime(minutes))
+      }
+    }
+
+    if (!slots.length && this.getReservedSlotsForDate(this.form.requestedStartDate).length) {
+      this.scheduleWarning = 'كل الأوقات المناسبة لمدة الحجز في هذا اليوم متداخلة مع حجوزات مؤكدة بالفعل. اختر يوماً أو وقتاً آخر.'
     }
 
     return slots
+  }
+
+  private doesSlotOverlapExistingBooking(dateIso: string, slotStartMinutes: number, slotEndMinutes: number): boolean {
+    return this.getReservedSlotsForDate(dateIso).some(slot => {
+      const reservedStart = this.timeToMinutes(slot.startTime)
+      const reservedEnd = this.timeToMinutes(slot.endTime)
+      return slotStartMinutes < reservedEnd && slotEndMinutes > reservedStart
+    })
+  }
+
+  private getReservedSlotsForDate(dateIso: string | null | undefined): Array<{ startTime: string; endTime: string; bookingNumber?: string }> {
+    if (!dateIso || !this.context?.unavailableSlots?.length) {
+      return []
+    }
+
+    return this.context.unavailableSlots.filter(slot => String(slot.date).substring(0, 10) === dateIso)
   }
 
   private isSelectedDateAvailable(): boolean {

@@ -88,6 +88,14 @@ public static class ArabicErrorMapper
             return string.Join(" - ", parts);
         }
 
+        if (lower.Contains("time adjustment request is still waiting for customer response"))
+            return "يوجد طلب زيادة وقت بانتظار رد العميل، ولا يمكن إنهاء الخدمة قبل الموافقة أو الرفض.";
+        if (lower.Contains("approved time adjustment must be paid before completing the booking"))
+            return "تمت الموافقة على طلب زيادة الوقت، ويجب دفع قيمة الزيادة قبل إنهاء الخدمة.";
+        if (lower.Contains("time adjustment can only be requested for active or in-progress bookings"))
+            return "يمكن طلب زيادة الوقت فقط قبل اكتمال الخدمة وأثناء حالة التنفيذ أو الحجز النشط.";
+        if (lower.Contains("there is already a pending time adjustment request for this booking"))
+            return "يوجد طلب زيادة وقت قيد الانتظار لهذا الحجز بالفعل.";
         if (lower.Contains("booking time is outside service listing availability"))
             return "وقت الحجز خارج مواعيد الإتاحة لهذه الخدمة. اختر وقتاً يسمح بانتهاء الحجز قبل نهاية وقت العمل.";
         if (lower.Contains("no availability exists for the selected day"))

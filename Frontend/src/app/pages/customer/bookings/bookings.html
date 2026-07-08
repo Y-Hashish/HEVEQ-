@@ -85,7 +85,7 @@
                 <div class="details-grid">
                     <div>
                         <span>المزود</span>
-                        <strong>{{ selectedBooking.providerName || 'غير محدد' }}</strong>
+                        <strong>{{ selectedBooking.providerName || selectedBooking.providerCompany || 'غير محدد' }}</strong>
                     </div>
 
                     <div>
@@ -112,8 +112,18 @@
                     </div>
 
                     <div>
-                        <span>القيمة</span>
-                        <strong>{{ selectedBooking.finalPrice || selectedBooking.totalPrice || 0 }} جنيه</strong>
+                        <span>سعر الخدمة</span>
+                        <strong>{{ formatMoney(getBaseServiceAmount(selectedBooking)) }}</strong>
+                    </div>
+
+                    <div>
+                        <span>{{ getAdditionalChargesLabel(selectedBooking) }}</span>
+                        <strong>{{ formatMoney(getAdditionalCharges(selectedBooking)) }}</strong>
+                    </div>
+
+                    <div>
+                        <span>الإجمالي</span>
+                        <strong>{{ formatMoney(getBookingTotal(selectedBooking)) }}</strong>
                     </div>
                 </div>
 

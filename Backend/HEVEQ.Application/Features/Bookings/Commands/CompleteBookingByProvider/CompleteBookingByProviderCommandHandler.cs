@@ -55,6 +55,20 @@ namespace HEVEQ.Application.Features.Bookings.Commands.CompleteBookingByProvider
             if (assignment.Status != OperatorAssignmentStatus.InProgress)
                 throw new InvalidOperationException("Operator assignment must be in progress before completing the booking.");
 
+            var blockingAdjustmentStatus = await _context.BookingTimeAdjustmentRequests
+                .Where(x => x.BookingId == booking.Id &&
+                            (x.Status == BookingTimeAdjustmentStatus.Pending ||
+                             x.Status == BookingTimeAdjustmentStatus.PendingPayment))
+                .OrderByDescending(x => x.CreatedAt)
+                .Select(x => (BookingTimeAdjustmentStatus?)x.Status)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (blockingAdjustmentStatus == BookingTimeAdjustmentStatus.Pending)
+                throw new InvalidOperationException("Time adjustment request is still waiting for customer response.");
+
+            if (blockingAdjustmentStatus == BookingTimeAdjustmentStatus.PendingPayment)
+                throw new InvalidOperationException("Approved time adjustment must be paid before completing the booking.");
+
             var now = DateTime.UtcNow;
 
             var evidenceForm = new JobCompletionEvidenceForm

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, signal } from '@angular/core'
+import { ApplicationRef, Component, OnDestroy, OnInit, signal } from '@angular/core'
 import { RouterOutlet } from '@angular/router'
 import { Subscription } from 'rxjs'
 import { Footer } from './layout/footer/footer'
@@ -20,15 +20,18 @@ import { ToastComponent } from './shared/components/toast/toast.component'
 export class App implements OnInit, OnDestroy {
   protected readonly title = signal('HEVEQ')
   private authSub?: Subscription
+  private uiTickTimer?: ReturnType<typeof setInterval>
 
   constructor(
     private authService: Auth,
     private tokenStorage: TokenStorage,
     private realtimeService: RealtimeService,
-    private notificationsService: NotificationsService
+    private notificationsService: NotificationsService,
+    private appRef: ApplicationRef
   ) {}
 
   ngOnInit(): void {
+    this.startShortUiRefreshLoop()
     this.authSub = this.tokenStorage.authState$.subscribe(auth => {
       if (auth?.accessToken) {
         this.realtimeService.connect()
@@ -57,5 +60,28 @@ export class App implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.authSub?.unsubscribe()
+
+    if (this.uiTickTimer) {
+      clearInterval(this.uiTickTimer)
+    }
+  }
+
+  private startShortUiRefreshLoop(): void {
+    let ticks = 0
+
+    this.uiTickTimer = setInterval(() => {
+      ticks += 1
+
+      try {
+        this.appRef.tick()
+      } catch {
+        // Angular may already be checking the view. Ignore this safe refresh.
+      }
+
+      if (ticks >= 20 && this.uiTickTimer) {
+        clearInterval(this.uiTickTimer)
+        this.uiTickTimer = undefined
+      }
+    }, 250)
   }
 }

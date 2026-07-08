@@ -1,6 +1,7 @@
 ﻿using HEVEQ.Application.Common.AI.Interfaces;
 using HEVEQ.Application.Common.AI.Models;
 using HEVEQ.Application.Common.Interfaces;
+using HEVEQ.Application.Common.Services;
 using HEVEQ.Domain.Entities;
 using HEVEQ.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -13,7 +14,7 @@ namespace HEVEQ.Infrastructure.Services.AI.BackgroundJobs
         IApplicationDbContext context,
         IDocumentVisionExtractor extractor,
         IHttpClientFactory httpClientFactory,
-        ILogger<DocumentOcrJob> logger)
+        ILogger<DocumentOcrJob> logger, NotificationHelper notificationHelper)
     {
         private const decimal MinConfidenceScore = 0.7m;
         private const int ExpiryWarnDays = 30;
@@ -105,7 +106,10 @@ namespace HEVEQ.Infrastructure.Services.AI.BackgroundJobs
             if (string.IsNullOrWhiteSpace(document.AdminNote))
                 document.AdminNote = note;
 
-            NotifyProvider(document, "DocumentLowConfidence", "مطلوب إعادة رفع المستند", note);
+
+            if (document.UserId.HasValue)
+                notificationHelper.DocumentLowConfidence(document.UserId.Value, document.Id, document.DocumentType.ToString());
+
 
             logger.LogWarning(
                 "DocumentOcrJob: Document {DocumentId} low confidence ({Score:P0}) — provider notified.",
@@ -120,16 +124,18 @@ namespace HEVEQ.Infrastructure.Services.AI.BackgroundJobs
             {
                 case DocumentExpiryStatus.Expired:
                     // Do NOT touch Status or FailureReason — Admin sees ExpiryStatus = Expired and decides.
-                    NotifyProvider(document, "DocumentExpired", "انتهت صلاحية المستند",
-                        $"انتهت صلاحية المستند بتاريخ {document.ExpiryDate:yyyy-MM-dd}.");
+                    if (document.UserId.HasValue)
+                        notificationHelper.DocumentExpired(document.UserId.Value, document.Id, document.DocumentType.ToString());
+
                     logger.LogWarning(
                         "DocumentOcrJob: Document {DocumentId} expired on {Date} — Admin notified via report.",
                         document.Id, document.ExpiryDate);
                     break;
 
                 case DocumentExpiryStatus.ExpiringSoon:
-                    NotifyProvider(document, "DocumentExpiringSoon", "المستند على وشك الانتهاء",
-                        $"تنبيه: تنتهي صلاحية المستند بتاريخ {document.ExpiryDate:yyyy-MM-dd} (خلال {ExpiryWarnDays} يومًا).");
+                    if (document.UserId.HasValue)
+                        notificationHelper.DocumentExpiringSoon(document.UserId.Value, document.Id, document.DocumentType.ToString(), document.ExpiryDate!.Value);
+
                     logger.LogInformation(
                         "DocumentOcrJob: Document {DocumentId} expiring soon ({Date}).",
                         document.Id, document.ExpiryDate);
@@ -139,25 +145,6 @@ namespace HEVEQ.Infrastructure.Services.AI.BackgroundJobs
                 case DocumentExpiryStatus.NotApplicable:
                     break;
             }
-        }
-
-        private void NotifyProvider(Document document, string eventType, string title, string? body)
-        {
-            if (!document.UserId.HasValue)
-                return;
-
-            context.Notifications.Add(new Notification
-            {
-                UserId = document.UserId.Value,
-                EventType = eventType,
-                Title = title,
-                Body = body,
-                ReferenceId = document.Id.ToString(),
-                ReferenceType = nameof(Document),
-                Channel = NotificationChannel.InApp,
-                IsRead = false,
-                SentAt = DateTime.UtcNow
-            });
         }
 
         private void LogAiInteraction(Document document, long latencyMs)
@@ -180,7 +167,7 @@ namespace HEVEQ.Infrastructure.Services.AI.BackgroundJobs
             if (!expiryDate.HasValue)
                 return DocumentExpiryStatus.NotApplicable;
 
-            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            var today = DateOnly.FromDateTime(DateTime.UtcNow.AddHours(3));
             var daysLeft = expiryDate.Value.DayNumber - today.DayNumber;
 
             return daysLeft < 0 ? DocumentExpiryStatus.Expired

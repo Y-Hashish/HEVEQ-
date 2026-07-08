@@ -1,12 +1,13 @@
 import { CommonModule } from '@angular/common'
 import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core'
 import { FormsModule } from '@angular/forms'
-import { RouterLink } from '@angular/router'
+import { ActivatedRoute, Router, RouterLink } from '@angular/router'
 import { Subject, Subscription, debounceTime, distinctUntilChanged, finalize } from 'rxjs'
 import { CategoryDto } from '../../../core/models/category.models'
 import { MarketplaceCondition, MarketplaceListing } from '../../../core/models/marketplace.models'
 import { CategoriesService } from '../../../core/services/categories'
 import { MarketplaceService } from '../../../core/services/marketplace'
+import { AiSearchService } from '../../../core/services/aiSearchService'
 
 @Component({
   selector: 'app-marketplace',
@@ -24,6 +25,8 @@ export class Marketplace implements OnInit, OnDestroy {
 
   isLoading = false
   errorMessage = ''
+  isAiResultsMode = false
+  aiResultsMessage = ''
 
   searchTerm = ''
   condition: MarketplaceCondition | '' = ''
@@ -34,7 +37,6 @@ export class Marketplace implements OnInit, OnDestroy {
 
   categories: CategoryDto[] = []
 
-  // Mirrors HEVEQ.Domain.Enums.ProductCondition + ArabicLocalizer.ToArabic(ProductCondition)
   readonly conditions: { value: MarketplaceCondition | ''; label: string }[] = [
     { value: '', label: 'كل الحالات' },
     { value: 'New', label: 'جديد' },
@@ -44,7 +46,6 @@ export class Marketplace implements OnInit, OnDestroy {
     { value: 'Used', label: 'مستعمل' }
   ]
 
-  // Canonical governorate names from EgyptianGeofenceValidator (this is what's stored in Listing.Governorate)
   readonly governorates: { value: string; label: string }[] = [
     { value: 'Cairo', label: 'القاهرة' },
     { value: 'Alexandria', label: 'الإسكندرية' },
@@ -77,27 +78,43 @@ export class Marketplace implements OnInit, OnDestroy {
 
   private readonly searchSubject = new Subject<string>()
   private searchSub?: Subscription
+  private routeSub?: Subscription
 
   constructor(
     private marketplaceService: MarketplaceService,
     private categoriesService: CategoriesService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private route: ActivatedRoute,
+    private router: Router,
+    private aiSearchService: AiSearchService
   ) {}
 
   ngOnInit(): void {
-    this.loadListings()
     this.loadCategories()
 
     this.searchSub = this.searchSubject
       .pipe(debounceTime(400), distinctUntilChanged())
       .subscribe(() => {
+        if (this.isAiResultsMode) return
         this.page = 1
         this.loadListings()
       })
+
+    this.routeSub = this.route.queryParamMap.subscribe(params => {
+      if (params.get('ai') === '1') {
+        this.loadAiResults()
+        return
+      }
+
+      this.isAiResultsMode = false
+      this.aiResultsMessage = ''
+      this.loadListings()
+    })
   }
 
   ngOnDestroy(): void {
     this.searchSub?.unsubscribe()
+    this.routeSub?.unsubscribe()
   }
 
   onSearchChange(): void {
@@ -120,6 +137,11 @@ export class Marketplace implements OnInit, OnDestroy {
     this.loadListings()
   }
 
+  clearAiResults(): void {
+    this.aiSearchService.clearResults()
+    this.router.navigate(['/marketplace'])
+  }
+
   loadCategories(): void {
     this.categoriesService.getCategories('Marketplace').subscribe({
       next: categories => {
@@ -132,7 +154,54 @@ export class Marketplace implements OnInit, OnDestroy {
     })
   }
 
+  loadAiResults(): void {
+    const response = this.aiSearchService.readResults()
+    this.isAiResultsMode = true
+    this.isLoading = false
+    this.errorMessage = ''
+    this.page = 1
+
+    if (!response || !this.aiSearchService.isResultsReady(response)) {
+      this.listings = []
+      this.totalCount = 0
+      this.aiResultsMessage = 'لا توجد نتائج بحث ذكي محفوظة. ابدأ بحثًا جديدًا من شريط البحث بالأعلى.'
+      this.cdr.detectChanges()
+      return
+    }
+
+    const marketItems = (response.results ?? [])
+      .filter(item => !!item.marketplaceListing)
+      .map(item => {
+        const listing = item.marketplaceListing!
+        return {
+          id: listing.id,
+          title: listing.title,
+          price: listing.price,
+          condition: listing.condition,
+          conditionAr: this.conditionLabel(listing.condition),
+          location: listing.distanceKm != null ? `يبعد ${listing.distanceKm.toFixed(1)} كم تقريبًا` : 'راجع تفاصيل البائع',
+          coverPhotoUrl: null,
+          sellerName: listing.sellerCompanyName,
+          categoryName: 'ترشيح ذكي',
+          transactionMethod: 'Pickup',
+          averageRating: Number(listing.sellerAverageRating ?? 0),
+          totalReviewsCount: 0,
+          status: 'Active',
+          statusAr: item.matchExplanation || 'مطابق لطلبك'
+        } satisfies MarketplaceListing
+      })
+
+    this.listings = marketItems
+    this.totalCount = marketItems.length
+    this.aiResultsMessage = marketItems.length
+      ? 'هذه النتائج مرشحة بواسطة البحث الذكي فقط بناءً على طلبك.'
+      : 'لم يجد البحث الذكي منتجات مطابقة بدقة. جرّب توضيح نوع المنتج أو قطعة الغيار.'
+    this.cdr.detectChanges()
+  }
+
   loadListings(): void {
+    if (this.isAiResultsMode) return
+
     this.isLoading = true
     this.errorMessage = ''
     this.cdr.detectChanges()
@@ -169,6 +238,7 @@ export class Marketplace implements OnInit, OnDestroy {
   }
 
   get totalPages(): number {
+    if (this.isAiResultsMode) return 1
     return Math.max(Math.ceil(this.totalCount / this.pageSize), 1)
   }
 
@@ -177,6 +247,7 @@ export class Marketplace implements OnInit, OnDestroy {
   }
 
   goToPage(targetPage: number): void {
+    if (this.isAiResultsMode) return
     if (targetPage < 1 || targetPage > this.totalPages || targetPage === this.page) {
       return
     }
@@ -190,16 +261,20 @@ export class Marketplace implements OnInit, OnDestroy {
     return Array.from({ length: 5 }, (_, i) => i < rounded)
   }
 
-  // Backend doesn't localize MarketplaceTransactionMethod (no ArabicLocalizer entry for it),
-  // so it's translated client-side. Values: Pickup | Delivery | Both
   transactionMethodLabel(method: string): string {
     const labels: Record<string, string> = {
       Pickup: 'استلام من موقع البائع',
       Delivery: 'يوجد توصيل',
-      Both: 'استلام أو توصيل'
+      Both: 'استلام أو توصيل',
+      Either: 'استلام أو توصيل'
     }
 
     return labels[method] ?? method
+  }
+
+  conditionLabel(condition: string): string {
+    const found = this.conditions.find(item => item.value === condition)
+    return found?.label ?? condition
   }
 
   trackById(_index: number, item: MarketplaceListing): string {

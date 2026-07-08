@@ -17,6 +17,7 @@ namespace HEVEQ.Application.Features.Auth.DTOs
         public string Role { get; set; }
         public bool IsActive { get; set; }
         public bool ProfileCompleted { get; set; }
+        public bool IsIdentityVerified { get; set; }
         public decimal? TrustScore { get; set; }
         public string DashboardUrl { get; set; }
         public string? EmployeeDepartment { get; set; }

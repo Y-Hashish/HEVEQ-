@@ -3,6 +3,7 @@ using HEVEQ.Application.Features.Bookings.DTOs;
 using HEVEQ.Application.Features.Bookings.Helpers;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using HEVEQ.Domain.Enums;
 
 namespace HEVEQ.Application.Features.Bookings.Queries.GetBookingEscrow
 {
@@ -21,6 +22,8 @@ namespace HEVEQ.Application.Features.Bookings.Queries.GetBookingEscrow
                 .Include(x => x.ServiceListing)
                     .ThenInclude(x => x.ProviderProfile)
                 .Include(x => x.EscrowRecords)
+                .Include(x => x.TimeAdjustmentRequests)
+                    .ThenInclude(x => x.EscrowRecords)
                 .FirstOrDefaultAsync(x => x.Id == request.BookingId, cancellationToken);
 
             if (booking is null)
@@ -41,11 +44,12 @@ namespace HEVEQ.Application.Features.Bookings.Queries.GetBookingEscrow
             if (!isCustomerOwner && !isProviderOwner && !isAdmin)
                 throw new UnauthorizedAccessException("You are not allowed to view escrow for this booking.");
 
-            var escrow = booking.EscrowRecords
+            var relatedEscrows = booking.EscrowRecords
+                .Concat(booking.TimeAdjustmentRequests.SelectMany(x => x.EscrowRecords))
                 .OrderByDescending(x => x.CreatedAt)
-                .FirstOrDefault();
+                .ToList();
 
-            if (escrow is null)
+            if (relatedEscrows.Count == 0)
             {
                 return new BookingEscrowDto
                 {
@@ -62,18 +66,26 @@ namespace HEVEQ.Application.Features.Bookings.Queries.GetBookingEscrow
                 };
             }
 
+            var displayStatus = relatedEscrows.Any(x => x.Status == EscrowStatus.Frozen)
+                ? EscrowStatus.Frozen
+                : relatedEscrows.Any(x => x.Status == EscrowStatus.Held)
+                    ? EscrowStatus.Held
+                    : relatedEscrows.All(x => x.Status == EscrowStatus.Released)
+                        ? EscrowStatus.Released
+                        : relatedEscrows.First().Status;
+
             return new BookingEscrowDto
             {
                 BookingId = booking.Id,
-                GrossAmount = escrow.GrossAmount,
-                PlatformCommission = escrow.PlatformCommission,
-                ProviderPayout = escrow.ProviderPayout,
-                VatAmount = escrow.VatAmount,
-                Status = escrow.Status.ToString(),
-                StatusAr = EscrowDisplayHelper.GetStatusAr(escrow.Status),
-                CapturedAt = escrow.CapturedAt,
-                ReleasedAt = escrow.ReleasedAt,
-                FrozenAt = escrow.FrozenAt
+                GrossAmount = relatedEscrows.Sum(x => x.GrossAmount),
+                PlatformCommission = relatedEscrows.Sum(x => x.PlatformCommission),
+                ProviderPayout = relatedEscrows.Sum(x => x.ProviderPayout),
+                VatAmount = relatedEscrows.Sum(x => x.VatAmount),
+                Status = displayStatus.ToString(),
+                StatusAr = EscrowDisplayHelper.GetStatusAr(displayStatus),
+                CapturedAt = relatedEscrows.Where(x => x.CapturedAt.HasValue).Max(x => x.CapturedAt),
+                ReleasedAt = relatedEscrows.Where(x => x.ReleasedAt.HasValue).Max(x => x.ReleasedAt),
+                FrozenAt = relatedEscrows.Where(x => x.FrozenAt.HasValue).Max(x => x.FrozenAt)
             };
         }
     }

@@ -11,6 +11,7 @@ export interface BookingListItem {
   serviceListingId?: string | null
   serviceTitle?: string | null
   providerName?: string | null
+  providerCompany?: string | null
   customerName?: string | null
   jobTitle?: string | null
   jobDescription?: string | null
@@ -24,6 +25,12 @@ export interface BookingListItem {
   statusAr?: string | null
   totalPrice?: number | null
   finalPrice?: number | null
+  estimatedTotal?: number | null
+  surchargeAmount?: number | null
+  isOutOfZoneBooking?: boolean | null
+  outOfZoneDistanceKm?: number | null
+  outOfZoneSurchargeAmount?: number | null
+  hourlyRateSnapshot?: number | null
   hasReview?: boolean
   createdAt?: string | null
   updatedAt?: string | null
@@ -181,7 +188,12 @@ export interface BookingCreateContext {
   hourlyRate: number | null
   dailyRate: number | null
   minimumBookingHours: number
+  providerBaseLatitude?: number | null
+  providerBaseLongitude?: number | null
+  serviceRadiusKm?: number | null
+  outOfZoneSurchargePerKm?: number | null
   availability: BookingCreateAvailability[]
+  unavailableSlots?: BookingUnavailableSlot[]
   defaultAddress: BookingCreateAddress | null
   customerEligibility: BookingCustomerEligibility
 }
@@ -193,6 +205,16 @@ export interface BookingCreateAvailability {
   dayNameAr: string
   openTime: string
   closeTime: string
+}
+
+export interface BookingUnavailableSlot {
+  bookingId: string
+  bookingNumber: string
+  date: string
+  startTime: string
+  endTime: string
+  status: string
+  statusAr: string
 }
 
 export interface BookingCreateAddress {

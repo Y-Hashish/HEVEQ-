@@ -45,27 +45,13 @@ public class PublicServiceListingsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<PublicServiceListingDetailDto>> GetPublicListingById(Guid id)
     {
-        try
-        {
-            var result = await _mediator.Send(new GetPublicServiceListingByIdQuery(id));
+        var result = await _mediator.Send(new GetPublicServiceListingByIdQuery(id));
 
-            if (result == null)
-            {
-                return NotFound(new { message = "The requested active service listing was not found." });
-            }
-
-            return Ok(result);
-        }
-        catch (Exception ex)
+        if (result == null)
         {
-            return BadRequest(new
-            {
-                message = "Caught an error directly in Controller!",
-                errorType = ex.GetType().Name,
-                errorMessage = ex.Message,
-                innerError = ex.InnerException?.Message,
-                stackTrace = ex.StackTrace
-            });
+            return NotFound(new { message = "الخدمة المطلوبة غير متاحة حالياً أو لم يتم اعتمادها بعد." });
         }
+
+        return Ok(result);
     }
 }

@@ -22,6 +22,7 @@ public class GetPublicServiceListingByIdQueryHandler(IApplicationDbContext conte
             .Include(l => l.Category)
             .Include(l => l.ProviderProfile)
             .Include(l => l.Photos)
+            .Include(l => l.Availability)
             .Include(l => l.ServiceListingOperators)
                 .ThenInclude(lo => lo.Operator)
             .FirstOrDefaultAsync(l => l.Id == request.Id && l.Status == ServiceListingStatus.Active, cancellationToken);
@@ -56,18 +57,26 @@ public class GetPublicServiceListingByIdQueryHandler(IApplicationDbContext conte
             listing.ProviderProfile != null ? (double)listing.ProviderProfile.AverageRating : 0.0,
             listing.ProviderProfile != null ? listing.ProviderProfile.CompletedBookingsCount : 0,
             listing.ProviderProfile != null ? (int)listing.ProviderProfile.TrustScore : 0,
-            listing.ProviderProfile != null ? listing.ProviderProfile.TrustLevel.ToString() : "Standard"
+            listing.ProviderProfile != null ? listing.ProviderProfile.TrustLevel.ToString() : "Standard",
+            listing.Governorate
         );
 
-        // 6. map availability list (mocked or mapped based on project stage)
-        var availability = new List<PublicAvailabilityDto>();
+        // 6. map real availability slots
+        var availability = listing.Availability
+            .OrderBy(a => a.DayOfWeek)
+            .ThenBy(a => a.OpenTime)
+            .Select(a => new PublicAvailabilityDto(a.Id, a.DayOfWeek, a.OpenTime, a.CloseTime))
+            .ToList();
 
 
-        // 7. live, listing-specific review aggregate
+        // 7. live, listing-specific review aggregate. Some old reviews were saved
+        // against BookingId only, so include reviews whose booking belongs to this service.
 
         var listingReviews = await context.Reviews
                             .AsNoTracking()
-                            .Where(r => r.ServiceListingId == listing.Id && r.IsPublished)
+                            .Where(r => r.IsPublished &&
+                                (r.ServiceListingId == listing.Id ||
+                                 (r.BookingId != null && context.Bookings.Any(b => b.Id == r.BookingId && b.ServiceListingId == listing.Id))))
                             .Select(r => r.Rating)
                             .ToListAsync(cancellationToken);
 

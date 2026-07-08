@@ -64,6 +64,7 @@ export class CreateListing implements OnInit {
   isAddingPhoto = false
   isLinkingOperator = false
   isAddingAvailability = false
+  isSubmittingForReview = false
 
   basicInfoModel: ServiceListingFormPayload = { ...EMPTY_BASIC_INFO }
   availabilityModel = {
@@ -236,6 +237,7 @@ export class CreateListing implements OnInit {
           minimumBookingHours: detail.minimumBookingHours
         }
         this.manageData = manage
+        this.newPhotoOrder = (manage.photos?.length ?? 0) + 1
         this.isInitialLoading = false
       },
       error: (err: HttpErrorResponse) => {
@@ -249,7 +251,10 @@ export class CreateListing implements OnInit {
     if (!this.listingId) return
 
     this.serviceListings.getManage(this.listingId).subscribe({
-      next: data => (this.manageData = data),
+      next: data => {
+        this.manageData = data
+        this.newPhotoOrder = this.getNextServicePhotoOrder()
+      },
       error: (err: HttpErrorResponse) => this.toast.error(extractErrorMessage(err))
     })
   }
@@ -271,8 +276,9 @@ export class CreateListing implements OnInit {
       this.serviceListings.update(this.listingId, this.basicInfoModel).subscribe({
         next: () => {
           this.isSavingStep1 = false
-          this.toast.success('تم تحديث المعلومات الأساسية')
+          this.toast.success('تم حفظ التعديلات. أكمل الخطوات ثم اضغط إرسال للمراجعة')
           this.refreshManageData()
+          this.currentStep = 2
         },
         error: (err: HttpErrorResponse) => {
           this.isSavingStep1 = false
@@ -301,16 +307,18 @@ export class CreateListing implements OnInit {
 
     this.isAddingPhoto = true
 
+    const displayOrder = this.getNextServicePhotoOrder()
+
     this.mediaUploadService
       .uploadImage(this.selectedServicePhotoFile, 'service-listings', this.listingId)
       .pipe(
-        switchMap(upload => this.serviceListings.addPhoto(this.listingId!, { photoUrl: upload.url, displayOrder: this.newPhotoOrder })),
+        switchMap(upload => this.serviceListings.addPhoto(this.listingId!, { photoUrl: upload.url, displayOrder })),
         finalize(() => (this.isAddingPhoto = false))
       )
       .subscribe({
         next: () => {
           this.selectedServicePhotoFile = null
-          this.newPhotoOrder = (this.manageData?.photos.length ?? 0) + 1
+          this.newPhotoOrder = displayOrder + 1
           this.toast.success('تم رفع الصورة وإضافتها')
           this.refreshManageData()
         },
@@ -412,15 +420,35 @@ export class CreateListing implements OnInit {
   }
 
   submitForReview(): void {
-    if (!this.listingId) return
+    if (!this.listingId || this.isSubmittingForReview) return
 
-    this.serviceListings.submitForReview(this.listingId).subscribe({
-      next: result => {
-        this.toast.success(result.message)
-        this.router.navigate(['/equipment'])
-      },
-      error: (err: HttpErrorResponse) => this.toast.error(extractErrorMessage(err))
-    })
+    this.isSubmittingForReview = true
+
+    this.serviceListings.getManage(this.listingId)
+      .pipe(
+        switchMap(manage => {
+          this.manageData = manage
+
+          if (!manage.canSubmitForReview) {
+            const missing = manage.missingRequirements?.length
+              ? manage.missingRequirements.join('، ')
+              : 'استكمل الصور والمشغلين والتوفر وبيانات المزود أولاً'
+            throw new Error(`لا يمكن الإرسال للمراجعة قبل استكمال: ${missing}`)
+          }
+
+          return this.serviceListings.submitForReview(this.listingId!)
+        }),
+        finalize(() => (this.isSubmittingForReview = false))
+      )
+      .subscribe({
+        next: result => {
+          this.toast.success(result.message || 'تم إرسال القائمة للمراجعة وسيتم فحصها بالذكاء الاصطناعي مرة أخرى')
+          this.router.navigate(['/equipment'])
+        },
+        error: (err: HttpErrorResponse | Error) => {
+          this.toast.error(err instanceof Error ? err.message : extractErrorMessage(err))
+        }
+      })
   }
 
   // ---------- Marketplace Submit Method ----------
@@ -527,12 +555,17 @@ export class CreateListing implements OnInit {
     })
   }
 
+  private getNextServicePhotoOrder(): number {
+    const currentMax = Math.max(0, ...(this.manageData?.photos ?? []).map(photo => Number(photo.displayOrder || 0)))
+    return currentMax + 1
+  }
+
   private uploadAndAttachMarketplacePhotos(listingId: string) {
     if (!this.selectedMarketplaceFiles.length) {
       return of([])
     }
 
-    const startOrder = this.marketplaceExistingPhotos.length + 1
+    const startOrder = Math.max(0, ...this.marketplaceExistingPhotos.map(photo => Number(photo.displayOrder || 0))) + 1
     return forkJoin(
       this.selectedMarketplaceFiles.map((file, index) =>
         this.mediaUploadService

@@ -1,4 +1,5 @@
-﻿using HEVEQ.Application.Common.Interfaces;
+using HEVEQ.Application.Common.AI.Interfaces;
+using HEVEQ.Application.Common.Interfaces;
 using HEVEQ.Application.Common.Services;
 using HEVEQ.Application.Features.Bookings.DTOs;
 using HEVEQ.Application.Features.Bookings.Helpers;
@@ -13,10 +14,16 @@ namespace HEVEQ.Application.Features.Bookings.Commands.DisputeBooking
     {
         private readonly IApplicationDbContext _context;
         private readonly NotificationHelper _notificationHelper;
-        public DisputeBookingCommandHandler(IApplicationDbContext context, NotificationHelper notificationHelper)
+        private readonly IComplaintAnalysisService _aiAnalysisService;
+
+        public DisputeBookingCommandHandler(
+            IApplicationDbContext context,
+            NotificationHelper notificationHelper,
+            IComplaintAnalysisService aiAnalysisService)
         {
             _context = context;
             _notificationHelper = notificationHelper;
+            _aiAnalysisService = aiAnalysisService;
         }
 
         public async Task<DisputeBookingResponseDto> Handle(DisputeBookingCommand request, CancellationToken cancellationToken)
@@ -49,6 +56,8 @@ namespace HEVEQ.Application.Features.Bookings.Commands.DisputeBooking
 
 
             var ticketCount = await _context.Tickets.CountAsync(cancellationToken);
+            var aiResult = await AnalyzeDisputeSafelyAsync(booking, request.Reason, cancellationToken);
+
             var ticket = new Ticket
             {
                 Id = Guid.NewGuid(),
@@ -59,7 +68,11 @@ namespace HEVEQ.Application.Features.Bookings.Commands.DisputeBooking
                 BookingId = booking.Id,
                 MarketplaceOrderId = null,
                 Status = TicketStatus.Open,
-                Priority = 2,
+                Priority = MapAiPriority(aiResult.Priority),
+                AiSummary = aiResult.Summary,
+                AiIdentifiedIssue = "نزاع على اكتمال الحجز",
+                AiClaimedImpact = request.Reason,
+                AiEscalationPriority = MapAiPriority(aiResult.Priority),
                 CreatedAt = now,
                 UpdatedAt = now
             };
@@ -97,10 +110,45 @@ namespace HEVEQ.Application.Features.Bookings.Commands.DisputeBooking
                 BookingId = booking.Id,
                 Status = booking.Status.ToString(),
                 StatusAr = BookingDisplayHelper.GetStatusAr(booking.Status),
-                TicketId = null,
-                Message = "Dispute opened successfully"
+                TicketId = ticket.Id,
+                Message = "تم فتح النزاع بنجاح"
             };
         }
+        private async Task<HEVEQ.Application.Common.AI.Models.ComplaintAnalysisResult> AnalyzeDisputeSafelyAsync(Booking booking, string reason, CancellationToken cancellationToken)
+        {
+            var complaintText = $"""
+                نوع التذكرة: نزاع على إكمال حجز خدمة.
+                رقم الحجز: {booking.BookingNumber}.
+                عنوان المهمة: {booking.JobTitle}.
+                وصف المهمة: {booking.JobDescription}.
+                الخدمة: {booking.ServiceListing?.Title}.
+                المحافظة: {booking.Governorate}.
+                المنطقة: {booking.District}.
+                قيمة الحجز: {booking.EstimatedTotal}.
+                سبب النزاع من العميل: {reason}
+                """;
+
+            try
+            {
+                return await _aiAnalysisService.AnalyzeComplaintAsync(complaintText, cancellationToken);
+            }
+            catch
+            {
+                return new HEVEQ.Application.Common.AI.Models.ComplaintAnalysisResult
+                {
+                    Priority = "HIGH",
+                    Summary = "تعذّر تحليل النزاع آليًا. يُرجى مراجعة سبب النزاع ورسائل العميل والمرفقات يدويًا."
+                };
+            }
+        }
+
+        private static int MapAiPriority(string? priority) => priority?.Trim().ToUpperInvariant() switch
+        {
+            "URGENT" => 3,
+            "HIGH" => 2,
+            _ => 1
+        };
+
         private static string ExtractFileName(string url)
         {
             try

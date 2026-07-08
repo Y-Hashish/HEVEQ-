@@ -1,4 +1,4 @@
-﻿using HEVEQ.Application.Common.Interfaces;
+using HEVEQ.Application.Common.Interfaces;
 using HEVEQ.Application.Common.Services;
 using HEVEQ.Application.Features.Bookings.DTOs;
 using HEVEQ.Application.Features.Bookings.Helpers;
@@ -69,6 +69,17 @@ namespace HEVEQ.Application.Features.Bookings.Commands.AcceptBooking
             if (operatorBlackout)
                 throw new InvalidOperationException("Operator has a blackout date for this booking date.");
 
+            var hasListingConflict = await HasServiceListingConflictAsync(
+                booking.Id,
+                booking.ServiceListingId,
+                booking.RequestedStartDate,
+                scheduledStart,
+                scheduledEnd,
+                cancellationToken);
+
+            if (hasListingConflict)
+                throw new InvalidOperationException("لا يمكن قبول هذا الطلب لأن الخدمة محجوزة بالفعل في نفس التوقيت. يجب رفض الطلب أو اقتراح وقت آخر للعميل.");
+
             var hasConflict = await _context.OperatorAssignments.AnyAsync(x =>
             x.OperatorId == request.OperatorId &&
             x.Status != OperatorAssignmentStatus.Cancelled &&
@@ -77,7 +88,7 @@ namespace HEVEQ.Application.Features.Bookings.Commands.AcceptBooking
             scheduledEnd > x.ScheduledStart, cancellationToken);
 
             if(hasConflict)
-                throw new InvalidOperationException("Operator already has another assignment in the same time range.");
+                throw new InvalidOperationException("المشغل لديه مهمة أخرى في نفس التوقيت. اختر مشغلاً آخر أو ارفض الطلب.");
 
             var assignment = new OperatorAssignment
             {
@@ -107,6 +118,36 @@ namespace HEVEQ.Application.Features.Bookings.Commands.AcceptBooking
                 Message = "Booking accepted successfully"
             };
 
+        }
+
+        private async Task<bool> HasServiceListingConflictAsync(
+            Guid currentBookingId,
+            Guid serviceListingId,
+            DateOnly requestedDate,
+            DateTime scheduledStart,
+            DateTime scheduledEnd,
+            CancellationToken cancellationToken)
+        {
+            var sameDayBookings = await _context.Bookings
+                .AsNoTracking()
+                .Where(x => x.Id != currentBookingId
+                            && x.ServiceListingId == serviceListingId
+                            && x.RequestedStartDate == requestedDate
+                            && BookingScheduleConflictHelper.BlockingStatuses.Contains(x.Status))
+                .Select(x => new
+                {
+                    x.RequestedStartDate,
+                    x.RequestedStartTime,
+                    x.EstimatedDurationHours
+                })
+                .ToListAsync(cancellationToken);
+
+            return sameDayBookings.Any(x =>
+                BookingScheduleConflictHelper.Overlaps(
+                    scheduledStart,
+                    scheduledEnd,
+                    BookingScheduleConflictHelper.ToScheduledStart(x.RequestedStartDate, x.RequestedStartTime),
+                    BookingScheduleConflictHelper.ToScheduledEnd(x.RequestedStartDate, x.RequestedStartTime, x.EstimatedDurationHours)));
         }
 
         private static DateTime ToDateTime(DateOnly date, TimeOnly time)

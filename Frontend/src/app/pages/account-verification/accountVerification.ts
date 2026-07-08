@@ -248,14 +248,16 @@ export class AccountVerification implements OnInit {
       })
   }
 
-  getDocumentName(type: DocumentType): string {
-    const option = this.documentTypeOptions.find(item => item.value === type)
+  getDocumentName(type: DocumentType | string | number | null | undefined): string {
+    const normalizedType = this.normalizeDocumentType(type)
+
+    const option = this.documentTypeOptions.find(item => item.value === normalizedType)
 
     if (option) {
       return option.label
     }
 
-    switch (type) {
+    switch (normalizedType) {
       case DocumentType.NationalId:
         return 'البطاقة الشخصية'
       case DocumentType.CommercialRegistration:
@@ -271,6 +273,34 @@ export class AccountVerification implements OnInit {
       default:
         return 'مستند آخر'
     }
+  }
+
+  private normalizeDocumentType(type: DocumentType | string | number | null | undefined): DocumentType {
+    if (typeof type === 'number') {
+      return type as DocumentType
+    }
+
+    if (typeof type === 'string') {
+      const trimmedType = type.trim()
+
+      if (!Number.isNaN(Number(trimmedType)) && trimmedType !== '') {
+        return Number(trimmedType) as DocumentType
+      }
+
+      const byName: Record<string, DocumentType> = {
+        NationalId: DocumentType.NationalId,
+        CommercialRegistration: DocumentType.CommercialRegistration,
+        TaxCard: DocumentType.TaxCard,
+        EquipmentLicense: DocumentType.EquipmentLicense,
+        OperatorLicense: DocumentType.OperatorLicense,
+        Insurance: DocumentType.Insurance,
+        Other: DocumentType.Other
+      }
+
+      return byName[trimmedType] ?? DocumentType.Other
+    }
+
+    return DocumentType.Other
   }
 
   getStatusText(status: DocumentVerificationStatus, statusAr: string): string {

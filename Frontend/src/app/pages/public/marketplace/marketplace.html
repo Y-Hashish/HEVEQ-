@@ -1,20 +1,13 @@
 <div class="container">
-  <div class="marketplace-hero animate-on-scroll">
-    <h1>سوق هيڤيك المركزي (مبيعات)</h1>
-    <p>شراء وبيع المعدات الثقيلة المستعملة والجديدة، وقطع الغيار الأصلية</p>
 
-    <div class="nav-search">
-      <input
-        type="text"
-        placeholder="ابحث عن محركات، هيدروليك، أو معدات للبيع..."
-        [(ngModel)]="searchTerm"
-        (ngModelChange)="onSearchChange()"
-      />
-      <span class="search-icon">🔍</span>
-    </div>
-  </div>
 
-  <section class="filters-section animate-on-scroll">
+  <section class="card ai-results-banner" *ngIf="isAiResultsMode" style="margin-bottom: var(--s5);">
+    <strong>نتائج البحث الذكي</strong>
+    <p class="text-muted">{{ aiResultsMessage }}</p>
+    <button type="button" class="btn btn-outline" (click)="clearAiResults()">عرض كل السوق</button>
+  </section>
+
+  <section class="filters-section animate-on-scroll" *ngIf="!isAiResultsMode">
     <div class="filters-bar">
       <div class="filter-field">
         <label for="mp-category">الفئة</label>
@@ -134,7 +127,7 @@
     </div>
 
     <!-- Pagination -->
-    <div class="pagination" *ngIf="!isLoading && !errorMessage && totalPages > 1">
+    <div class="pagination" *ngIf="!isAiResultsMode && !isLoading && !errorMessage && totalPages > 1">
       <button type="button" class="page-btn" [disabled]="page === 1" (click)="goToPage(page - 1)">السابق</button>
 
       <button

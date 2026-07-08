@@ -78,7 +78,7 @@ public sealed class SearchController : ControllerBase
     public async Task<ActionResult> AISearch([FromBody] SearchRequestDto request, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(request.RawQuery))
-            return BadRequest(new { message = "rawQuery must not be empty." });
+            return BadRequest(new { message = "من فضلك اكتب ما تريد البحث عنه." });
 
         // فك الـ History
         var history = request.ConversationHistory?
@@ -99,14 +99,7 @@ public sealed class SearchController : ControllerBase
             SessionId: request.SessionId
         );
 
-        try
-        {
-            var result = await _sender.Send(query, ct);
-            return Ok(result);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { message = "Search failed.", details = ex.Message });
-        }
+        var result = await _sender.Send(query, ct);
+        return Ok(result);
     }
 }

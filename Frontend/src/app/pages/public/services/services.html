@@ -1,45 +1,5 @@
 <div class="container">
-    <div class="services-hero animate-on-scroll">
-        <h1>منصة تأجير المعدات الثقيلة (Rentals)</h1>
-        <p>احجز معداتك الثقيلة والآليات الإنشائية فوراً مع المشغلين والشركات المعتمدة</p>
-
-        <div class="nav-search services-search">
-            <input type="text" placeholder="ابحث عن ونش، رافعة، جرافة، أو مولدات للإيجار..." name="search"
-                [(ngModel)]="filters.search" (keyup.enter)="search()">
-            <span class="search-icon" (click)="search()" style="cursor: pointer;">🔍</span>
-        </div>
-    </div>
-
-    <section class="services-section">
-        <div class="section-header animate-on-scroll">
-            <div class="section-title">
-                <h2>استكشف فئات التأجير</h2>
-                <p>آليات الرفع، تسوية التربة، وحلول الطاقة الكهربائية</p>
-            </div>
-        </div>
-
-        <div class="categories-grid">
-            <div class="category-card animate-on-scroll">
-                <span class="category-icon">🏗️</span>
-                <span class="category-name">رافعات وأوناش</span>
-            </div>
-
-            <div class="category-card animate-on-scroll">
-                <span class="category-icon">🚜</span>
-                <span class="category-name">حفارات وجرافات</span>
-            </div>
-
-            <div class="category-card animate-on-scroll">
-                <span class="category-icon">⚡</span>
-                <span class="category-name">مولدات كهرباء</span>
-            </div>
-
-            <div class="category-card animate-on-scroll">
-                <span class="category-icon">🚚</span>
-                <span class="category-name">شاحنات نقل ثقيل</span>
-            </div>
-        </div>
-    </section>
+    
 
     <section>
         <div class="section-header animate-on-scroll">
@@ -49,8 +9,14 @@
             </div>
         </div>
 
+        <div class="card ai-results-banner" *ngIf="isAiResultsMode" style="margin-bottom: var(--s5);">
+            <strong>نتائج البحث الذكي</strong>
+            <p class="text-muted">{{ aiResultsMessage }}</p>
+            <button type="button" class="btn btn-outline" (click)="clearAiResults()">عرض كل الخدمات</button>
+        </div>
+
         <!-- Real filters wired to GET /api/public/service-listings -->
-        <div class="card flex gap-3" style="margin-bottom: var(--s5); flex-wrap: wrap; align-items: flex-end;">
+        <div *ngIf="!isAiResultsMode" class="card flex gap-3" style="margin-bottom: var(--s5); flex-wrap: wrap; align-items: flex-end;">
             <div class="form-group" style="flex: 1; min-width: 160px;">
                 <label class="form-label">الفئة</label>
                 <select class="form-input" name="categoryId" [(ngModel)]="filters.categoryId" (change)="search()">
@@ -60,7 +26,16 @@
             </div>
             <div class="form-group" style="flex: 1; min-width: 160px;">
                 <label class="form-label">المحافظة</label>
-                <input class="form-input" name="governorate" [(ngModel)]="filters.governorate" (keyup.enter)="search()">
+                <input class="form-input"
+                    list="service-governorates"
+                    name="governorate"
+                    placeholder="اكتب مثل: قا أو الجيزة"
+                    [(ngModel)]="filters.governorate"
+                    (change)="search()"
+                    (keyup.enter)="search()">
+                <datalist id="service-governorates">
+                    <option *ngFor="let g of governorates" [value]="g.label">{{ g.value }}</option>
+                </datalist>
             </div>
             <div class="form-group" style="flex: 1; min-width: 120px;">
                 <label class="form-label">أقل سعر/ساعة</label>
@@ -110,7 +85,7 @@
             </div>
         </div>
 
-        <div class="flex gap-3 justify-center" style="margin-top: var(--s6);" *ngIf="!isLoading && listings.length > 0">
+        <div class="flex gap-3 justify-center" style="margin-top: var(--s6);" *ngIf="!isAiResultsMode && !isLoading && listings.length > 0">
             <button type="button" class="btn btn-outline" [disabled]="(filters.page ?? 1) <= 1" (click)="previousPage()">السابق</button>
             <span class="text-muted" style="align-self: center;">صفحة {{ filters.page }}</span>
             <button type="button" class="btn btn-outline" [disabled]="(filters.page ?? 1) * (filters.pageSize ?? 9) >= totalCount" (click)="nextPage()">التالي</button>

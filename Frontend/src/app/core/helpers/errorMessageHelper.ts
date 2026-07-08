@@ -2,6 +2,8 @@ const FALLBACK_AR = 'حدث خطأ غير متوقع، حاول مرة أخرى'
 
 const translations: Array<[RegExp, string]> = [
   [/Booking time is outside service listing availability/i, 'وقت الحجز خارج مواعيد الإتاحة لهذه الخدمة. اختر وقتاً يسمح بانتهاء الحجز قبل نهاية وقت العمل'],
+  [/service is already booked|service listing is already booked|already booked in this time|محجوزة بالفعل/i, 'هذه الخدمة محجوزة بالفعل في هذا التوقيت. من فضلك اختر وقتاً آخر'],
+  [/another assignment in the same time|مشغل لديه مهمة أخرى|المشغل لديه مهمة أخرى/i, 'المشغل لديه مهمة أخرى في نفس التوقيت. اختر مشغلاً آخر أو وقتاً مختلفاً'],
   [/No availability exists for the selected day/i, 'اليوم المحدد غير متاح لهذه الخدمة. اختر يوماً من أيام الإتاحة المعروضة'],
   [/Booking is not allowed on a blackout date/i, 'لا يمكن الحجز في هذا اليوم لأنه غير متاح لدى المزود'],
   [/Minimum booking duration/i, 'مدة الحجز أقل من الحد الأدنى المسموح لهذه الخدمة'],

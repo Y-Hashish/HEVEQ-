@@ -1,138 +1,170 @@
-<div class="container">
-    <div *ngIf="isLoading" class="card">
-        <p class="text-muted">جاري التحميل...</p>
+<div class="container product-details-page service-details-page">
+
+  <div class="pd-loading" *ngIf="isLoading">
+    <div class="pd-gallery-skeleton">
+      <div class="card skeleton" style="height: 420px;"></div>
+      <div class="pd-thumbs-skeleton">
+        <div class="card skeleton" *ngFor="let s of [1,2,3,4]" style="height: 80px;"></div>
+      </div>
+    </div>
+    <div class="card skeleton" style="height: 420px;"></div>
+  </div>
+
+  <div class="empty-state" *ngIf="notFound && !isLoading">
+    <p class="text-muted">هذه الخدمة غير متاحة حالياً أو غير موجودة.</p>
+    <a class="btn btn-outline" routerLink="/services">الرجوع للخدمات</a>
+  </div>
+
+  <div class="pd-layout" *ngIf="listing && !isLoading && !notFound">
+    <div class="pd-main">
+      <div class="pd-gallery card">
+        <div class="pd-main-photo">
+          <img
+            *ngIf="activePhotoUrl; else noServiceImage"
+            [src]="activePhotoUrl"
+            [alt]="listing.title"
+            (error)="onImageError(activePhotoUrl)"
+          />
+          <ng-template #noServiceImage>
+            <div class="no-image">🚜</div>
+          </ng-template>
+        </div>
+
+        <div class="pd-thumbs" *ngIf="sortedPhotos.length > 1">
+          <button
+            type="button"
+            class="pd-thumb"
+            *ngFor="let photoUrl of sortedPhotos; let i = index"
+            [class.active]="i === activePhotoIndex"
+            (click)="selectPhoto(i)"
+          >
+            <img [src]="photoUrl" [alt]="listing.title" (error)="onImageError(photoUrl)" />
+          </button>
+        </div>
+      </div>
+
+      <div class="card pd-section">
+        <h2>الوصف</h2>
+        <p class="pd-description">{{ listing.description }}</p>
+      </div>
+
+      <div class="card pd-section">
+        <h2>مواصفات المعدة</h2>
+        <div class="pd-specs-grid">
+          <div class="pd-spec" *ngIf="listing.equipmentModel">
+            <span>الموديل</span>
+            <strong>{{ listing.equipmentModel }}</strong>
+          </div>
+          <div class="pd-spec" *ngIf="listing.equipmentCapacity">
+            <span>الحمولة / السعة</span>
+            <strong>{{ listing.equipmentCapacity }}</strong>
+          </div>
+          <div class="pd-spec">
+            <span>الحالة</span>
+            <strong>{{ conditionLabel(listing.equipmentCondition) }}</strong>
+          </div>
+          <div class="pd-spec" *ngIf="listing.yearOfManufacture">
+            <span>سنة الصنع</span>
+            <strong>{{ listing.yearOfManufacture }}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="card pd-section" *ngIf="listing.availability.length > 0">
+        <h2>أوقات التوفر</h2>
+        <div class="availability-list">
+          <div class="availability-item" *ngFor="let slot of listing.availability">
+            <strong>{{ dayNames[slot.dayOfWeek] }}</strong>
+            <span>{{ slot.openTime }} - {{ slot.closeTime }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card pd-section" *ngIf="listing.operators.length > 0">
+        <h2>المشغلون</h2>
+        <div class="operators-grid">
+          <div class="operator-card" *ngFor="let op of listing.operators">
+            <strong>{{ op.fullName }}</strong>
+            <p class="text-muted">{{ op.yearsOfExperience || 0 }} سنوات خبرة</p>
+            <p class="text-muted" *ngIf="op.specialization">{{ op.specialization }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card pd-section service-reviews-card">
+        <div class="reviews-header">
+          <div>
+            <h2>تقييمات الحجوزات على هذه الخدمة</h2>
+            <p class="text-muted">تظهر هنا تقييمات العملاء بعد إكمال حجوزات هذه الخدمة فقط.</p>
+          </div>
+          <div class="reviews-score" *ngIf="reviewsTotal > 0">
+            <span class="score">{{ reviewsAverage | number:'1.1-1' }}</span>
+            <span class="stars">
+              <span *ngFor="let filled of ratingStars(reviewsAverage)" [class.filled]="filled">★</span>
+            </span>
+            <small>{{ reviewsTotal }} تقييم</small>
+          </div>
+        </div>
+
+        <p class="text-muted" *ngIf="reviewsLoading">جاري تحميل التقييمات...</p>
+        <div class="empty-reviews" *ngIf="!reviewsLoading && reviews.length === 0">
+          لا توجد تقييمات منشورة لهذه الخدمة حتى الآن.
+        </div>
+        <div class="reviews-list" *ngIf="!reviewsLoading && reviews.length > 0">
+          <div class="review-item" *ngFor="let review of reviews">
+            <div class="review-top">
+              <strong>{{ review.reviewerName || 'عميل' }}</strong>
+              <span class="stars">
+                <span *ngFor="let filled of ratingStars(review.rating)" [class.filled]="filled">★</span>
+              </span>
+            </div>
+            <p *ngIf="review.comment">{{ review.comment }}</p>
+            <small class="text-muted">{{ review.createdAt | date:'shortDate' }}</small>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div *ngIf="notFound && !isLoading" class="card">
-        <p class="text-muted">هذه القائمة غير متاحة حالياً أو غير موجودة.</p>
+    <div class="pd-sidebar">
+      <div class="card pd-buy-box">
+        <span class="badge badge-info">{{ listing.categoryName }}</span>
+        <div class="pd-price">{{ listing.hourlyRate | number }} ج.م/ساعة</div>
+        <h1 class="pd-title">{{ listing.title }}</h1>
+        <div class="pd-condition" *ngIf="listing.dailyRate">السعر اليومي: <strong>{{ listing.dailyRate | number }} ج.م</strong></div>
+        <div class="pd-condition">أقل عدد ساعات للحجز: <strong>{{ listing.minimumBookingHours }}</strong></div>
+
+        <button
+          type="button"
+          class="btn btn-primary w-full"
+          *ngIf="listing.canRequestBooking"
+          (click)="requestBooking()"
+        >
+          طلب وحجز الخدمة 🚜
+        </button>
+
+        <button
+          type="button"
+          class="btn btn-outline w-full"
+          [disabled]="isStartingConversation"
+          (click)="startProviderChat()"
+        >
+          {{ isStartingConversation ? 'جاري فتح المحادثة...' : 'تواصل مع المزود' }}
+        </button>
+      </div>
+
+      <div class="card pd-seller-card">
+        <p class="text-muted">مزود الخدمة</p>
+        <div class="pd-seller-name">{{ listing.provider.companyName }}</div>
+        <p class="text-muted" *ngIf="listing.provider.governorate">المحافظة: {{ listing.provider.governorate }}</p>
+        <div class="pd-seller-rating">
+          <span class="stars">
+            <span *ngFor="let filled of ratingStars(listing.provider.averageRating)" [class.filled]="filled">★</span>
+          </span>
+          <span class="rating-value">{{ listing.provider.averageRating | number:'1.1-1' }}</span>
+          <span class="rating-count">({{ listing.provider.completedBookingsCount }} عمل مكتمل)</span>
+        </div>
+        <span class="badge badge-success">{{ listing.provider.trustLevel }}</span>
+      </div>
     </div>
-
-    <div *ngIf="listing && !isLoading">
-        <div class="card" style="margin-bottom: var(--s5);">
-            <div class="flex gap-4" style="flex-wrap: wrap;">
-                <img *ngIf="listing.photos.length > 0" [src]="listing.photos[0].photoUrl" [alt]="listing.title"
-                    style="width: 280px; height: 200px; object-fit: cover; border-radius: var(--radius);">
-
-                <div style="flex: 1; min-width: 240px;">
-                    <span class="badge badge-info">{{ listing.categoryName }}</span>
-                    <h1 style="margin-top: var(--s2);">{{ listing.title }}</h1>
-                    <div class="services-rate" style="margin-top: var(--s2);">
-                        <strong>{{ listing.hourlyRate }} ج.م/ساعة</strong>
-                        <span *ngIf="listing.dailyRate">({{ listing.dailyRate }} ج.م/يومي)</span>
-                    </div>
-                    <p class="text-muted" style="margin-top: var(--s2);">أقل عدد ساعات للحجز: {{ listing.minimumBookingHours }}</p>
-
-                    <div class="flex gap-3" style="margin-top: var(--s4); flex-wrap: wrap;">
-                        <button type="button" class="btn btn-primary"
-                            *ngIf="listing.canRequestBooking" (click)="requestBooking()">
-                            طلب وحجز الخدمة 🚜
-                        </button>
-                        <button type="button" class="btn btn-outline" [disabled]="isStartingConversation" (click)="startProviderChat()">
-                            {{ isStartingConversation ? 'جاري فتح المحادثة...' : 'تواصل مع المزود' }}
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="card" style="margin-bottom: var(--s5);">
-            <h3 style="margin-bottom: var(--s3);">الوصف</h3>
-            <p>{{ listing.description }}</p>
-        </div>
-
-        <div class="card" style="margin-bottom: var(--s5);">
-            <h3 style="margin-bottom: var(--s3);">مواصفات المعدة</h3>
-            <div class="services-meta">
-                <span *ngIf="listing.equipmentModel">🏗️ الموديل: {{ listing.equipmentModel }}</span>
-                <span *ngIf="listing.equipmentCapacity">⚖️ الحمولة/السعة: {{ listing.equipmentCapacity }}</span>
-                <span>✅ الحالة: {{ conditionLabel(listing.equipmentCondition) }}</span>
-                <span *ngIf="listing.yearOfManufacture">📅 سنة الصنع: {{ listing.yearOfManufacture }}</span>
-            </div>
-        </div>
-
-        <div class="card" style="margin-bottom: var(--s5);" *ngIf="listing.photos.length > 0">
-            <h3 style="margin-bottom: var(--s3);">معرض الصور</h3>
-            <div class="flex gap-3" style="flex-wrap: wrap;">
-                <img *ngFor="let photo of listing.photos" [src]="photo.photoUrl" [alt]="listing.title"
-                    style="width: 160px; height: 120px; object-fit: cover; border-radius: var(--radius-sm);">
-            </div>
-        </div>
-
-        <div class="card" style="margin-bottom: var(--s5);" *ngIf="listing.availability.length > 0">
-            <h3 style="margin-bottom: var(--s3);">أوقات التوفر</h3>
-            <div class="table-container">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>اليوم</th>
-                            <th>من</th>
-                            <th>إلى</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr *ngFor="let slot of listing.availability">
-                            <td>{{ dayNames[slot.dayOfWeek] }}</td>
-                            <td>{{ slot.openTime }}</td>
-                            <td>{{ slot.closeTime }}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="card" style="margin-bottom: var(--s5);" *ngIf="listing.operators.length > 0">
-            <h3 style="margin-bottom: var(--s3);">المشغلين</h3>
-            <div class="flex gap-3" style="flex-wrap: wrap;">
-                <div class="card" *ngFor="let op of listing.operators" style="padding: var(--s3); flex: 1; min-width: 200px;">
-                    <strong>{{ op.fullName }}</strong>
-                    <p class="text-muted">{{ op.yearsOfExperience }} سنوات خبرة</p>
-                    <p class="text-muted" *ngIf="op.specialization">{{ op.specialization }}</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="card service-reviews-card" style="margin-bottom: var(--s5);">
-            <div class="reviews-header">
-                <div>
-                    <h3>تقييمات الحجوزات على هذه الخدمة</h3>
-                    <p class="text-muted">تظهر هنا تقييمات العملاء بعد إكمال حجوزات هذه الخدمة فقط.</p>
-                </div>
-                <div class="reviews-score" *ngIf="reviewsTotal > 0">
-                    <span class="score">{{ reviewsAverage | number:'1.1-1' }}</span>
-                    <span class="stars">
-                        <span *ngFor="let filled of ratingStars(reviewsAverage)" [class.filled]="filled">★</span>
-                    </span>
-                    <small>{{ reviewsTotal }} تقييم</small>
-                </div>
-            </div>
-            <p class="text-muted" *ngIf="reviewsLoading">جاري تحميل التقييمات...</p>
-            <div class="empty-reviews" *ngIf="!reviewsLoading && reviews.length === 0">
-                لا توجد تقييمات منشورة لهذه الخدمة حتى الآن.
-            </div>
-            <div class="reviews-list" *ngIf="!reviewsLoading && reviews.length > 0">
-                <div class="review-item" *ngFor="let review of reviews">
-                    <div class="review-top">
-                        <strong>{{ review.reviewerName || 'عميل' }}</strong>
-                        <span class="stars">
-                            <span *ngFor="let filled of ratingStars(review.rating)" [class.filled]="filled">★</span>
-                        </span>
-                    </div>
-                    <p *ngIf="review.comment">{{ review.comment }}</p>
-                    <small class="text-muted">{{ review.createdAt | date:'shortDate' }}</small>
-                </div>
-            </div>
-        </div>
-
-        <div class="card widget-card">
-            <div class="widget-info">
-                <p class="text-muted">مزود الخدمة</p>
-                <h3>{{ listing.provider.companyName }}</h3>
-                <p class="text-muted">
-                    ⭐ {{ listing.provider.averageRating.toFixed(1) }} —
-                    {{ listing.provider.completedBookingsCount }} عمل مكتمل —
-                    <span class="badge badge-success">{{ listing.provider.trustLevel }}</span>
-                </p>
-            </div>
-        </div>
-    </div>
+  </div>
 </div>

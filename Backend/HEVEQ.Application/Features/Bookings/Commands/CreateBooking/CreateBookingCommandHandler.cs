@@ -1,4 +1,4 @@
-﻿using HEVEQ.Application.Common.Interfaces;
+using HEVEQ.Application.Common.Interfaces;
 using HEVEQ.Application.Features.Bookings.Services;
 using HEVEQ.Application.Features.Bookings.Services.Interfaces;
 using MediatR;
@@ -46,7 +46,10 @@ namespace HEVEQ.Application.Features.Bookings.Commands.CreateBooking
                 throw new InvalidOperationException("Provider profile was not found.");
 
             if (listing.ProviderProfile.UserId == request.CustomerId)
-                throw new InvalidOperationException("Provider cannot book his own service listing.");
+                throw new InvalidOperationException("لا يمكن للمزود حجز خدمته الخاصة.");
+
+            await EnsureCustomerHasNoOpenBookingForSameServiceAsync(request, cancellationToken);
+            await EnsureServiceListingHasNoCommittedConflictAsync(request, cancellationToken);
 
             var booking = _bookingCreationService.Create(request, listing, addressSnapshot);
 
@@ -68,6 +71,66 @@ namespace HEVEQ.Application.Features.Bookings.Commands.CreateBooking
                 EstimatedTotal = booking.EstimatedTotal,
                 Message = "Booking request submitted successfully"
             };
+        }
+
+        private async Task EnsureCustomerHasNoOpenBookingForSameServiceAsync(
+            CreateBookingCommand request,
+            CancellationToken cancellationToken)
+        {
+            var existingBooking = await _context.Bookings
+                .AsNoTracking()
+                .Where(x => x.CustomerId == request.CustomerId
+                            && x.ServiceListingId == request.ServiceListingId
+                            && BookingScheduleConflictHelper.CustomerOpenBookingStatuses.Contains(x.Status))
+                .OrderByDescending(x => x.CreatedAt)
+                .Select(x => new { x.BookingNumber, x.Status })
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (existingBooking is not null)
+            {
+                throw new InvalidOperationException(
+                    $"لديك حجز قائم بالفعل على هذه الخدمة برقم {existingBooking.BookingNumber}. يمكنك حجز نفس الخدمة مرة أخرى بعد اكتمال أو إلغاء الحجز الحالي.");
+            }
+        }
+
+        private async Task EnsureServiceListingHasNoCommittedConflictAsync(
+            CreateBookingCommand request,
+            CancellationToken cancellationToken)
+        {
+            var requestedStart = BookingScheduleConflictHelper.ToScheduledStart(
+                request.RequestedStartDate,
+                request.RequestedStartTime);
+            var requestedEnd = BookingScheduleConflictHelper.ToScheduledEnd(
+                request.RequestedStartDate,
+                request.RequestedStartTime,
+                request.EstimatedDurationHours);
+
+            var sameDayBookings = await _context.Bookings
+                .AsNoTracking()
+                .Where(x => x.ServiceListingId == request.ServiceListingId
+                            && x.RequestedStartDate == request.RequestedStartDate
+                            && BookingScheduleConflictHelper.BlockingStatuses.Contains(x.Status))
+                .Select(x => new
+                {
+                    x.BookingNumber,
+                    x.RequestedStartDate,
+                    x.RequestedStartTime,
+                    x.EstimatedDurationHours
+                })
+                .ToListAsync(cancellationToken);
+
+            var conflictingBooking = sameDayBookings.FirstOrDefault(x =>
+                BookingScheduleConflictHelper.Overlaps(
+                    requestedStart,
+                    requestedEnd,
+                    BookingScheduleConflictHelper.ToScheduledStart(x.RequestedStartDate, x.RequestedStartTime),
+                    BookingScheduleConflictHelper.ToScheduledEnd(x.RequestedStartDate, x.RequestedStartTime, x.EstimatedDurationHours)));
+
+            if (conflictingBooking is not null)
+            {
+                throw new InvalidOperationException(
+                    $"هذه الخدمة محجوزة بالفعل في هذا التوقيت ضمن الحجز رقم {conflictingBooking.BookingNumber}. من فضلك اختر وقتاً آخر.");
+            }
         }
     }
 }

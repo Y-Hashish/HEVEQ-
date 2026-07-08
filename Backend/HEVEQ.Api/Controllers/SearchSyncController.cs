@@ -64,14 +64,22 @@ public sealed class SearchSyncController : ControllerBase
 
         try
         {
-            var result = await _syncService.SyncAllActiveListingsAsync(ct);
+            var serviceResult = await _syncService.SyncAllActiveListingsAsync(ct);
+            var marketplaceResult = await _syncService.SyncAllActiveMarketplaceListingsAsync(ct);
+
+            var failedIds = serviceResult.FailedIds.Concat(marketplaceResult.FailedIds).ToList();
+            var duration = serviceResult.Duration + marketplaceResult.Duration;
 
             return Ok(new ReindexResponse(
-                result.TotalListings,
-                result.Synced,
-                result.Failed,
-                result.FailedIds,
-                result.Duration.ToString(@"hh\:mm\:ss\.fff")));
+                serviceResult.TotalListings + marketplaceResult.TotalListings,
+                serviceResult.Synced + marketplaceResult.Synced,
+                serviceResult.Failed + marketplaceResult.Failed,
+                failedIds,
+                duration.ToString(@"hh\:mm\:ss\.fff"),
+                serviceResult.TotalListings,
+                marketplaceResult.TotalListings,
+                serviceResult.Synced,
+                marketplaceResult.Synced));
         }
         catch (OperationCanceledException)
         {
@@ -118,7 +126,11 @@ public sealed record ReindexResponse(
     int Synced,
     int Failed,
     IReadOnlyList<Guid> FailedIds,
-    string Duration);
+    string Duration,
+    int ServiceListingsTotal,
+    int MarketplaceListingsTotal,
+    int ServiceListingsSynced,
+    int MarketplaceListingsSynced);
 
 public sealed record StatusResponse(
     string CollectionName,

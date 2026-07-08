@@ -3,6 +3,7 @@ using HEVEQ.Application.Features.Bookings.DTOs;
 using HEVEQ.Application.Features.Bookings.Helpers;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using HEVEQ.Domain.Enums;
 
 namespace HEVEQ.Application.Features.Bookings.Queries.GetCustomerBookings
 {
@@ -38,7 +39,8 @@ namespace HEVEQ.Application.Features.Bookings.Queries.GetCustomerBookings
                     x.RequestedStartTime,
                     x.EstimatedDurationHours,
                     x.EstimatedTotal,
-                    x.Status
+                    x.Status,
+                    HasReview = x.Reviews.Any(r => r.ReviewerId == request.CustomerId && r.ModerationStatus != ModerationStatus.Rejected)
                 })
                 .ToListAsync(cancellationToken);
 
@@ -56,7 +58,8 @@ namespace HEVEQ.Application.Features.Bookings.Queries.GetCustomerBookings
                 StatusAr = BookingDisplayHelper.GetStatusAr(x.Status),
                 CanCancel = BookingActionsHelper.CanCustomerCancel(x.Status),
                 CanConfirmCompletion = BookingActionsHelper.CanCustomerConfirmCompletion(x.Status),
-                CanDispute = BookingActionsHelper.CanCustomerDispute(x.Status)
+                CanDispute = BookingActionsHelper.CanCustomerDispute(x.Status),
+                HasReview = x.HasReview
             }).ToList();
 
             return new CustomerBookingsResponseDto

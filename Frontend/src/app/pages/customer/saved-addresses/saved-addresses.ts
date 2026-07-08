@@ -1,10 +1,12 @@
 import { CommonModule } from '@angular/common'
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core'
 import { FormsModule } from '@angular/forms'
-import { finalize } from 'rxjs'
+import { finalize, firstValueFrom } from 'rxjs'
 import { getErrorMessage } from '../../../core/helpers/errorMessageHelper'
+import { extractCoordinatesFromMapLink } from '../../../core/helpers/mapLinkHelper'
 import { AddressItem } from '../../../core/models/addressModels'
 import { AddressesService } from '../../../core/services/addressesService'
+import { MapLinkResolverService } from '../../../core/services/mapLinkResolverService'
 
 @Component({
   selector: 'app-saved-addresses',
@@ -29,6 +31,7 @@ export class SavedAddresses implements OnInit {
     governorate: '',
     district: '',
     street: '',
+    locationUrl: '',
     latitude: null as number | null,
     longitude: null as number | null,
     isDefault: false
@@ -36,6 +39,7 @@ export class SavedAddresses implements OnInit {
 
   constructor(
     private addressesService: AddressesService,
+    private mapLinkResolver: MapLinkResolverService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -69,7 +73,7 @@ export class SavedAddresses implements OnInit {
       })
   }
 
-  saveAddress(): void {
+  async saveAddress(): Promise<void> {
     this.errorMessage = ''
     this.successMessage = ''
 
@@ -79,9 +83,7 @@ export class SavedAddresses implements OnInit {
       return
     }
 
-    if (this.form.latitude === null || this.form.longitude === null) {
-      this.errorMessage = 'من فضلك أدخل خط العرض وخط الطول'
-      this.cdr.detectChanges()
+    if (!(await this.syncCoordinatesFromLocationUrl())) {
       return
     }
 
@@ -169,6 +171,7 @@ export class SavedAddresses implements OnInit {
       governorate: address.governorate,
       district: address.district,
       street: address.street,
+      locationUrl: address.latitude !== null && address.longitude !== null ? `${address.latitude},${address.longitude}` : '',
       latitude: address.latitude,
       longitude: address.longitude,
       isDefault: address.isDefault
@@ -230,12 +233,45 @@ export class SavedAddresses implements OnInit {
       governorate: '',
       district: '',
       street: '',
+      locationUrl: '',
       latitude: null,
       longitude: null,
       isDefault: false
     }
 
     this.cdr.detectChanges()
+  }
+
+  private async syncCoordinatesFromLocationUrl(): Promise<boolean> {
+    const coordinates = await this.resolveCoordinatesFromMapLink(this.form.locationUrl)
+
+    if (!coordinates) {
+      this.errorMessage = 'من فضلك أدخل رابط موقع يحتوي على الإحداثيات أو الصق الإحداثيات مباشرة مثل 30.123,31.456.'
+      this.cdr.detectChanges()
+      return false
+    }
+
+    this.form.latitude = coordinates.latitude
+    this.form.longitude = coordinates.longitude
+    return true
+  }
+
+  private async resolveCoordinatesFromMapLink(value: string): Promise<{ latitude: number; longitude: number } | null> {
+    const direct = extractCoordinatesFromMapLink(value)
+    if (direct) {
+      return direct
+    }
+
+    if (!value?.trim()) {
+      return null
+    }
+
+    try {
+      const response = await firstValueFrom(this.mapLinkResolver.resolve(value.trim()))
+      return { latitude: Number(response.latitude), longitude: Number(response.longitude) }
+    } catch {
+      return null
+    }
   }
 
   trackById(index: number, item: AddressItem): string {

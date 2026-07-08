@@ -1,9 +1,10 @@
-﻿using HEVEQ.Application.Common.Interfaces;
+using HEVEQ.Application.Common.Interfaces;
 using HEVEQ.Application.Features.Bookings.DTOs;
 using HEVEQ.Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using HEVEQ.Application.Common.Helpers;
+using HEVEQ.Application.Features.Bookings.Helpers;
 
 namespace HEVEQ.Application.Features.Bookings.Queries.GetBookingCreateContext
 {
@@ -49,11 +50,18 @@ namespace HEVEQ.Application.Features.Bookings.Queries.GetBookingCreateContext
             }
             else
             {
-                if (customerProfile.RequiresAdditionalVerification)
-                    missingRequirements.Add("Additional verification is required.");
+                var hasApprovedNationalId = await _context.Documents
+                    .AsNoTracking()
+                    .AnyAsync(d => d.UserId == request.CustomerId
+                                   && d.DocumentType == DocumentType.NationalId
+                                   && d.Status == DocumentVerificationStatus.Approved,
+                        cancellationToken);
+
+                if (customerProfile.RequiresAdditionalVerification || !hasApprovedNationalId)
+                    missingRequirements.Add("يجب توثيق البطاقة الشخصية واعتمادها أولاً.");
 
                 if (!customerProfile.User.PhoneNumberConfirmed)
-                    missingRequirements.Add("Phone number must be verified.");
+                    missingRequirements.Add("يجب تأكيد رقم الهاتف.");
             }
 
             if (defaultAddress is null)
@@ -73,6 +81,49 @@ namespace HEVEQ.Application.Features.Bookings.Queries.GetBookingCreateContext
                 })
                 .ToList();
 
+            var today = DateOnly.FromDateTime(DateTime.UtcNow.AddHours(3));
+            var maxDate = today.AddDays(60);
+
+            var blockedBookings = await _context.Bookings
+                .AsNoTracking()
+                .Where(x => x.ServiceListingId == listing.Id
+                            && x.RequestedStartDate >= today
+                            && x.RequestedStartDate <= maxDate
+                            && BookingScheduleConflictHelper.BlockingStatuses.Contains(x.Status))
+                .Select(x => new
+                {
+                    x.Id,
+                    x.BookingNumber,
+                    x.RequestedStartDate,
+                    x.RequestedStartTime,
+                    x.EstimatedDurationHours,
+                    x.Status
+                })
+                .ToListAsync(cancellationToken);
+
+            var unavailableSlots = blockedBookings
+                .Select(x =>
+                {
+                    var end = BookingScheduleConflictHelper.ToScheduledEnd(
+                        x.RequestedStartDate,
+                        x.RequestedStartTime,
+                        x.EstimatedDurationHours);
+
+                    return new BookingUnavailableSlotDto
+                    {
+                        BookingId = x.Id,
+                        BookingNumber = x.BookingNumber,
+                        Date = x.RequestedStartDate,
+                        StartTime = x.RequestedStartTime,
+                        EndTime = TimeOnly.FromDateTime(end),
+                        Status = x.Status.ToString(),
+                        StatusAr = BookingDisplayHelper.GetStatusAr(x.Status)
+                    };
+                })
+                .OrderBy(x => x.Date)
+                .ThenBy(x => x.StartTime)
+                .ToList();
+
             return new BookingCreateContextDto
             {
                 ServiceListingId = listing.Id,
@@ -81,7 +132,12 @@ namespace HEVEQ.Application.Features.Bookings.Queries.GetBookingCreateContext
                 HourlyRate = listing.HourlyRate,
                 DailyRate = listing.DailyRate,
                 MinimumBookingHours = listing.MinimumBookingHours,
+                ProviderBaseLatitude = listing.ProviderProfile.BaseLatitude,
+                ProviderBaseLongitude = listing.ProviderProfile.BaseLongitude,
+                ServiceRadiusKm = listing.ProviderProfile.ServiceRadiusKm,
+                OutOfZoneSurchargePerKm = 25m,
                 Availability = availability,
+                UnavailableSlots = unavailableSlots,
                 DefaultAddress = defaultAddress is null ? null
                     : new BookingCreateContextAddressDto
                     {

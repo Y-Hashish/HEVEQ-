@@ -95,11 +95,15 @@
                 </div>
                 <div class="ai-flags" *ngIf="selectedDetails.aiRiskFlags">
                   <h4>علامات التحذير:</h4>
-                  <p>{{ selectedDetails.aiRiskFlags }}</p>
+                  <ul class="ai-text-list">
+                    <li *ngFor="let line of formatAiText(selectedDetails.aiRiskFlags)">{{ line }}</li>
+                  </ul>
                 </div>
                 <div class="ai-rec" *ngIf="selectedDetails.aiRecommendation">
                   <h4>توصية النظام:</h4>
-                  <p>{{ selectedDetails.aiRecommendation }}</p>
+                  <ul class="ai-text-list">
+                    <li *ngFor="let line of formatAiText(selectedDetails.aiRecommendation)">{{ line }}</li>
+                  </ul>
                 </div>
               </div>
             </div>

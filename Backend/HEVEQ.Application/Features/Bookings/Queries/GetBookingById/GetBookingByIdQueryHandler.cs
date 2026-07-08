@@ -3,6 +3,7 @@ using HEVEQ.Application.Features.Bookings.DTOs;
 using HEVEQ.Application.Features.Bookings.Services;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using HEVEQ.Domain.Enums;
 
 namespace HEVEQ.Application.Features.Bookings.Queries.GetBookingById
 {
@@ -41,7 +42,20 @@ namespace HEVEQ.Application.Features.Bookings.Queries.GetBookingById
             if (!isAdmin && !isCustomerOwner && !isProviderOwner)
                 throw new InvalidOperationException("You are not allowed to view this booking.");
 
-            return BookingDtoMapper.ToDto(booking, request.Role);
+            var dto = BookingDtoMapper.ToDto(booking, request.Role);
+
+            if (isCustomerOwner)
+            {
+                dto.HasReview = await _context.Reviews
+                    .AsNoTracking()
+                    .AnyAsync(r =>
+                        r.ReviewerId == request.UserId &&
+                        r.BookingId == booking.Id &&
+                        r.ModerationStatus != ModerationStatus.Rejected,
+                        cancellationToken);
+            }
+
+            return dto;
         }
     }
 }

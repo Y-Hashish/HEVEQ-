@@ -135,6 +135,16 @@ export class AdminListingReview implements OnInit {
     this.isModalOpen = true;
   }
 
+  formatAiText(value: string | null | undefined): string[] {
+    if (!value) return []
+
+    return value
+      .replace(/[•]+/g, '\n• ')
+      .split(/\r?\n|(?=\d+[\)\-.])|(?=•)/)
+      .map(part => part.trim())
+      .filter(Boolean)
+  }
+
   handleModalConfirm(note?: string) {
     if (!this.selectedDetails || !this.pendingAction) return;
 

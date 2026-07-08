@@ -293,6 +293,9 @@ export class ActiveJobs implements OnInit {
             this.providerNote = ''
             this.cdr.detectChanges()
           })
+
+          this.selectedJob = null
+          this.loadActiveJobs()
         },
         error: error => {
           this.ngZone.run(() => {

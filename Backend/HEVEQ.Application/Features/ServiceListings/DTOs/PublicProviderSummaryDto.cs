@@ -10,6 +10,7 @@ namespace HEVEQ.Application.Features.ServiceListings.DTOs
         double AverageRating,
         int CompletedBookingsCount,
         int TrustScore,
-        string TrustLevel
+        string TrustLevel,
+        string? Governorate
     );
 }

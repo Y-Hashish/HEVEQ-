@@ -19,5 +19,6 @@ namespace HEVEQ.Application.Features.Bookings.DTOs
         public bool CanCancel { get; set; }
         public bool CanConfirmCompletion { get; set; }
         public bool CanDispute { get; set; }
+        public bool HasReview { get; set; }
     }
 }
