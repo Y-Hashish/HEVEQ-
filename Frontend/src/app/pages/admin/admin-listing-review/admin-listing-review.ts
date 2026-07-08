@@ -21,6 +21,10 @@ export class AdminListingReview implements OnInit {
   
   pendingListings: PendingListing[] = [];
   isLoading = true;
+  isLoadingMore = false;
+  page = 1;
+  pageSize = 10;
+  totalCount = 0;
 
   // Details View
   selectedDetails: ListingReviewDetails | null = null;
@@ -67,17 +71,21 @@ export class AdminListingReview implements OnInit {
   loadListings(openId?: string) {
     this.isLoading = true;
     this.pendingListings = [];
+    this.page = 1;
     
     const obs$ = this.activeTab === 'services' 
-      ? this.listingService.getPendingServiceListings(1, 50)
-      : this.listingService.getPendingMarketplaceListings(1, 50);
+      ? this.listingService.getPendingServiceListings(this.page, this.pageSize)
+      : this.listingService.getPendingMarketplaceListings(this.page, this.pageSize);
 
     obs$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => {
         this.pendingListings = res.items || [];
+        this.totalCount = res.totalCount || 0;
         this.isLoading = false;
         if (openId) {
           this.viewDetails(openId);
+        } else if (this.pendingListings.length > 0) {
+          this.viewDetails(this.pendingListings[0].id);
         }
         this.cdr.detectChanges();
       },
@@ -87,6 +95,45 @@ export class AdminListingReview implements OnInit {
         this.cdr.detectChanges();
       }
     });
+  }
+
+  loadMore() {
+    if (this.isLoading || this.isLoadingMore || this.pendingListings.length >= this.totalCount) return;
+    this.isLoadingMore = true;
+    this.page++;
+    
+    const obs$ = this.activeTab === 'services' 
+      ? this.listingService.getPendingServiceListings(this.page, this.pageSize)
+      : this.listingService.getPendingMarketplaceListings(this.page, this.pageSize);
+
+    obs$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (res) => {
+        const newItems = res.items || [];
+        this.pendingListings = [...this.pendingListings, ...newItems];
+        this.totalCount = res.totalCount || 0;
+        this.isLoadingMore = false;
+        
+        // Auto-select first item if details are empty
+        if (!this.selectedDetails && !this.isDetailsLoading && this.pendingListings.length > 0) {
+          this.viewDetails(this.pendingListings[0].id);
+        }
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.isLoadingMore = false;
+        this.toastService.error('فشل في تحميل المزيد من الإدراجات');
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  onScroll(event: Event) {
+    const element = event.target as HTMLElement;
+    const threshold = 100; // Trigger load when within 100px of bottom
+    const atBottom = element.scrollHeight - element.scrollTop <= element.clientHeight + threshold;
+    if (atBottom) {
+      this.loadMore();
+    }
   }
 
   viewDetails(id: string) {

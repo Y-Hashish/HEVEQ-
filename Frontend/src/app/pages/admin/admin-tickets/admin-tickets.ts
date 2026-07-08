@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, ChangeDetectionStrategy, DestroyRef, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, ChangeDetectionStrategy, DestroyRef, inject, ChangeDetectorRef, HostListener } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { AdminTicketsService } from '../../../core/services/adminTicketsService';
@@ -6,7 +6,6 @@ import { AdminTicket, AdminTicketDetails } from '../../../core/models/admin.mode
 import { Loading } from '../../../shared/components/loading/loading';
 import { EmptyState } from '../../../shared/components/empty-state/empty-state';
 import { ActionModal } from '../../../shared/components/action-modal/action-modal';
-import { Pagination } from '../../../shared/components/pagination/pagination';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { FormsModule } from '@angular/forms';
 import { TokenStorage } from '../../../core/services/token-storage';
@@ -16,7 +15,7 @@ import { AdminUsersService } from '../../../core/services/adminUsersService';
 
 @Component({
   selector: 'app-admin-tickets',
-  imports: [CommonModule, FormsModule, Loading, EmptyState, ActionModal, Pagination],
+  imports: [CommonModule, FormsModule, Loading, EmptyState, ActionModal],
   templateUrl: './admin-tickets.html',
   styleUrl: './admin-tickets.css'
 })
@@ -30,6 +29,7 @@ export class AdminTickets implements OnInit {
   page = 1;
   pageSize = 15;
   totalCount = 0;
+  isLoadingMore = false;
 
   // Selected Ticket View
   selectedTicket: AdminTicketDetails | null = null;
@@ -38,6 +38,9 @@ export class AdminTickets implements OnInit {
   // Chat Reply
   replyContent = '';
   isReplying = false;
+
+  // Dropdown overlay state
+  isDropdownOpen = false;
 
   // Dispute decisions variables
   decisionType = '';
@@ -77,6 +80,22 @@ export class AdminTickets implements OnInit {
     private route: ActivatedRoute
   ) {}
 
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    this.isDropdownOpen = false;
+  }
+
+  toggleDropdown(event?: Event) {
+    if (event) {
+      event.stopPropagation();
+    }
+    this.isDropdownOpen = !this.isDropdownOpen;
+  }
+
+  closeDropdown() {
+    this.isDropdownOpen = false;
+  }
+
   ngOnInit() {
     const user = this.tokenStorage.getCurrentUser();
     this.currentUserId = user?.id || '';
@@ -87,6 +106,8 @@ export class AdminTickets implements OnInit {
 
   loadTickets() {
     this.isLoading = true;
+    this.page = 1;
+    this.cdr.detectChanges();
     this.ticketsService.getTickets(this.page, this.pageSize, this.filterStatus || undefined, this.filterPriority || undefined)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
@@ -95,8 +116,12 @@ export class AdminTickets implements OnInit {
         this.totalCount = res.totalCount || 0;
         this.isLoading = false;
         const targetId = this.route.snapshot.queryParamMap.get('ticketId');
-        if (targetId && !this.selectedTicket) {
-          this.viewTicket(targetId);
+        if (targetId) {
+          if (!this.selectedTicket) {
+            this.viewTicket(targetId);
+          }
+        } else if (this.tickets.length > 0 && !this.selectedTicket) {
+          this.viewTicket(this.tickets[0].id);
         }
         this.cdr.detectChanges();
       },
@@ -114,9 +139,35 @@ export class AdminTickets implements OnInit {
     this.loadTickets();
   }
 
-  onPageChange(newPage: number) {
-    this.page = newPage;
-    this.loadTickets();
+  onListScroll(event: Event) {
+    const element = event.target as HTMLElement;
+    const atBottom = element.scrollHeight - element.scrollTop <= element.clientHeight + 100;
+    
+    if (atBottom && !this.isLoadingMore && this.tickets.length < this.totalCount) {
+      this.loadMoreTickets();
+    }
+  }
+
+  loadMoreTickets() {
+    this.isLoadingMore = true;
+    this.page++;
+    this.cdr.detectChanges();
+
+    this.ticketsService.getTickets(this.page, this.pageSize, this.filterStatus || undefined, this.filterPriority || undefined)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          this.tickets = [...this.tickets, ...(res.items || [])];
+          this.isLoadingMore = false;
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.isLoadingMore = false;
+          this.page--;
+          this.toastService.error('فشل في تحميل المزيد من التذاكر');
+          this.cdr.detectChanges();
+        }
+      });
   }
 
   viewTicket(id: string) {
@@ -126,6 +177,7 @@ export class AdminTickets implements OnInit {
     this.customerAmount = 0;
     this.providerAmount = 0;
     this.selectedEmployeeId = '';
+    this.cdr.detectChanges();
 
     this.ticketsService.getTicketDetails(id)
       .pipe(takeUntilDestroyed(this.destroyRef))

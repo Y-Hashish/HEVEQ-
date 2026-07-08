@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectionStrategy, DestroyRef, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, DestroyRef, inject, ChangeDetectorRef, NgZone } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { AdminUser, AdminUsersService, UpdateUserStatusRequest, CreateStaffRequest } from '../../../core/services/adminUsersService';
@@ -47,7 +47,8 @@ export class AdminUsers implements OnInit {
   constructor(
     private usersService: AdminUsersService,
     private toastService: ToastService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private ngZone: NgZone
   ) {}
 
   ngOnInit() {
@@ -57,6 +58,7 @@ export class AdminUsers implements OnInit {
   loadUsers() {
     this.isLoading = true;
     this.error = false;
+    this.cdr.detectChanges();
     
     let isActiveParam: boolean | undefined = undefined;
     if (this.filterStatus === 'true') isActiveParam = true;
@@ -66,16 +68,20 @@ export class AdminUsers implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
       next: (res) => {
-        this.users = res.items || [];
-        this.totalCount = res.totalCount || 0;
-        this.isLoading = false;
-        this.cdr.detectChanges();
+        this.ngZone.run(() => {
+          this.users = res.items || [];
+          this.totalCount = res.totalCount || 0;
+          this.isLoading = false;
+          this.cdr.detectChanges();
+        });
       },
       error: () => {
-        this.error = true;
-        this.isLoading = false;
-        this.toastService.error('حدث خطأ أثناء جلب المستخدمين');
-        this.cdr.detectChanges();
+        this.ngZone.run(() => {
+          this.error = true;
+          this.isLoading = false;
+          this.toastService.error('حدث خطأ أثناء جلب المستخدمين');
+          this.cdr.detectChanges();
+        });
       }
     });
   }

@@ -89,17 +89,17 @@ export class Notifications implements OnInit, OnDestroy {
   }
 
   getNotificationIcon(eventType?: string): string {
-    if (!eventType) return '🔔'
+    if (!eventType) return 'fa-solid fa-bell'
     const type = eventType.toLowerCase()
-    if (type.includes('ticket')) return '🎫'
-    if (type.includes('booking')) return '📅'
-    if (type.includes('escrow') || type.includes('wallet') || type.includes('paid')) return '💰'
-    if (type.includes('dispute')) return '⚖️'
-    if (type.includes('message')) return '💬'
-    if (type.includes('order') || type.includes('marketplace')) return '📦'
-    if (type.includes('fieldverification')) return '📍'
-    if (type.includes('document')) return '📄'
-    return '🔔'
+    if (type.includes('ticket')) return 'fa-solid fa-ticket'
+    if (type.includes('booking')) return 'fa-solid fa-calendar-days'
+    if (type.includes('escrow') || type.includes('wallet') || type.includes('paid')) return 'fa-solid fa-money-bill-wave'
+    if (type.includes('dispute')) return 'fa-solid fa-scale-balanced'
+    if (type.includes('message')) return 'fa-solid fa-comments'
+    if (type.includes('order') || type.includes('marketplace')) return 'fa-solid fa-box-open'
+    if (type.includes('fieldverification')) return 'fa-solid fa-location-dot'
+    if (type.includes('document')) return 'fa-solid fa-file-lines'
+    return 'fa-solid fa-bell'
   }
 
   getNotificationMessage(notification: NotificationItem): string {

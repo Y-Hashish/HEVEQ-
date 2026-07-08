@@ -7,16 +7,20 @@ import { AccountVerification } from '../../../core/models/admin.models';
 import { Loading } from '../../../shared/components/loading/loading';
 import { EmptyState } from '../../../shared/components/empty-state/empty-state';
 import { ToastService } from '../../../shared/components/toast/toast.service';
+import { Pagination } from '../../../shared/components/pagination/pagination';
 
 @Component({
   selector: 'app-admin-account-verification',
-  imports: [CommonModule, RouterModule, Loading, EmptyState],
+  imports: [CommonModule, RouterModule, Loading, EmptyState, Pagination],
   templateUrl: './admin-account-verification.html',
   styleUrl: './admin-account-verification.css'
 })
 export class AdminAccountVerification implements OnInit {
   verifications: AccountVerification[] = [];
   isLoading = true;
+  page = 1;
+  pageSize = 5;
+  totalCount = 0;
 
   private destroyRef = inject(DestroyRef);
 
@@ -32,7 +36,7 @@ export class AdminAccountVerification implements OnInit {
 
   loadVerifications() {
     this.isLoading = true;
-    this.verificationService.getPendingVerifications()
+    this.verificationService.getPendingVerifications(this.page, this.pageSize)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
       next: (res) => {
@@ -45,6 +49,7 @@ export class AdminAccountVerification implements OnInit {
           submittedAt: doc.uploadedAt,
           documentIds: [doc.documentId]
         }));
+        this.totalCount = res.totalCount || 0;
         this.isLoading = false;
         this.cdr.detectChanges();
       },
@@ -54,5 +59,10 @@ export class AdminAccountVerification implements OnInit {
         this.cdr.detectChanges();
       }
     });
+  }
+
+  onPageChange(newPage: number) {
+    this.page = newPage;
+    this.loadVerifications();
   }
 }

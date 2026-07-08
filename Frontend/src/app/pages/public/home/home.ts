@@ -12,32 +12,32 @@ import { RouterLink } from '@angular/router'
 export class Home {
   categories = [
     {
-      icon: '🏗️',
+      icon: 'fa-solid fa-truck-ramp-box',
       name: 'الأوناش',
       description: 'خدمات الرفع والنقل للمواقع والمشروعات'
     },
     {
-      icon: '🚜',
+      icon: 'fa-solid fa-tractor',
       name: 'الحفارات',
       description: 'معدات الحفر والردم وأعمال الأساسات'
     },
     {
-      icon: '🚛',
+      icon: 'fa-solid fa-truck-field',
       name: 'اللوادر',
       description: 'تحميل ونقل الخامات داخل مواقع العمل'
     },
     {
-      icon: '⚡',
+      icon: 'fa-solid fa-bolt-lightning',
       name: 'المولدات',
       description: 'حلول الطاقة المؤقتة للمواقع الصناعية'
     },
     {
-      icon: '🧱',
+      icon: 'fa-solid fa-cubes',
       name: 'الشدات والسقالات',
       description: 'تجهيزات البناء والتشطيبات والمواقع'
     },
     {
-      icon: '🚚',
+      icon: 'fa-solid fa-truck-flatbed',
       name: 'الشاحنات',
       description: 'نقل المعدات والمواد الثقيلة بأمان'
     }
@@ -64,22 +64,22 @@ export class Home {
 
   features = [
     {
-      icon: '🔎',
+      icon: 'fa-solid fa-magnifying-glass',
       title: 'بحث سريع',
       description: 'اعثر على الخدمة أو المعدة المناسبة حسب الموقع ونوع العمل.'
     },
     {
-      icon: '🛡️',
+      icon: 'fa-solid fa-user-shield',
       title: 'مزودون موثقون',
       description: 'مراجعة مستندات وحسابات المزودين قبل ظهورهم للمستخدمين.'
     },
     {
-      icon: '💳',
+      icon: 'fa-solid fa-wallet',
       title: 'دفع آمن',
       description: 'نظام دفع وتتبع للحجوزات والطلبات مع Escrow داخل المنصة.'
     },
     {
-      icon: '💬',
+      icon: 'fa-solid fa-comments',
       title: 'تواصل مباشر',
       description: 'رسائل وإشعارات فورية بين العميل والمزود وإدارة الدعم.'
     }

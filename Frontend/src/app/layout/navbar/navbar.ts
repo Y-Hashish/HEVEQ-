@@ -22,7 +22,7 @@ export class Navbar implements OnInit, OnDestroy {
   role = ''
   isDropdownOpen = false
   currentUrl = ''
-  themeIcon = '🌙'
+  themeIcon = 'fa-solid fa-moon'
   unreadNotifications = 0
 
   aiQuery = ''
@@ -68,7 +68,7 @@ export class Navbar implements OnInit, OnDestroy {
 
     const savedTheme = localStorage.getItem('theme') || 'light'
     document.documentElement.setAttribute('data-theme', savedTheme)
-    this.themeIcon = savedTheme === 'dark' ? '☀️' : '🌙'
+    this.themeIcon = savedTheme === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon'
   }
 
   ngOnDestroy(): void {
@@ -206,7 +206,7 @@ export class Navbar implements OnInit, OnDestroy {
     localStorage.setItem('theme', nextTheme)
     document.documentElement.setAttribute('data-theme', nextTheme)
 
-    this.themeIcon = nextTheme === 'dark' ? '☀️' : '🌙'
+    this.themeIcon = nextTheme === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon'
   }
 
   toggleMobileMenu(): void {

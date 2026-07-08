@@ -10,7 +10,7 @@
 
   <div class="toolbar-card">
     <label>فلترة الحالة</label>
-    <select [(ngModel)]="statusFilter">
+    <select [(ngModel)]="statusFilter" (change)="onFilterChange()">
       <option value="">كل الحالات</option>
       <option value="Dispatched">تم الإرسال</option>
       <option value="OnSite">في الموقع</option>

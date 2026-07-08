@@ -65,6 +65,9 @@ export class AdminDisputes implements OnInit {
         this.disputes = items;
         this.totalCount = res.totalCount || 0;
         this.isLoading = false;
+        if (this.disputes.length > 0 && !this.selectedDispute) {
+          this.viewDispute(this.disputes[0].id);
+        }
         this.cdr.detectChanges();
       },
       error: () => {
@@ -83,6 +86,7 @@ export class AdminDisputes implements OnInit {
 
   onPageChange(newPage: number) {
     this.page = newPage;
+    this.selectedDispute = null;
     this.loadDisputes();
   }
 

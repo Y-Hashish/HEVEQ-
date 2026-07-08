@@ -98,7 +98,7 @@
 
         <!-- Order success -->
         <div class="pd-order-success" *ngIf="orderResult">
-          <p>✅ {{ orderResult.message }}</p>
+          <p><i class="fa-solid fa-circle-check"></i> {{ orderResult.message }}</p>
           <p>رقم الطلب: <strong>{{ orderResult.orderNumber }}</strong></p>
           <p>الحالة: <strong>{{ orderResult.statusAr }}</strong></p>
           <p class="text-muted">سيتم تحويلك إلى صفحة دفع طلب السوق.</p>

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common'
-import { Component, OnInit } from '@angular/core'
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core'
 import { ActivatedRoute } from '@angular/router'
 import { FormsModule } from '@angular/forms'
 import { catchError, finalize, forkJoin, of, switchMap } from 'rxjs'
@@ -39,7 +39,8 @@ export class MarketplaceOrders implements OnInit {
   constructor(
     private ordersService: MarketplaceOrdersService,
     private mediaUploadService: MediaUploadService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -49,10 +50,16 @@ export class MarketplaceOrders implements OnInit {
   loadOrders(): void {
     this.isLoading = true
     this.errorMessage = ''
+    this.cdr.detectChanges()
 
     this.ordersService
       .getMyPurchases()
-      .pipe(finalize(() => (this.isLoading = false)))
+      .pipe(
+        finalize(() => {
+          this.isLoading = false
+          this.cdr.detectChanges()
+        })
+      )
       .subscribe({
         next: orders => {
           this.orders = orders ?? []
@@ -61,10 +68,12 @@ export class MarketplaceOrders implements OnInit {
             const target = targetId && this.orders.some(o => o.id === targetId) ? targetId : this.orders[0].id
             this.openOrder(target)
           }
+          this.cdr.detectChanges()
         },
         error: error => {
           this.orders = []
           this.errorMessage = getErrorMessage(error, 'تعذر تحميل طلبات السوق')
+          this.cdr.detectChanges()
         }
       })
   }
@@ -76,24 +85,32 @@ export class MarketplaceOrders implements OnInit {
     this.disputeReason = ''
     this.cancelReason = ''
     this.selectedDisputeFiles = []
+    this.cdr.detectChanges()
 
     forkJoin({
       details: this.ordersService.getById(id),
       tracking: this.ordersService.getTracking(id),
       escrow: this.ordersService.getEscrow(id).pipe(catchError(() => of(null)))
     })
-      .pipe(finalize(() => (this.isDetailsLoading = false)))
+      .pipe(
+        finalize(() => {
+          this.isDetailsLoading = false
+          this.cdr.detectChanges()
+        })
+      )
       .subscribe({
         next: result => {
           this.selectedOrder = result.details
           this.tracking = result.tracking
           this.escrow = result.escrow
+          this.cdr.detectChanges()
         },
         error: error => {
           this.selectedOrder = null
           this.tracking = null
           this.escrow = null
           this.errorMessage = getErrorMessage(error, 'تعذر تحميل تفاصيل الطلب')
+          this.cdr.detectChanges()
         }
       })
   }
@@ -278,16 +295,26 @@ export class MarketplaceOrders implements OnInit {
     this.isActionLoading = true
     this.errorMessage = ''
     this.successMessage = ''
+    this.cdr.detectChanges()
 
-    request.pipe(finalize(() => (this.isActionLoading = false))).subscribe({
-      next: (response: any) => {
-        this.successMessage = response?.message || defaultMessage
-        this.openOrder(id)
-        this.loadOrders()
-      },
-      error: (error: any) => {
-        this.errorMessage = getErrorMessage(error, 'تعذر تنفيذ العملية')
-      }
-    })
+    request
+      .pipe(
+        finalize(() => {
+          this.isActionLoading = false
+          this.cdr.detectChanges()
+        })
+      )
+      .subscribe({
+        next: (response: any) => {
+          this.successMessage = response?.message || defaultMessage
+          this.openOrder(id)
+          this.loadOrders()
+          this.cdr.detectChanges()
+        },
+        error: (error: any) => {
+          this.errorMessage = getErrorMessage(error, 'تعذر تنفيذ العملية')
+          this.cdr.detectChanges()
+        }
+      })
   }
 }

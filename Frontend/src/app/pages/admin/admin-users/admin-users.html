@@ -5,8 +5,7 @@
       <p class="page-subtitle">عرض وتعديل حالات المستخدمين والمزودين والموظفين</p>
     </div>
     <div class="header-actions">
-      <button type="button" class="btn btn-secondary" (click)="openCreateModal('Employee')">إضافة موظف</button>
-      <button type="button" class="btn btn-primary" (click)="openCreateModal('Admin')">إضافة أدمن</button>
+      <button type="button" class="btn btn-primary" (click)="openCreateModal('Employee')">إضافة</button>
     </div>
   </div>
 
@@ -108,7 +107,7 @@
   (close)="isModalOpen = false">
 </app-action-modal>
 
-<div class="modal-backdrop" *ngIf="isCreateModalOpen" (click)="closeCreateModal()">
+<div class="modal-backdrop" [class.show]="isCreateModalOpen" (click)="closeCreateModal()">
   <div class="staff-modal" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <div>
@@ -132,7 +131,9 @@
       <label>كلمة المرور
         <div class="password-inline">
           <input class="form-control" [type]="showNewPassword ? 'text' : 'password'" [(ngModel)]="createForm.password">
-          <button type="button" (click)="showNewPassword = !showNewPassword">{{ showNewPassword ? '🙈' : '👁️' }}</button>
+          <button type="button" (click)="showNewPassword = !showNewPassword">
+            <i class="fa-solid" [class.fa-eye-slash]="showNewPassword" [class.fa-eye]="!showNewPassword"></i>
+          </button>
         </div>
       </label>
 
@@ -146,10 +147,7 @@
           </select>
         </label>
         <label>المحافظة المسندة<input class="form-control" [(ngModel)]="createForm.assignedGovernorate" placeholder="اختياري"></label>
-        <label class="checkbox-row full-width">
-          <input type="checkbox" [(ngModel)]="createForm.isAvailableForDispatch">
-          <span>متاح للتكليف بالزيارات الميدانية</span>
-        </label>
+
       </ng-container>
     </div>
 
